@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from config import *
+from web.start import start_web_server
 
 # Read cli arguments and return them
 def read_arguments() -> Arguments:
@@ -27,3 +28,21 @@ if __name__ == '__main__':
     
     # Configure logger (colors, format, ...)
     Config.init_logger(arguments.DEBUG)
+    
+    # Start web (flask) server, if it's not disabled
+    if not arguments.DISABLE_WEB:
+        if arguments.DEBUG:
+            # Start dev flask server
+            start_web_server()
+        else:
+            # TODO Start production flask server
+            pass
+    
+    # Start api (fastapi) server, if it's not disabled
+    if not arguments.DISABLE_API:
+        if arguments.DEBUG:
+            # Start dev fastapi server
+            pass
+        else:
+            # TODO Start production fastapi server
+            pass
