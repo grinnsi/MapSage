@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from config import *
 
- # Read cli arguments and return them
+# Read cli arguments and return them
 def read_arguments() -> Arguments:
     # Create cli-argument parser
     parser = ArgumentParser(add_help=False)
