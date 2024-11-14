@@ -27,7 +27,7 @@ if __name__ == '__main__':
     arguments = read_arguments()
     
     # Configure logger (colors, format, ...)
-    Config.init_logger(arguments.DEBUG)
+    init_logger(arguments.DEBUG)
     
     # Start web (flask) server, if it's not disabled
     if not arguments.DISABLE_WEB:
