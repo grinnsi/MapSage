@@ -1,6 +1,6 @@
 # Class as namespace for arguments (for autocomplete and more)
 class Arguments(object):
-    HELP = True
+    HELP = False
     DEBUG = False
     DISABLE_WEB = False
     DISABLE_API = False

@@ -1,23 +1,29 @@
 from argparse import ArgumentParser
 from config import *
 
-# Start program
-if __name__ == '__main__':
+ # Read cli arguments and return them
+def read_arguments() -> Arguments:
     # Create cli-argument parser
-    parser = ArgumentParser("ogc-api implementation", add_help=False)
-    parser.add_argument("-h", "--help", help="Show this help message and exit", metavar='\b', dest="HELP")
-    parser.add_argument("-d", "--debug", help="Enable debug mode", metavar='\b', dest="DEBUG")
-    parser.add_argument("--disable-web", help="Disable the web interface", metavar='\b', dest="DISABLE_WEB")
-    parser.add_argument("--disable-api", help="Disable the ogc api", metavar='\b', dest="DISABLE_API")
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument("-h", "--help", help="Show this help message and exit", action="store_true", dest="HELP")
+    parser.add_argument("-d", "--debug", help="Enable debug mode", action="store_true", dest="DEBUG")
+    parser.add_argument("--disable-web", help="Disable the web interface", action="store_true", dest="DISABLE_WEB")
+    parser.add_argument("--disable-api", help="Disable the ogc api", action="store_true", dest="DISABLE_API")
 
     # Create object for the arguments and parse the arguments into the object
     arguments = Arguments()
     parser.parse_args(namespace=arguments)
-    
-    # If the help message is printed, exit program
+
+    # Print help messae and exit program if help-flag set
     if arguments.HELP:
         parser.print_help()
         exit(0)
-
+        
+    return arguments
+    
+# Start program
+if __name__ == '__main__':
+    arguments = read_arguments()
+    
     # Configure logger (colors, format, ...)
     Config.init_logger(arguments.DEBUG)
