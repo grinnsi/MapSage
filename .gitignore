@@ -9,6 +9,9 @@ dist
 # Node dependencies
 node_modules
 
+# Python
+__pycache__
+
 # Logs
 logs
 *.log
