@@ -3,7 +3,7 @@
     <ElAside class="sidebar" width="170px">
       <ElMenu class="vertical-menu navigation-menu">
         <template v-for="route in nav" :key="route.name">
-          <NuxtLink :to="route" class="navigation-link" :class="(route.path === $route.path)?'navigation-current-page':'navigation-different-page'">
+          <NuxtLink :to="route.path" class="navigation-link" :class="(route.path === $route.path)?'navigation-current-page':'navigation-different-page'">
             <ElMenuItem :index="route.name?.toString()">
               <span>{{ route.name }}</span>
             </ElMenuItem>
@@ -29,7 +29,7 @@
 const nav = [
   {path: '/', name: 'Startseite'},
   // {path: '/layers', name: 'Ebenen'},
-  // {path: '/settings', name: 'Einstellungen'},
+  {path: '/options', name: 'Einstellungen'},
 ];
 </script>
 

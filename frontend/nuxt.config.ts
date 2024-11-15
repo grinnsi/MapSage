@@ -2,11 +2,13 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-13',
   devtools: { enabled: true },
+  ssr: false,
   app: {
     head: {
       charset: 'utf-8',
       title: 'Interface',
     },
+    baseURL: "/interface",
   },
   modules: [
     ['@nuxt/eslint', { fix: true }],
@@ -37,6 +39,5 @@ export default defineNuxtConfig({
   },
   nitro: {
     preset: 'static',
-    baseURL: "/interface",
   }
 })
