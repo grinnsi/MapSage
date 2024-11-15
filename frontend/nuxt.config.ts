@@ -31,5 +31,6 @@ export default defineNuxtConfig({
   },
   nitro: {
     preset: 'static',
+    baseURL: "/interface"
   }
 })
