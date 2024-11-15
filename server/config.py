@@ -1,12 +1,14 @@
+from os.path import abspath
 from logging.config import dictConfig
 import coloredlogs
 
 # Class as namespace for arguments (for autocomplete and more)
 class Arguments(object):
     HELP = False
-    DEBUG = False
+    DEBUG_MODE = False
     DISABLE_WEB = False
     DISABLE_API = False
+    DATABASE_DIR = abspath("./data")
 
 # Class to group configuration methods/variables
 def init_logger(debug_mode: bool):
