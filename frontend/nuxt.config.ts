@@ -6,9 +6,9 @@ export default defineNuxtConfig({
   app: {
     head: {
       charset: 'utf-8',
-      title: 'Interface',
+      title: '[name] Dashboard',
     },
-    baseURL: "/interface",
+    baseURL: "/dashboard",
   },
   modules: [
     ['@nuxt/eslint', { fix: true }],
@@ -31,6 +31,9 @@ export default defineNuxtConfig({
         },
       },
     },
+    build: {
+      emptyOutDir: true,
+    },
   },
   vue: {
     compilerOptions: {
@@ -38,6 +41,10 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
+    static: true,
     preset: 'static',
+    output: {
+      publicDir: '../server/web/static',
+    }
   }
 })
