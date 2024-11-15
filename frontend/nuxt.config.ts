@@ -15,6 +15,11 @@ export default defineNuxtConfig({
   elementPlus: {
     importStyle: 'scss',
   },
+  router: {
+    options: {
+      hashMode: true,
+    }
+  },
   vite: {
     css: {
       preprocessorOptions: {
@@ -31,5 +36,6 @@ export default defineNuxtConfig({
   },
   nitro: {
     preset: 'static',
+    baseURL: "/interface",
   }
 })
