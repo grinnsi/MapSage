@@ -1,0 +1,39 @@
+@use "./variables.scss" as *;
+
+$margin-of-selector: 6px;
+
+.navigation-menu {
+  background-color: color-mix(in srgb, var(--el-color-primary) 80%, #3a3a3a 25%);
+  vertical-align: top;
+  overflow: hidden;
+  box-shadow: inset 0 0 5px #0000009c;
+  border-radius: $layout-border-radius;
+
+  > a:first-child > li.el-menu-item {
+    margin-top: $margin-of-selector;
+  }
+}
+
+.navigation-link {
+  text-decoration: none;
+  
+  > .el-menu-item {
+    color: white;
+    border-radius: ($layout-border-radius - $margin-of-selector);
+    height: 45px;
+    margin-left: $margin-of-selector;
+    margin-right: $margin-of-selector;
+    margin-bottom: $margin-of-selector;
+  }
+
+  &.navigation-current-page > .el-menu-item{
+    background: rgb(255, 255, 255);
+    color: var(--el-color-primary);
+    box-shadow: 0 0 8px 1px #00000099;
+  }
+
+  &.navigation-different-page > .el-menu-item:hover{
+    background-color: rgba(255, 255, 255, 0.731);
+    color: black;
+  }
+}

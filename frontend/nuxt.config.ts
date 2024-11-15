@@ -25,6 +25,7 @@ export default defineNuxtConfig({
       preprocessorOptions: {
         scss: {
           additionalData: '@use "~/scss/theming.scss" as *;',
+          api: 'modern-compiler',
         },
       },
     },
