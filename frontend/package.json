@@ -11,6 +11,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "iconify-icon": "^2.1.0",
     "nuxt": "^3.14.159",
     "vue": "latest",
     "vue-router": "latest"

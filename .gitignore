@@ -4,6 +4,7 @@
 .nuxt
 .nitro
 .cache
+static
 dist
 
 # Node dependencies
@@ -11,6 +12,7 @@ node_modules
 
 # Python
 __pycache__
+*.db
 
 # Logs
 logs
@@ -24,5 +26,5 @@ logs
 
 # Local env files
 .env
-.env.*
+.env
 !.env.example

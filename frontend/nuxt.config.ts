@@ -22,6 +22,11 @@ export default defineNuxtConfig({
       hashMode: true,
     }
   },
+  imports: {
+    dirs: [
+      'utils/**',
+    ],
+  },
   vite: {
     css: {
       preprocessorOptions: {
