@@ -1,7 +1,7 @@
 <template>
   <div>
     {{ $route.name }}
-    <ElButton type="primary">Test</ElButton>
+    
   </div>
 </template>
 
