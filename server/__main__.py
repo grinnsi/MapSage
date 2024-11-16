@@ -3,9 +3,11 @@ import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from config import *
 from web.start import start_web_server
+from database.db import Database
 
 from dotenv import load_dotenv
 
+# FIXME function gets called twice when starting
 # Set environment variables from arguments, if they're not already set
 # Order: OS -> .env file (only in debug mode) -> cli arguments
 def set_env_variables(arguments: Arguments) -> None:
@@ -35,7 +37,7 @@ def read_arguments() -> Arguments:
     parser.add_argument("-d", "--debug", help="Enable debug mode", action="store_true", dest="DEBUG_MODE")
     parser.add_argument("--disable-web", help="Disable the web interface", action="store_true", dest="DISABLE_WEB")
     parser.add_argument("--disable-api", help="Disable the ogc api", action="store_true", dest="DISABLE_API")
-    parser.add_argument("--db-dir", help="Absolute path to the database directory", action="store", metavar="path", default=Arguments.DATABASE_DIR, dest="DATABASE_DIR")
+    parser.add_argument("--db-dir", help="Absolute or relative path to the database directory", action="store", metavar="path", default=Arguments.DATABASE_DIR, dest="DATABASE_DIR")
 
     # Create object for the arguments and parse the arguments into the object
     arguments = Arguments()
@@ -55,10 +57,12 @@ if __name__ == '__main__':
     init_logger(arguments.DEBUG_MODE)
     # Set environment variables
     set_env_variables(arguments)  
+    # Init SQLite3 database
+    Database.init_sqlite_db(arguments.DEBUG_MODE, False)
     
     # Start web (flask) server, if it's not disabled
     if not arguments.DISABLE_WEB:
-        if arguments.DEBUG:
+        if arguments.DEBUG_MODE:
             # Start dev flask server
             start_web_server()
         else:
@@ -67,7 +71,7 @@ if __name__ == '__main__':
     
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:
-        if arguments.DEBUG:
+        if arguments.DEBUG_MODE:
             # Start dev fastapi server
             pass
         else:
