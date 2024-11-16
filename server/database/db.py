@@ -38,12 +38,8 @@ class Database():
         SQLModel.metadata.create_all(engine)
         cls.sqlite_engine = engine
 
-    @classmethod
-    def get_db(cls):
-        if cls.sqlite_engine is None:
-            cls.logger.error(msg="Error while getting database, database engine not found", exc_info=cls.debug_mode)
-            return None
-
-    @classmethod
-    def close_db(cls, e=None):
-        pass
+    # @classmethod
+    # def get_db(cls):
+    #     if cls.sqlite_engine is None:
+    #         cls.logger.error(msg="Error while getting database, database engine not found", exc_info=cls.debug_mode)
+    #         return None

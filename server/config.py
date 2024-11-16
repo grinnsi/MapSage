@@ -10,7 +10,7 @@ class Arguments(object):
     DISABLE_API = False
     DATABASE_DIR = abspath("./data")
 
-# Class to group configuration methods/variables
+# Method to set the logger configuration like colorscheme and formatting
 def init_logger(debug_mode: bool):
     coloredlogs.DEFAULT_LEVEL_STYLES = dict(
         spam=dict(color=22, faint=True),
