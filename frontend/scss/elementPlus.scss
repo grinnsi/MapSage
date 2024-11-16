@@ -1,0 +1,22 @@
+@use "./variables.scss" as *;
+// @use "../node_modules/element-plus/theme-chalk/src/card.scss";
+
+.el-aside {
+  overflow: hidden;
+}
+
+.main-content>.el-scrollbar {
+  padding-right: calc($main-content-padding - $main-content-padding-right);
+}
+
+.el-card__body {
+  padding: 10px;
+}
+
+.dialog-background {
+  background-color: rgba(91, 91, 91, 0.1) !important;
+}
+
+.el-table th.column-header {
+  color: var(--el-color-primary);
+}

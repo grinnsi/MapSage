@@ -1,0 +1,38 @@
+@use "./variables.scss" as *;
+
+.base-layout {
+  margin: $top-space $side-space;
+  height: calc(100% - 2*$top-space);
+}
+
+.main-content {
+  background-color: white;
+  border-radius: $layout-border-radius;
+  border: $border-of-content;
+  margin-left: 20px;
+  max-height: 86vh;
+  padding: $main-content-padding;
+  padding-right: $main-content-padding-right;
+}
+
+.icon-button {
+  position: relative;
+  height: $icon-button-size;
+  width: $icon-button-size;
+
+  span {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+
+    iconify-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}

@@ -1,0 +1,21 @@
+@forward '../node_modules/element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'primary': (
+      'base': #287aed,
+    ),
+    'danger': (
+      'base': #ff3c3c,
+    )
+  ),
+  $border-radius: (
+    'base': 6px,
+    'small': 4px,
+  ),
+  $tree: (
+    'expand-icon-color': black,
+    'node-content-height': 28px,
+  ),
+  // $card: (
+  //   'padding': 10px,
+  // )
+)
