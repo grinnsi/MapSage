@@ -6,9 +6,10 @@ export default defineNuxtConfig({
   app: {
     head: {
       charset: 'utf-8',
+      // TODO Set name of application everywhere (here, in other pages, in nginx, ...; noted as [name])
       title: '[name] Dashboard',
     },
-    baseURL: "/dashboard",
+    baseURL: "/dashboard/",
   },
   modules: [
     ['@nuxt/eslint', { fix: true }],
@@ -17,15 +18,15 @@ export default defineNuxtConfig({
   elementPlus: {
     importStyle: 'scss',
   },
-  router: {
-    options: {
-      hashMode: true,
-    }
-  },
   imports: {
     dirs: [
       'utils/**',
     ],
+  },
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => tag === 'iconify-icon',
+    },
   },
   vite: {
     css: {
@@ -38,11 +39,6 @@ export default defineNuxtConfig({
     },
     build: {
       emptyOutDir: true,
-    },
-  },
-  vue: {
-    compilerOptions: {
-      isCustomElement: (tag) => tag === 'iconify-icon',
     },
   },
   nitro: {

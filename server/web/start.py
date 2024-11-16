@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import WebserverConfig
 
@@ -10,6 +11,10 @@ def create_app(config: WebserverConfig) -> Flask:
     
     # Create app
     app = Flask("webserver", static_folder=os.path.join(instance_path, "static"), instance_relative_config=True, instance_path=instance_path)
+    # TODO Set number of proxies, depending on env-variable or user input
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+    )
 
     # Configure app (https://flask.palletsprojects.com/en/stable/tutorial/factory/)
     app.config.from_object(config)
@@ -20,11 +25,16 @@ def create_app(config: WebserverConfig) -> Flask:
     except OSError:
         app.logger.critical("Error while creating Data-Directory", exc_info=OSError)
         raise
-        
-    @app.route('/interface', defaults={'path': ''})
-    @app.route('/<path:path>')
-    def get_interface(path):
-        return app.send_static_file("index.html")
+
+    # Catch /dashboard/... requests; Send index.html, and nessecary files
+    @app.route('/dashboard/')
+    @app.route('/dashboard/<path:path>')
+    def get_dashboard(path="index.html"):
+        # If url path is not a file (like options, namesapces) then add index.html to path
+        if path.count('.') == 0:
+            path += f"/index.html"
+
+        return send_from_directory(app.static_folder, path)
     
     return app
 
