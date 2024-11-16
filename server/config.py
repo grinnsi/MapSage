@@ -10,7 +10,7 @@ class Arguments(object):
     DISABLE_API = False
     DATABASE_DIR = abspath("./data")
 
-# Class to group configuration methods/variables
+# Method to set the logger configuration like colorscheme and formatting
 def init_logger(debug_mode: bool):
     coloredlogs.DEFAULT_LEVEL_STYLES = dict(
         spam=dict(color=22, faint=True),
@@ -45,11 +45,21 @@ def init_logger(debug_mode: bool):
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://flask.logging.wsgi_errors_stream',
                 'formatter': 'default',
-            }
+            },
+            "sqlalchemy": {
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+            },
         },
-        'root': {
-            # Configure severity level
-            'level': 'DEBUG' if debug_mode else "WARNING",
-            'handlers': ['wsgi']
-        },
+        "loggers": {
+            '': {
+                'level': 'DEBUG' if debug_mode else "WARNING",
+                'handlers': ['wsgi']
+            },
+            "sqlalchemy.engine.Engine": {
+                'level': "DEBUG" if debug_mode else "WARNING",
+                "handlers": ["sqlalchemy"],
+                'propagate': False
+            },
+        }
     })
