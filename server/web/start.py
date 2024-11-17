@@ -10,7 +10,7 @@ def create_app(config: WebserverConfig) -> Flask:
     instance_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
     
     # Create app
-    app = Flask("webserver", static_folder=os.path.join(instance_path, "static"), instance_relative_config=True, instance_path=instance_path)
+    app = Flask(__name__, static_folder=os.path.join(instance_path, "static"), instance_relative_config=True, instance_path=instance_path)
     # TODO Set number of proxies, depending on env-variable or user input
     app.wsgi_app = ProxyFix(
         app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
