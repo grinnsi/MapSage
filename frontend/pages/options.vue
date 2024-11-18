@@ -68,7 +68,7 @@ definePageMeta({
   name: "Einstellungen"
 });
 
-const { data, refresh } = await useFetch<Connection[]>('../database/getConnections');
+const { data, refresh } = await useFetch<Connection[]>('../data/connections');
 
 function showConfirmationDialog(connection: Connection) {
   Object.assign(selectedConnection, connection);
@@ -79,8 +79,8 @@ async function deleteConnection(uuid: string) {
   confirmationDialogRef.value!.toggleVisibility();
 
   try {
-    const response = await $fetch.raw('/database/deleteConnection', {
-      method: 'POST',
+    const response = await $fetch.raw('/data/connections', {
+      method: 'DELETE',
       headers: {
         'Content-Type': 'text/plain'
       },
