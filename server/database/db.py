@@ -39,6 +39,14 @@ class Database():
         SQLModel.metadata.create_all(engine)
         cls.sqlite_engine = engine
 
+    # Input connection parameters and returns if connection is successful
+    @classmethod
+    def test_pg_connection(cls, data: Connection) -> bool:
+        """Test the connection to a PostgreSQL database, using the connection parameters"""
+        pg_url = f""
+        pg_engine = create_engine(pg_url, echo=cls.debug_mode)
+        
+
     # @classmethod
     # def get_db(cls):
     #     if cls.sqlite_engine is None:

@@ -1,3 +1,4 @@
+from logging import getLogger
 from flask import Blueprint, request, Response
 
 def create_database_endpoints() -> Blueprint:
@@ -5,7 +6,9 @@ def create_database_endpoints() -> Blueprint:
     
     @bp.route('/connections', methods=("GET", "POST" ,"DELETE"))
     def connections() -> Response:
-        print(request.form, request.data)
+        logger = getLogger()
+        logger.debug(msg=f"Received following connection request: {request.method} {request.data}")
+
         if request.method == "GET":
             pass
         
