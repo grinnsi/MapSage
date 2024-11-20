@@ -108,7 +108,7 @@ const rules = {
 
 async function saveConnection() {
   try {
-    const response = await $fetch.raw('/database/newConn', {
+    const response = await $fetch.raw('../data/connections', {
       method: 'POST',
       body: form
     });
