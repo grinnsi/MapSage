@@ -2,7 +2,7 @@ import os
 from flask import Flask, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .settings.data import create_database_endpoints
+from .settings.routes import create_data_endpoints
 
 from .config import WebserverConfig
 
@@ -38,7 +38,7 @@ def create_app(config: WebserverConfig) -> Flask:
 
         return send_from_directory(app.static_folder, path)
     
-    app.register_blueprint(create_database_endpoints())
+    app.register_blueprint(create_data_endpoints())
     
     return app
 
