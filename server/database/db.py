@@ -2,7 +2,7 @@ import os
 import logging
 
 from sqlalchemy import Engine
-from sqlmodel import SQLModel, Session, create_engine, delete
+from sqlmodel import SQLModel, Session, create_engine, delete, select
 
 from .models import Connection, Namespace
 
@@ -43,8 +43,13 @@ class Database():
     @classmethod
     def test_pg_connection(cls, data: Connection) -> bool:
         """Test the connection to a PostgreSQL database, using the connection parameters"""
-        pg_url = f""
+        pg_url = f"postgresql+psycopg2://{data.name}:{data.password}@{data.host}:{data.port}/{data.database_name}"
         pg_engine = create_engine(pg_url, echo=cls.debug_mode)
+        
+        with Session(pg_engine) as session:
+            stmt = select("SELECT * FROM information_schema.tables")
+            result = session.exec(stmt)
+            cls.logger.debug(msg=f"Result of PostgreSQL connection test: {result}")
         
 
     # @classmethod
