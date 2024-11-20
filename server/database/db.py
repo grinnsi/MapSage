@@ -2,7 +2,7 @@ import os
 import logging
 
 from sqlalchemy import Engine
-from sqlmodel import SQLModel, Session, create_engine, delete, select
+from sqlmodel import SQLModel, Session, create_engine, delete, select 
 
 from .models import Connection, Namespace
 
@@ -50,7 +50,12 @@ class Database():
             stmt = select("SELECT * FROM information_schema.tables")
             result = session.exec(stmt)
             cls.logger.debug(msg=f"Result of PostgreSQL connection test: {result}")
-        
+            
+    @classmethod
+    def get_table_result(cls, statement) -> tuple:
+        with Session(cls.sqlite_engine) as session:
+            result = session.exec(statement)
+            return result
 
     # @classmethod
     # def get_db(cls):
