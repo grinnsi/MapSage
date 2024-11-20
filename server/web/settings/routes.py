@@ -1,6 +1,8 @@
 from logging import getLogger
 from flask import Blueprint, request, Response
 
+from .connections import get_connections
+
 def create_data_endpoints() -> Blueprint:
     bp = Blueprint("database_endpoints", __name__, url_prefix="/data")
     
@@ -10,7 +12,7 @@ def create_data_endpoints() -> Blueprint:
         logger.debug(msg=f"Received following connection request: {request.method} {request.data}")
 
         if request.method == "GET":
-            pass
+            get_connections()
         
         if request.method == "POST":
             pass
