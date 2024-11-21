@@ -9,10 +9,10 @@ def create_data_endpoints() -> Blueprint:
     @bp.route('/connections', methods=("GET", "POST" ,"DELETE"))
     def connections() -> Response:
         logger = getLogger()
-        logger.debug(msg=f"Received following connection request: {request.method} {request.data}")
+        logger.debug(msg=f"Received following connections request: {request.method} {request.data}")
 
         if request.method == "GET":
-            get_connections()
+            return get_connections()
         
         if request.method == "POST":
             pass
