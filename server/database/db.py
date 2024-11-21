@@ -52,10 +52,10 @@ class Database():
             cls.logger.debug(msg=f"Result of PostgreSQL connection test: {result}")
             
     @classmethod
-    def get_table_result(cls, statement) -> tuple:
+    def select_table(cls, statement) -> list:
         with Session(cls.sqlite_engine) as session:
-            result = session.exec(statement)
-            return result
+            results = session.exec(statement)
+            return results.all()
 
     # @classmethod
     # def get_db(cls):
