@@ -1,9 +1,9 @@
 import os
 import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from config import *
-from web.start import start_web_server
-from database.db import Database
+from .config import *
+from .web.start import start_web_server
+from .database.db import Database
 
 from dotenv import load_dotenv
 
