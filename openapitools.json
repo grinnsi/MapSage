@@ -1,0 +1,16 @@
+{
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.11.0",
+    "generators": {
+      "fastapi": {
+        "generatorName": "python-fastapi",
+        "output": "#{cwd}/server/api",
+        "glob": "docs/complete-ogc-api.yaml",
+        "additionalProperties": {
+          "packageName": "ogc_api_server"
+        }
+      }
+    }
+  }
+}
