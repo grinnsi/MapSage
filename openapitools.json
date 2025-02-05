@@ -1,0 +1,19 @@
+{
+  "$schema": "C:/Users/Anton/AppData/Roaming/npm/node_modules/@openapitools/openapi-generator-cli/config.schema.json",
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.11.0",
+    "generators": {
+      "feature-api": {
+        "generatorName": "python-fastapi",
+        "output": "#{cwd}/server/ogc-apis/features",
+        "glob": "docs/complete-ogc-features-api.yaml",
+        "additionalProperties": {
+          "strictSpec": true,
+          "packageName": "features",
+          "fastapiImplementationPackage": "implementation"
+        }
+      }
+    }
+  }  
+}
