@@ -3,3 +3,4 @@ flask
 coloredlogs
 python-dotenv
 sqlmodel
+"psycopg[binary,pool]"

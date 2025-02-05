@@ -38,7 +38,7 @@ def create_app(config: WebserverConfig) -> Flask:
 
         return send_from_directory(app.static_folder, path)
     
-    app.register_blueprint(create_database_endpoints())
+    app.register_blueprint(create_data_endpoints())
     
     return app
 

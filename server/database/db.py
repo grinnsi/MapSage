@@ -1,8 +1,8 @@
 import os
 import logging
 
-from sqlalchemy import Engine
-from sqlmodel import SQLModel, Session, create_engine, delete
+from sqlalchemy import Engine, text
+from sqlmodel import SQLModel, Session, create_engine, delete, select 
 
 from server.database.models import Connection, Namespace
 
@@ -38,6 +38,24 @@ class Database():
 
         SQLModel.metadata.create_all(engine)
         cls.sqlite_engine = engine
+
+    # Input connection parameters and returns if connection is successful
+    @classmethod
+    def test_pg_connection(cls, data: dict) -> bool:
+        """Test the connection to a PostgreSQL database, using the connection parameters"""
+        pg_url = f"postgresql+psycopg://{data["role"]}:{data["password"]}@{data["host"]}:{data["port"]}/{data["database_name"]}"
+        pg_engine = create_engine(pg_url, echo=cls.debug_mode)
+        
+        with Session(pg_engine) as session:
+            stmt = select(text(" * FROM information_schema.tables"))
+            result = session.exec(stmt)
+            cls.logger.debug(msg=f"Result of PostgreSQL connection test: {result}")
+            
+    @classmethod
+    def select_table(cls, statement) -> list:
+        with Session(cls.sqlite_engine) as session:
+            results = session.exec(statement)
+            return results.all()
 
     # @classmethod
     # def get_db(cls):

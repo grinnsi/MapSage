@@ -79,7 +79,7 @@ async function deleteConnection(uuid: string) {
   confirmationDialogRef.value!.toggleVisibility();
 
   try {
-    const response = await $fetch.raw('/data/connections', {
+    const response = await $fetch.raw('../data/connections', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'text/plain'
