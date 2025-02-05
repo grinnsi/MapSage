@@ -1,3 +1,4 @@
+import asyncio
 import logging.config
 import os
 import logging
@@ -6,8 +7,7 @@ from server.config import *
 from server.web.start import start_web_server
 from server.database.db import Database
 
-import uvicorn
-from server.ogc_apis.features.main import init_app
+import server.ogc_apis.start as api
 
 from dotenv import load_dotenv
 
@@ -76,9 +76,8 @@ if __name__ == '__main__':
     
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:
-        if arguments.DEBUG_MODE:
-            uvicorn.run(init_app(), port=8000, log_config=logger_config)
-            pass
-        else:
-            # TODO Start production fastapi server
-            pass
+        server = api.start_api_server(arguments.DEBUG_MODE)
+        try:
+            asyncio.run(server.serve())
+        except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
+            print("Server shutdown gracefully")
