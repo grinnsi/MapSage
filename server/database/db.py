@@ -8,6 +8,7 @@ from .models import Connection, Namespace
 
 # TODO How to include second db ?
 class Database():
+    # FIXME Do a global logger
     logger = logging.getLogger()
     debug_mode = False
     sqlite_engine: Engine = None
