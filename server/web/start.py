@@ -2,7 +2,7 @@ import os
 from flask import Flask, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from server.web.settings.data import create_database_endpoints
+from server.web.settings.routes import create_data_endpoints
 
 from server.web.config import WebserverConfig
 

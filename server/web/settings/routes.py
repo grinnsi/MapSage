@@ -1,7 +1,7 @@
 from logging import getLogger
 from flask import Blueprint, request, Response
 
-from .connections import create_new_connection, get_connections
+from server.web.settings.connections import create_new_connection, get_connections
 
 def create_data_endpoints() -> Blueprint:
     bp = Blueprint("database_endpoints", __name__, url_prefix="/data")
