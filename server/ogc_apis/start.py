@@ -8,6 +8,7 @@ def start_api_server(debug_mode: bool) -> uvicorn.Server:
     config = uvicorn.Config(
         app=features_api.init_app(),
         port=int(os.getenv("APISERVER_PORT", "8000")),
+        root_path=os.getenv("APISERVER_ROOT_PATH", ""),
         proxy_headers=True,
         log_config=get_logger_config(debug_mode),
         log_level="debug" if debug_mode else "warning",

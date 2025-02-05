@@ -80,4 +80,4 @@ if __name__ == '__main__':
         try:
             asyncio.run(server.serve())
         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
-            print("Server shutdown gracefully")
+            logging.getLogger().info("Server stopped")
