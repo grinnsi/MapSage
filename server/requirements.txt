@@ -1,5 +1,5 @@
 flask
-fastapi
+"fastapi[standard]"
 coloredlogs
 python-dotenv
 sqlmodel

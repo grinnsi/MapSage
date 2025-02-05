@@ -6,11 +6,11 @@
     "generators": {
       "feature-api": {
         "generatorName": "python-fastapi",
-        "output": "#{cwd}/server/api/features",
+        "output": "#{cwd}/server/ogc-apis/features",
         "glob": "docs/complete-ogc-features-api.yaml",
         "additionalProperties": {
           "strictSpec": true,
-          "packageName": "features_api",
+          "packageName": "features",
           "fastapiImplementationPackage": "implementation"
         }
       }
