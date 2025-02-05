@@ -1,4 +1,5 @@
 flask
+fastapi
 coloredlogs
 python-dotenv
 sqlmodel
