@@ -16,7 +16,7 @@ To run the server, please execute the following from the root directory:
 
 ```bash
 pip3 install -r requirements.txt
-PYTHONPATH=src uvicorn main:app --host 0.0.0.0 --port 8080
+PYTHONPATH=src uvicorn server.ogc_apis.features.main:app --host 0.0.0.0 --port 8080
 ```
 
 and open your browser at `http://localhost:8080/docs/` to see the docs.
