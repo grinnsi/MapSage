@@ -1,7 +1,7 @@
 <template>
-  <TemplateSection section-title="Vorhandene Kollektionen:">
+  <TemplateSection section-title="Vorhandene Namespaces:">
     <template #header-right>
-      <TemplateButton tooltip="Neue Kollektion" iconName="flowbite:plus-outline"
+      <TemplateButton tooltip="Neuer Namespace" iconName="flowbite:plus-outline"
         @click="useEmitter().value.emit('show-new-namespace-dialog')" />
     </template>
     <ElTable :data="data as Namespace[]" style="width: 100%" table-layout="auto" header-cell-class-name="column-header">
@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  name: 'Kollektionen'
+  name: 'Namespaces'
 });
 
 // const { data, refresh } = useFetch<Namespace[]>('/database/getNamespaces');
