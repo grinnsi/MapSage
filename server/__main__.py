@@ -1,9 +1,12 @@
 import os
 import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from config import *
-from web.start import start_web_server
-from database.db import Database
+from server.config import *
+from server.web.start import start_web_server
+from server.database.db import Database
+
+import uvicorn
+from server.ogc_apis.features.main import init_app
 
 from dotenv import load_dotenv
 
@@ -72,7 +75,7 @@ if __name__ == '__main__':
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:
         if arguments.DEBUG_MODE:
-            # Start dev fastapi server
+            uvicorn.run(init_app(), port=8000, log_level="debug")
             pass
         else:
             # TODO Start production fastapi server
