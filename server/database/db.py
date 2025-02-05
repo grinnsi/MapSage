@@ -4,7 +4,7 @@ import logging
 from sqlalchemy import Engine
 from sqlmodel import SQLModel, Session, create_engine, delete
 
-from .models import Connection, Namespace
+from server.database.models import Connection, Namespace
 
 # TODO How to include second db ?
 class Database():
