@@ -10,8 +10,52 @@ class Arguments(object):
     DISABLE_API = False
     DATABASE_DIR = abspath("./data")
 
+def get_logger_config(debug_mode: bool) -> dict:
+    return {
+        'version': 1,
+        'formatters': {
+            'default': {
+                '()': 'coloredlogs.ColoredFormatter',
+                'format': '[%(asctime)s] %(levelname)-8s in %(module)-20s %(message)s',
+                'datefmt': '%H:%M:%S, %d-%m-%Y'
+            }
+        },
+        'handlers': {
+            'wsgi': {
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://flask.logging.wsgi_errors_stream',
+                'formatter': 'default',
+            },
+            'asgi': {
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stdout',
+                'formatter': 'default',
+            },
+            "sqlalchemy": {
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+            },
+        },
+        "loggers": {
+            '': {
+                'level': 'DEBUG' if debug_mode else "WARNING",
+                'handlers': ['wsgi']
+            },
+            "sqlalchemy.engine.Engine": {
+                'level': "DEBUG" if debug_mode else "WARNING",
+                "handlers": ["sqlalchemy"],
+                'propagate': False
+            },
+            'uvicorn': {
+                'level': "DEBUG" if debug_mode else "WARNING",
+                'handlers': ['asgi'],
+                'propagate': False
+            },
+        }
+    }
+
 # Method to set the logger configuration like colorscheme and formatting
-def init_logger(debug_mode: bool):
+def init_logger(logger_config: dict) -> None:
     coloredlogs.DEFAULT_LEVEL_STYLES = dict(
         spam=dict(color=22, faint=True),
         debug=dict(color=28),
@@ -31,35 +75,4 @@ def init_logger(debug_mode: bool):
         programname=dict(color='cyan'),
         username=dict(color='yellow'),
     )
-    dictConfig({
-        'version': 1,
-        'formatters': {
-            'default': {
-                '()': 'coloredlogs.ColoredFormatter',
-                'format': '[%(asctime)s] %(levelname)-8s in %(module)-20s %(message)s',
-                'datefmt': '%H:%M:%S, %d-%m-%Y'
-            }
-        },
-        'handlers': {
-            'wsgi': {
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://flask.logging.wsgi_errors_stream',
-                'formatter': 'default',
-            },
-            "sqlalchemy": {
-                "class": "logging.StreamHandler",
-                "formatter": "default",
-            },
-        },
-        "loggers": {
-            '': {
-                'level': 'DEBUG' if debug_mode else "WARNING",
-                'handlers': ['wsgi']
-            },
-            "sqlalchemy.engine.Engine": {
-                'level': "DEBUG" if debug_mode else "WARNING",
-                "handlers": ["sqlalchemy"],
-                'propagate': False
-            },
-        }
-    })
+    dictConfig(logger_config)

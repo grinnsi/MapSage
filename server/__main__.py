@@ -1,3 +1,4 @@
+import logging.config
 import os
 import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -57,7 +58,8 @@ def read_arguments() -> Arguments:
 if __name__ == '__main__':
     arguments = read_arguments()
     # Configure logger (colors, format, ...)
-    init_logger(arguments.DEBUG_MODE)
+    logger_config = get_logger_config(arguments.DEBUG_MODE)
+    init_logger(logger_config)
     # Set environment variables
     set_env_variables(arguments)  
     # Init SQLite3 database
@@ -75,7 +77,7 @@ if __name__ == '__main__':
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:
         if arguments.DEBUG_MODE:
-            uvicorn.run(init_app(), port=8000, log_level="debug")
+            uvicorn.run(init_app(), port=8000, log_config=logger_config)
             pass
         else:
             # TODO Start production fastapi server
