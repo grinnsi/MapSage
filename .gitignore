@@ -23,6 +23,7 @@ logs
 .DS_Store
 .fleet
 .idea
+templates
 
 # Local env files
 .env
