@@ -31,6 +31,7 @@ from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 from server.ogc_apis.features.models.exception import Exception
 from server.ogc_apis.features.models.landing_page import LandingPage
+import markdown
 
 
 router = APIRouter()
@@ -43,16 +44,16 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
 @router.get(
     "/collections/{collectionId}",
     responses={
-        200: {"model": Collection, "description": "Information about the feature collection with id &#x60;collectionId&#x60;.  The response contains a link to the items in the collection (path &#x60;/collections/{collectionId}/items&#x60;, link relation &#x60;items&#x60;) as well as key information about the collection. This information includes:  * A local identifier for the collection that is unique for the dataset; * A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude); * An optional title and description for the collection; * An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data; * An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is &#39;feature&#39;)."},
-        404: {"description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value."},
-        500: {"model": Exception, "description": "A server error occurred."},
+        200: {"model": Collection, "description": markdown.markdown("Information about the feature collection with id `collectionId`.\n\nThe response contains a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is &#39;feature&#39;).")},
+        404: {"description": markdown.markdown("The requested resource does not exist on the server. For example, a path parameter had an incorrect value.")},
+        500: {"model": Exception, "description": markdown.markdown("A server error occurred.")},
     },
     tags=["Capabilities"],
-    summary="describe the feature collection with id &#x60;collectionId&#x60;",
+    summary="describe the feature collection with id `collectionId`",
     response_model_by_alias=True,
 )
 async def describe_collection(
-    collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")] = Path(..., description="local identifier of a collection"),
+    collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")] = Path(..., description=markdown.markdown("local identifier of a collection")),
 ) -> Collection:
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -62,8 +63,8 @@ async def describe_collection(
 @router.get(
     "/collections",
     responses={
-        200: {"model": Collections, "description": "The feature collections shared by this API.  The dataset is organized as one or more feature collections. This resource provides information about and access to the collections.  The response contains the list of collections. For each collection, a link to the items in the collection (path &#x60;/collections/{collectionId}/items&#x60;, link relation &#x60;items&#x60;) as well as key information about the collection. This information includes:  * A local identifier for the collection that is unique for the dataset; * A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude); * An optional title and description for the collection; * An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data; * An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is &#39;feature&#39;)."},
-        500: {"model": Exception, "description": "A server error occurred."},
+        200: {"model": Collections, "description": markdown.markdown("The feature collections shared by this API.\n\nThe dataset is organized as one or more feature collections. This resource provides information about and access to the collections.\n\nThe response contains the list of collections. For each collection, a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is &#39;feature&#39;).")},
+        500: {"model": Exception, "description": markdown.markdown("A server error occurred.")},
     },
     tags=["Capabilities"],
     summary="the feature collections in the dataset",
@@ -79,8 +80,8 @@ async def get_collections(
 @router.get(
     "/conformance",
     responses={
-        200: {"model": ConfClasses, "description": "The URIs of all conformance classes supported by the server.  To support \&quot;generic\&quot; clients that want to access multiple OGC API Features implementations - and not \&quot;just\&quot; a specific API / server, the server declares the conformance classes it implements and conforms to."},
-        500: {"model": Exception, "description": "A server error occurred."},
+        200: {"model": ConfClasses, "description": markdown.markdown("The URIs of all conformance classes supported by the server.\n\nTo support \&quot;generic\&quot; clients that want to access multiple OGC API Features implementations - and not \&quot;just\&quot; a specific API / server, the server declares the conformance classes it implements and conforms to.")},
+        500: {"model": Exception, "description": markdown.markdown("A server error occurred.")},
     },
     tags=["Capabilities"],
     summary="information about specifications that this API conforms to",
@@ -97,8 +98,8 @@ async def get_conformance_declaration(
 @router.get(
     "/",
     responses={
-        200: {"model": LandingPage, "description": "The landing page provides links to the API definition (link relations &#x60;service-desc&#x60; and &#x60;service-doc&#x60;), the Conformance declaration (path &#x60;/conformance&#x60;, link relation &#x60;conformance&#x60;), and the Feature Collections (path &#x60;/collections&#x60;, link relation &#x60;data&#x60;)."},
-        500: {"model": Exception, "description": "A server error occurred."},
+        200: {"model": LandingPage, "description": markdown.markdown("The landing page provides links to the API definition (link relations `service-desc` and `service-doc`), the Conformance declaration (path `/conformance`, link relation `conformance`), and the Feature Collections (path `/collections`, link relation `data`).")},
+        500: {"model": Exception, "description": markdown.markdown("A server error occurred.")},
     },
     tags=["Capabilities"],
     summary="landing page",
