@@ -3,6 +3,7 @@ import logging.config
 import os
 import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+
 from server.config import *
 from server.web.start import start_web_server
 from server.database.db import Database
@@ -76,8 +77,13 @@ if __name__ == '__main__':
     
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:
-        server = api.start_api_server(arguments.DEBUG_MODE)
-        try:
-            asyncio.run(server.serve())
-        except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
-            logging.getLogger().info("Server stopped")
+        if arguments.DEBUG_MODE:
+            # Start dev fastapi server
+            api.start_dev_api_server()
+        else:
+            # Start prod fastapi server
+            server = api.start_api_server()
+            try:
+                asyncio.run(server.serve())
+            except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
+                logging.getLogger().info("Server stopped")
