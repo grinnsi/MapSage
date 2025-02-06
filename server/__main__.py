@@ -5,7 +5,7 @@ import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 from server.config import *
-from server.web.start import start_web_server
+import server.web.start as web
 from server.database.db import Database
 
 import server.ogc_apis.start as api
@@ -66,15 +66,6 @@ if __name__ == '__main__':
     # Init SQLite3 database
     Database.init_sqlite_db(arguments.DEBUG_MODE, False)
     
-    # Start web (flask) server, if it's not disabled
-    if not arguments.DISABLE_WEB:
-        if arguments.DEBUG_MODE:
-            # Start dev flask server
-            start_web_server()
-        else:
-            # TODO Start production flask server
-            pass
-    
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:
         if arguments.DEBUG_MODE:
@@ -87,3 +78,8 @@ if __name__ == '__main__':
                 asyncio.run(server.serve())
             except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
                 logging.getLogger().info("Server stopped")
+    else:
+        # Start dev web (flask) server, if it's not disabled
+        if not arguments.DISABLE_WEB:
+            # Start dev flask server
+            web.start_dev_web_server()

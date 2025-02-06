@@ -7,7 +7,7 @@ from server.web.settings.routes import create_data_endpoints
 from server.web.config import WebserverConfig
 
 # Init webserver
-def create_app(config: WebserverConfig) -> Flask:     
+def create_app(config: WebserverConfig = None) -> Flask:     
     # Get absolute instance path (data-dir of module)
     instance_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
     
@@ -19,6 +19,9 @@ def create_app(config: WebserverConfig) -> Flask:
     )
 
     # Configure app (https://flask.palletsprojects.com/en/stable/tutorial/factory/)
+    if config is None:
+        config = WebserverConfig()
+    
     app.config.from_object(config)
     
     # Ensure instance/data folder exists
@@ -29,10 +32,10 @@ def create_app(config: WebserverConfig) -> Flask:
         raise
 
     # Catch /dashboard/... requests; Send index.html, and nessecary files
-    @app.route('/dashboard/')
-    @app.route('/dashboard/<path:path>')
+    @app.route('/')
+    @app.route('/<path:path>')
     def get_dashboard(path="index.html"):
-        # If url path is not a file (like options, namesapces) then add index.html to path
+        # If url path is not a file (like options, namespaces) then add index.html to path
         if path.count('.') == 0:
             path += f"/index.html"
 
@@ -42,8 +45,7 @@ def create_app(config: WebserverConfig) -> Flask:
     
     return app
 
-# TODO Dev Server, need different method for production
-def start_web_server() -> None:
-    config = WebserverConfig(True)
+def start_dev_web_server() -> None:
+    config = WebserverConfig()
     app = create_app(config)
     app.run(port=config.PORT, debug=config.DEBUG)

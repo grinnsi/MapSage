@@ -2,7 +2,9 @@ import os
 import secrets
 
 class WebserverConfig(object):
-    def __init__(self, debug_mode: bool) -> None:
+    def __init__(self) -> None:
+        debug_mode = os.getenv("APP_DEBUG_MODE", "False") == "True"
+        
         self.DEBUG = debug_mode           
         self.SECRET_KEY = "debug" if debug_mode else secrets.token_hex()
-        self.PORT = os.getenv("WEBSERVER_PORT", 4000)
+        self.PORT = int(os.getenv("WEBSERVER_PORT", "4000"))
