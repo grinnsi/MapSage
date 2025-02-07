@@ -4,11 +4,11 @@ from flask import Blueprint, request, Response
 from server.web.settings.connections import create_new_connection, get_connections
 
 def create_data_endpoints() -> Blueprint:
-    bp = Blueprint("database_endpoints", __name__, url_prefix="/data")
+    bp = Blueprint("database_endpoints", __name__, url_prefix="/data/")
     
-    @bp.route('/connections', methods=("GET", "POST" ,"DELETE"))
+    @bp.route('/connections', methods=["GET", "POST", "DELETE"])
     def connections() -> Response:
-        request_data = request.get_json()
+        request_data = request.get_json() if request.data else ''
         logger = getLogger()
         logger.debug(msg=f"Received following connections request: {request.method} {request_data}")
 

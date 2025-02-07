@@ -1,8 +1,8 @@
 from flask import Response
 from sqlmodel import select
 
-from ...database.models import Connection
-from ...database.db import Database
+from server.database.models import Connection
+from server.database.db import Database
 
 def get_connections() -> dict:
     """Gets all connections to a (PostgreSQL) database from the internal database and returns a Response with the data and status"""
@@ -15,7 +15,7 @@ def get_connections() -> dict:
         "role": connection.role,
         "database_name":connection.database_name
     } for connection in results]
-    
+
     return json_data
 
 def create_new_connection(form: Connection) -> Response:
