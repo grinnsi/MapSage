@@ -11,6 +11,11 @@ export default defineNuxtConfig({
     },
     baseURL: "/dashboard/",
   },
+  runtimeConfig: {
+    public: {
+      baseURL: '/dashboard/',
+    }
+  },
   modules: [
     ['@nuxt/eslint', { fix: true }],
     '@element-plus/nuxt',

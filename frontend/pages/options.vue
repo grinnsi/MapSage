@@ -54,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import useBaseUrlFetchRaw from '~/composables/useBaseUrlFetchRaw';
 import useEmitter from '~/composables/useEmitter';
 import useServerErrorNotification from '~/composables/useServerErrorNotification';
 import type { Connection } from '~/utils/types';
@@ -68,7 +69,12 @@ definePageMeta({
   name: "Einstellungen"
 });
 
-const { data, refresh } = await useFetch<Connection[]>('../data/connections');
+const { data, refresh } = await useBaseUrlFetch<Connection[]>('/data/connections', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
 function showConfirmationDialog(connection: Connection) {
   Object.assign(selectedConnection, connection);
@@ -79,7 +85,7 @@ async function deleteConnection(uuid: string) {
   confirmationDialogRef.value!.toggleVisibility();
 
   try {
-    const response = await $fetch.raw('../data/connections', {
+    const response = await useBaseUrlFetchRaw('/data/connections', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'text/plain'
