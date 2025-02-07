@@ -6,7 +6,7 @@ from ...database.db import Database
 
 def get_connections() -> dict:
     """Gets all connections to a (PostgreSQL) database from the internal database and returns a Response with the data and status"""
-    results: list[Connection] = Database.get_table_result(select(Connection))
+    results: list[Connection] = Database.select_table(select(Connection))
     json_data = [{
         "uuid": connection.id,
         "name": connection.name,

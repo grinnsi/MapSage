@@ -62,9 +62,7 @@ if __name__ == '__main__':
     logger_config = get_logger_config(arguments.DEBUG_MODE)
     init_logger(logger_config)
     # Set environment variables
-    set_env_variables(arguments)  
-    # Init SQLite3 database
-    Database.init_sqlite_db(arguments.DEBUG_MODE, False)
+    set_env_variables(arguments)
     
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:

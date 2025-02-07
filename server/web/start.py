@@ -3,8 +3,8 @@ from flask import Flask, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from server.web.settings.routes import create_data_endpoints
-
 from server.web.config import WebserverConfig
+from server.database.db import Database
 
 # Init webserver
 def create_app(config: WebserverConfig = None) -> Flask:     
@@ -32,9 +32,9 @@ def create_app(config: WebserverConfig = None) -> Flask:
         raise
 
     # Catch /dashboard/... requests; Send index.html, and nessecary files
-    @app.route('/')
-    @app.route('/<path:path>')
-    def get_dashboard(path="index.html"):
+    @app.route('/' if os.getenv("APP_DISABLE_API", "False") == "False" else '/dashboard/')
+    @app.route('/<path:path>' if os.getenv("APP_DISABLE_API", "False") == "False" else '/dashboard/<path:path>')
+    def get_dashboard(path="index.html"):       
         # If url path is not a file (like options, namespaces) then add index.html to path
         if path.count('.') == 0:
             path += f"/index.html"
@@ -48,4 +48,9 @@ def create_app(config: WebserverConfig = None) -> Flask:
 def start_dev_web_server() -> None:
     config = WebserverConfig()
     app = create_app(config)
+    
+    # Init SQLite database
+    with app.app_context():
+        Database.init_sqlite_db(False)
+        
     app.run(port=config.PORT, debug=config.DEBUG)
