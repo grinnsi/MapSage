@@ -1,15 +1,12 @@
 import logging
-import os
 from flask import Blueprint, request, Response, current_app
 
 from server.web.settings.connections import create_new_connection, get_connections
 
-def create_data_endpoints() -> Blueprint:
-    bp_url_prefix = "/data/"
-    if os.getenv("APP_DISABLE_API", "False") == "True":
-        bp_url_prefix = "/dashboard" + bp_url_prefix
+_LOGGER = logging.getLogger("web.data")
 
-    bp = Blueprint("database_endpoints", __name__, url_prefix=bp_url_prefix)
+def create_data_endpoints() -> Blueprint:
+    bp = Blueprint("database_endpoints", __name__, url_prefix="/data/")
     
     @bp.route('/connections', methods=["GET", "POST", "DELETE"])
     def connections() -> Response:
