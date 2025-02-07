@@ -63,9 +63,12 @@ if __name__ == '__main__':
     init_logger(logger_config)
     # Set environment variables
     set_env_variables(arguments)
+    # Get root logger
+    logger = logging.getLogger()
     
     # Start api (fastapi) server, if it's not disabled
     if not arguments.DISABLE_API:
+        logger.info("Starting FastAPI Server")
         if arguments.DEBUG_MODE:
             # Start dev fastapi server
             api.start_dev_api_server()
@@ -75,9 +78,11 @@ if __name__ == '__main__':
             try:
                 asyncio.run(server.serve())
             except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
-                logging.getLogger().info("Server stopped")
+                logger.info("FastAPI Server stopped")
     else:
         # Start dev web (flask) server, if it's not disabled
+        logger.info("FastAPI Server disabled")
         if not arguments.DISABLE_WEB:
             # Start dev flask server
+            logger.info("Starting Flask Web Server")
             web.start_dev_web_server()

@@ -16,11 +16,16 @@ def get_logger_config(debug_mode: bool) -> dict:
         'formatters': {
             'default': {
                 '()': 'coloredlogs.ColoredFormatter',
-                'format': '[%(asctime)s] %(levelname)-8s in %(module)-20s %(message)s',
+                'format': '[%(asctime)s] %(levelname)-8s %(name)-30s in %(module)-20s %(message)s',
                 'datefmt': '%H:%M:%S, %d-%m-%Y'
             }
         },
         'handlers': {
+            'default': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'default',
+                'stream': 'ext://sys.stdout',  
+            },
             'wsgi': {
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://flask.logging.wsgi_errors_stream',
@@ -37,9 +42,14 @@ def get_logger_config(debug_mode: bool) -> dict:
             },
         },
         "loggers": {
-            '': {
+            'root': {
                 'level': 'DEBUG' if debug_mode else "WARNING",
-                'handlers': ['wsgi']
+                'handlers': ['default'],
+                'propagate': False
+            },
+            'server.api': {
+                'level': 'DEBUG' if debug_mode else "WARNING",
+                'handlers': ['default'],
             },
             "sqlalchemy.engine.Engine": {
                 'level': "DEBUG" if debug_mode else "WARNING",
@@ -51,6 +61,21 @@ def get_logger_config(debug_mode: bool) -> dict:
                 'handlers': ['asgi'],
                 'propagate': False
             },
+            "uvicorn.error": {
+                'level': "DEBUG" if debug_mode else "WARNING",
+                'handlers': ['asgi'],
+                'propagate': False
+            },
+            "uvicorn.access": {
+                'level': "DEBUG" if debug_mode else "WARNING",
+                'handlers': ['asgi'],
+                'propagate': False
+            },
+            "uvicorn.asgi": {
+                'level': "DEBUG" if debug_mode else "WARNING",
+                'handlers': ['asgi'],
+                'propagate': False
+            }
         }
     }
 

@@ -14,7 +14,7 @@
 
 
 from contextlib import asynccontextmanager
-import os
+import os, logging
 import markdown
 from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -23,12 +23,16 @@ from server.ogc_apis.features.apis.capabilities_api import router as Capabilitie
 from server.ogc_apis.features.apis.data_api import router as DataApiRouter
 from server.database.db import Database
 
+_LOGGER = logging.getLogger("server.api")
+
 def init_api_server() -> FastAPI:
     # Initialize SQLite database after startup of FastAPI server
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        _LOGGER.info("Starting FastAPI server")
         Database.init_sqlite_db(False)
         yield
+        _LOGGER.info("Stopping FastAPI server")
     
     app = FastAPI(
         title="Building Blocks specified in the OGC API - Features - Part 1 and Part 2: Core and CRS standard",
@@ -43,6 +47,7 @@ def init_api_server() -> FastAPI:
     # Mount webserver, if it's not disabled
     if os.getenv("APP_DISABLE_WEB", "False") == "False":
         import server.web.start as webserver
+        _LOGGER.info("Mounting webserver")
         app.mount("/dashboard", WSGIMiddleware(webserver.create_app()))
 
     return app

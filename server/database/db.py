@@ -7,7 +7,7 @@ from sqlmodel import SQLModel, Session, create_engine, delete, select
 from server.database.models import Connection, Namespace
 
 # local logger
-_LOGGER = logging.getLogger()
+_LOGGER = logging.getLogger("database")
 
 # Initialize SQLite database engine gets called twice when starting
 def init_sqlite_engine(sqlite_file_name: str, debug_mode: bool) -> Engine:
@@ -39,18 +39,24 @@ class Database():
     sqlite_engine: Engine = init_sqlite_engine(sqlite_file_name, debug_mode)
 
     @classmethod
-    def init_sqlite_db(cls, reset_db: bool) -> None:  
+    def init_sqlite_db(cls, reset_db: bool) -> None:
         # Fallback if database engine not found (init_sqlite_engine called before setting APP_DATABASE_DIR)
         if cls.sqlite_engine is None:
             return
-             
-        if reset_db:
+
+        _LOGGER.info(msg="Initializing SQLite database")
+            
+        # FIXME: Replace with cli option
+        if reset_db:            
+            _LOGGER.info(msg="Resetting database")
             with Session(cls.sqlite_engine) as session:
                 stmt = delete(Connection)
                 session.exec(stmt)
                 stmt = delete(Namespace)
                 session.exec(stmt)
                 session.commit()
+                
+        _LOGGER.info(msg="Creating database tables")
 
         SQLModel.metadata.create_all(cls.sqlite_engine)
 
