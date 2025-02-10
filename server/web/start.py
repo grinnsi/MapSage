@@ -27,9 +27,9 @@ def create_app(config: WebserverConfig = None) -> Flask:
     
     # Ensure instance/data folder exists
     try:
-        os.makedirs(os.path.join(instance_path, "data"), exist_ok=True)
+        os.makedirs(os.path.join(instance_path, "instance"), exist_ok=True)
     except OSError:
-        app.logger.critical("Error while creating Data-Directory", exc_info=OSError)
+        app.logger.critical("Error while creating Instance-Directory", exc_info=OSError)
         raise
 
     # Catch /dashboard/... requests; Send index.html, and necessary files
