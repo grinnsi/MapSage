@@ -1,8 +1,10 @@
 import os
 import logging
+from typing import Union
+from uuid import UUID
 
-from sqlalchemy import Engine, text
-from sqlmodel import SQLModel, Session, create_engine, delete, select 
+from sqlalchemy import Engine, text, exc
+from sqlmodel import SQLModel, Session, create_engine, delete, select
 
 from server.database.models import Connection, Namespace
 
@@ -38,6 +40,9 @@ class Database():
     sqlite_file_name = "data.db"
     sqlite_engine: Engine = init_sqlite_engine(sqlite_file_name, debug_mode)
 
+    def __init__(self):
+        raise RuntimeError("Database class cannot be instantiated")
+
     @classmethod
     def init_sqlite_db(cls, reset_db: bool) -> None:
         # Fallback if database engine not found (init_sqlite_engine called before setting APP_DATABASE_DIR)
@@ -59,30 +64,92 @@ class Database():
         _LOGGER.info(msg="Creating database tables")
 
         SQLModel.metadata.create_all(cls.sqlite_engine)
+        
+    @classmethod
+    def get_postgresql_connection_string(cls, data: dict) -> str:
+        return f"postgresql+psycopg://{data['role']}:{data['password']}@{data['host']}:{data['port']}/{data['database_name']}"
 
     # Input connection parameters and returns if connection is successful
     @classmethod
     def test_pg_connection(cls, data: dict) -> bool:
         """Test the connection to a PostgreSQL database, using the connection parameters"""
-        pg_url = f"postgresql+psycopg://{data["role"]}:{data["password"]}@{data["host"]}:{data["port"]}/{data["database_name"]}"
+        pg_url = cls.get_postgresql_connection_string(data)
         pg_engine = create_engine(pg_url, echo=cls.debug_mode)
         
+        connection_successful = False
         with Session(pg_engine) as session:
-            stmt = select(text(" * FROM information_schema.tables"))
-            result = session.exec(stmt)
-            _LOGGER.debug(msg=f"Result of PostgreSQL connection test: {result}")
+            try:
+                stmt = select(text(" * FROM information_schema.tables"))
+                result = session.exec(stmt)
+                connection_successful = len(result.all()) > 0
+            except exc.OperationalError as e:
+                _LOGGER.debug(msg=f"Error while testing PostgreSQL connection: {e}")
+                connection_successful = False
             
-    @classmethod
-    def select_table(cls, statement) -> list:
-        if cls.sqlite_engine is None:
-            _LOGGER.error(msg=f"Error while selecting table, database engine not found; Value: {cls.sqlite_engine}", exc_info=cls.debug_mode)
-            return []
-        with Session(cls.sqlite_engine) as session:
-            results = session.exec(statement)
-            return results.all()
+        _LOGGER.debug(msg=f"Result of PostgreSQL connection test: {connection_successful}")
+        return connection_successful
 
-    # @classmethod
-    # def get_db(cls):
-    #     if cls.sqlite_engine is None:
-    #         _LOGGER.error(msg="Error while getting database, database engine not found", exc_info=cls.debug_mode)
-    #         return None
+    @classmethod
+    def select_sqlite_db(cls, table_model: SQLModel = None, uuid: str = None, select_all: bool = True, statement = None) -> Union[SQLModel, list[SQLModel]]:
+        if cls.sqlite_engine is None:
+            _LOGGER.error(msg=f"Error while selecting from SQLite database, database engine not found", exc_info=cls.debug_mode)
+            raise RuntimeError("Database engine not found")
+
+        with Session(cls.sqlite_engine) as session:
+            result = None
+            
+            if table_model is not None and uuid is not None:
+                uuid = UUID(uuid)
+                result = session.get(table_model, uuid)
+            elif table_model is not None and select_all:
+                result = session.exec(select(table_model)).all()
+            elif statement is not None:
+                result = session.exec(statement).all()
+            else:
+                raise AttributeError("SQL-Select: Wrong combination of parameters")
+            
+            _LOGGER.debug(msg=f"Result of select query: {result}")
+            
+            if not result:
+                raise ValueError("SQL-Select: No results found")
+            
+            return result
+        
+    @classmethod
+    def insert_sqlite_db(cls, data_object: SQLModel = None) -> Union[SQLModel, list[SQLModel]]:
+        if cls.sqlite_engine is None:
+            _LOGGER.error(msg=f"Error while inserting into SQLite database, database engine not found", exc_info=cls.debug_mode)
+            raise RuntimeError("Database engine not found")
+
+        with Session(cls.sqlite_engine) as session:
+            if data_object is not None:
+                session.add(data_object)
+                session.commit()
+                session.refresh(data_object)
+            
+                _LOGGER.debug(msg=f"Successfully inserted [{data_object.__class__.__name__}]: {data_object}")
+
+                return data_object
+            
+            raise AttributeError("SQL-Insert: No data object provided")
+        
+    @classmethod
+    def delete_sqlite_db(cls, table_model: SQLModel, uuid: str) -> Union[None, SQLModel]:
+        if cls.sqlite_engine is None:
+            _LOGGER.error(msg=f"Error while deleting from SQLite database, database engine not found", exc_info=cls.debug_mode)
+            raise RuntimeError("Database engine not found")
+
+        uuid = UUID(uuid)
+
+        with Session(cls.sqlite_engine) as session:
+            object_to_delete = session.get(table_model, uuid)
+            if not object_to_delete:
+                _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with uuid: {uuid}")
+                return None
+            
+            session.delete(object_to_delete)
+            session.commit()
+            
+            _LOGGER.debug(msg=f"Successfully deleted [{table_model.__class__.__name__}]: {object_to_delete}")
+            
+            return object_to_delete
