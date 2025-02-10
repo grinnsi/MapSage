@@ -88,9 +88,9 @@ async function deleteConnection(uuid: string) {
     const response = await useBaseUrlFetchRaw('/data/connections', {
       method: 'DELETE',
       headers: {
-        'Content-Type': 'text/plain'
+        'Content-Type': 'application/json'
       },
-      body: uuid,
+      body: JSON.stringify({ uuid }),
     });
     if (!response.ok) throw new Error('Antwort des Löschens nicht verständlich');
     ElMessage({
@@ -98,7 +98,7 @@ async function deleteConnection(uuid: string) {
       message: 'Verbindung erfolgreich gelöscht'
     });
   } catch (error) {
-    console.error(error)
+    console.error(error);
     useServerErrorNotification();
   } finally {
     refresh();
