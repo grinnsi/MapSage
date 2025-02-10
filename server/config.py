@@ -42,14 +42,10 @@ def get_logger_config(debug_mode: bool) -> dict:
             },
         },
         "loggers": {
-            'root': {
+            '': {
                 'level': 'DEBUG' if debug_mode else "WARNING",
                 'handlers': ['default'],
                 'propagate': False
-            },
-            'server.api': {
-                'level': 'DEBUG' if debug_mode else "WARNING",
-                'handlers': ['default'],
             },
             "sqlalchemy.engine.Engine": {
                 'level': "DEBUG" if debug_mode else "WARNING",

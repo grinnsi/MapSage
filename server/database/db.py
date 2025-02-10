@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 import logging
 from typing import Union
@@ -64,7 +65,17 @@ class Database():
         _LOGGER.info(msg="Creating database tables")
 
         SQLModel.metadata.create_all(cls.sqlite_engine)
+
+    @classmethod
+    @contextmanager
+    def get_sqlite_session(cls):
+        if cls.sqlite_engine is None:
+            _LOGGER.error(msg=f"Error while getting session, database engine not found", exc_info=cls.debug_mode)
+            raise RuntimeError("Database engine not found")
         
+        with Session(cls.sqlite_engine) as session:
+            yield session
+    
     @classmethod
     def get_postgresql_connection_string(cls, data: dict) -> str:
         return f"postgresql+psycopg://{data['role']}:{data['password']}@{data['host']}:{data['port']}/{data['database_name']}"
@@ -91,11 +102,7 @@ class Database():
 
     @classmethod
     def select_sqlite_db(cls, table_model: SQLModel = None, uuid: str = None, select_all: bool = True, statement = None) -> Union[SQLModel, list[SQLModel]]:
-        if cls.sqlite_engine is None:
-            _LOGGER.error(msg=f"Error while selecting from SQLite database, database engine not found", exc_info=cls.debug_mode)
-            raise RuntimeError("Database engine not found")
-
-        with Session(cls.sqlite_engine) as session:
+        with cls.get_sqlite_session() as session:
             result = None
             
             if table_model is not None and uuid is not None:
@@ -117,11 +124,7 @@ class Database():
         
     @classmethod
     def insert_sqlite_db(cls, data_object: SQLModel = None) -> Union[SQLModel, list[SQLModel]]:
-        if cls.sqlite_engine is None:
-            _LOGGER.error(msg=f"Error while inserting into SQLite database, database engine not found", exc_info=cls.debug_mode)
-            raise RuntimeError("Database engine not found")
-
-        with Session(cls.sqlite_engine) as session:
+        with cls.get_sqlite_session() as session:
             if data_object is not None:
                 session.add(data_object)
                 session.commit()
@@ -135,13 +138,9 @@ class Database():
         
     @classmethod
     def delete_sqlite_db(cls, table_model: SQLModel, uuid: str) -> Union[None, SQLModel]:
-        if cls.sqlite_engine is None:
-            _LOGGER.error(msg=f"Error while deleting from SQLite database, database engine not found", exc_info=cls.debug_mode)
-            raise RuntimeError("Database engine not found")
-
         uuid = UUID(uuid)
 
-        with Session(cls.sqlite_engine) as session:
+        with cls.get_sqlite_session() as session:
             object_to_delete = session.get(table_model, uuid)
             if not object_to_delete:
                 _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with uuid: {uuid}")
