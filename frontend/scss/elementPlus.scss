@@ -20,3 +20,7 @@
 .el-table th.column-header {
   color: var(--el-color-primary);
 }
+
+.el-scrollbar .is-horizontal {
+  visibility: hidden;
+}
