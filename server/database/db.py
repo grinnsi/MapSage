@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import Engine, text, exc
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
+from server.database.models import GeneralOption
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -59,6 +60,42 @@ class SetupSqliteDatabase():
         _LOGGER.info(msg="Creating database tables")
 
         SQLModel.metadata.create_all(sqlite_engine)
+        
+        # Retrieve the default options from the General class
+        default_options = GeneralOption.get_default_options()
+
+        # Initialize an empty list to store existing options
+        existing_options = []
+
+        # Fetch all saved options from the database
+        saved_options: list[SQLModel] = Database.select_sqlite_db(table_model=GeneralOption, select_all=True)
+
+        # Iterate over each saved option
+        for option in saved_options:
+            # Check if the option key is in the default options
+            if option.key in default_options:
+                # If it is, add the option key to the existing options list
+                existing_options.append(option.key)
+
+        # Initialize an empty list to store options that need to be set
+        options_to_set = []
+
+        # Iterate over each key-value pair in the default options
+        for k, v in default_options.items():
+            # Check if the key is not in the existing options
+            if k not in existing_options:
+                # If it is not, create a new GeneralOption object and add it to the options_to_set list
+                options_to_set.append(GeneralOption(key=k, value=v))
+
+        # Insert the new options into the database
+        Database.insert_sqlite_db(options_to_set)
+        
+        pre_render_landing_page_triggers = cls._get_prerender_trigger()
+        with Session(sqlite_engine) as session:
+            session.begin()
+            for trigger in pre_render_landing_page_triggers:
+                session.exec(text(trigger))
+            session.commit()
 
 # TODO How to include second db ?
 class Database():
