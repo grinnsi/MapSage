@@ -123,14 +123,23 @@ class Database():
             return result
         
     @classmethod
-    def insert_sqlite_db(cls, data_object: SQLModel = None) -> Union[SQLModel, list[SQLModel]]:
+    def insert_sqlite_db(cls, data_object: Union[SQLModel, list[SQLModel]] = None) -> Union[SQLModel, list[SQLModel]]:
         with cls.get_sqlite_session() as session:
             if data_object is not None:
-                session.add(data_object)
-                session.commit()
-                session.refresh(data_object)
+                if type(data_object) is list:
+                    session.add_all(data_object)
+                    session.commit()
+                    
+                    for obj in data_object:
+                        session.refresh(obj)
+                        
+                        _LOGGER.debug(msg=f"Successfully inserted [{obj.__class__.__name__}]: {obj}")
+                else:
+                    session.add(data_object)
+                    session.commit()
+                    session.refresh(data_object)
             
-                _LOGGER.debug(msg=f"Successfully inserted [{data_object.__class__.__name__}]: {data_object}")
+                    _LOGGER.debug(msg=f"Successfully inserted [{data_object.__class__.__name__}]: {data_object}")
 
                 return data_object
             
