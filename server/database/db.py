@@ -7,7 +7,6 @@ from uuid import UUID
 from sqlalchemy import Engine, text, exc
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
-from server.database.models import Connection, Namespace
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -48,14 +47,14 @@ class SetupSqliteDatabase():
         _LOGGER.info(msg="Initializing SQLite database")
             
         # FIXME: Replace with cli option
-        if reset_db:            
-            _LOGGER.info(msg="Resetting database")
-            with Session(sqlite_engine) as session:
-                stmt = delete(Connection)
-                session.exec(stmt)
-                stmt = delete(Namespace)
-                session.exec(stmt)
-                session.commit()
+        # if reset_db:            
+        #     _LOGGER.info(msg="Resetting database")
+        #     with Session(sqlite_engine) as session:
+        #         stmt = delete(Connection)
+        #         session.exec(stmt)
+        #         stmt = delete(Namespace)
+        #         session.exec(stmt)
+        #         session.commit()
                 
         _LOGGER.info(msg="Creating database tables")
 
