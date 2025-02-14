@@ -158,6 +158,6 @@ class Database():
             session.delete(object_to_delete)
             session.commit()
             
-            _LOGGER.debug(msg=f"Successfully deleted [{table_model.__class__.__name__}]: {object_to_delete}")
+            _LOGGER.debug(msg=f"Successfully deleted [{table_model.__class__.__name__}] with uuid [{uuid}]: {object_to_delete}")
             
             return object_to_delete
