@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import Engine, text, exc
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
-from server.database.models import GeneralOption
+from server.database.models import GeneralOption, KeyValueBase
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -205,3 +205,57 @@ class Database():
             _LOGGER.debug(msg=f"Successfully deleted [{table_model.__class__.__name__}] with uuid [{uuid}]: {object_to_delete}")
             
             return object_to_delete
+    
+    @classmethod
+    def update_sqlite_db(cls, update: Union[SQLModel, list[SQLModel]], primary_key_value: str = None, primary_key_name = "uuid") -> Union[None, SQLModel, list[SQLModel]]:                
+        with cls.get_sqlite_session() as session:
+            if type(update) is list:
+                table_model = update[0].__class__
+                if issubclass(table_model, KeyValueBase):
+                    primary_key_name = "key"
+                
+                db_models = [session.get(table_model, getattr(model, primary_key_name)) for model in update]
+                if len(db_models) == 0:
+                    _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}'s] found with uuids: {[getattr(model, primary_key_name) for model in update]}")
+                    return None
+                
+                for db_model in db_models:
+                    for update_model in update:
+                        if getattr(update_model, primary_key_name) == getattr(db_model, primary_key_name):
+                            new_data = update_model.model_dump(exclude_unset=True)
+                            db_model.sqlmodel_update(new_data)
+                            session.add(db_model)
+
+                session.commit()
+                for db_model in db_models:
+                    session.refresh(db_model)
+                
+                _LOGGER.debug(msg=f"Successfully updated [{table_model.__class__.__name__}]: {update}")
+                
+                return db_models
+      
+            else:
+                if not primary_key_value:
+                    raise AttributeError("SQL-Update: No primary key value provided")
+                
+                table_model = update.__class__
+                if issubclass(table_model, KeyValueBase):
+                    primary_key_name = "key"
+                    
+                if primary_key_name == "uuid":
+                    primary_key_value = UUID(primary_key_value)
+                
+                db_model: SQLModel = session.get(table_model, primary_key_value)
+                if not db_model:
+                    _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with {primary_key_name}: {primary_key_value}")
+                    return None
+                
+                new_data = update.model_dump(exclude_unset=True)
+                db_model.sqlmodel_update(new_data)
+                session.add(db_model)
+                session.commit()
+                session.refresh(db_model)
+                
+                _LOGGER.debug(msg=f"Successfully updated [{table_model.__class__.__name__}] with {primary_key_name} [{primary_key_value}]: {db_model}")
+                
+                return db_model
