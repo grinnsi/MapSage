@@ -24,3 +24,7 @@ class Namespace(CoreModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, unique=True)
     name: str
     url: str
+
+class KeyValueBase(CoreModel):
+    key: str = Field(primary_key=True, unique=True)
+    value: str
