@@ -35,6 +35,32 @@ def init_sqlite_engine(sqlite_file_name: str, debug_mode: bool) -> Engine:
     connection_args = {"check_same_thread": False}
     return create_engine(sqlite_url, echo=debug_mode, connect_args=connection_args)
 
+class SetupSqliteDatabase():
+    def __init__(self):
+        raise RuntimeError("SetupSqliteDatabase class cannot be instantiated")
+
+    @classmethod
+    def setup(cls, sqlite_engine: Engine, reset_db: bool) -> None:
+        # Fallback if database engine not found (init_sqlite_engine called before setting APP_DATABASE_DIR)
+        if sqlite_engine is None:
+            return
+
+        _LOGGER.info(msg="Initializing SQLite database")
+            
+        # FIXME: Replace with cli option
+        if reset_db:            
+            _LOGGER.info(msg="Resetting database")
+            with Session(sqlite_engine) as session:
+                stmt = delete(Connection)
+                session.exec(stmt)
+                stmt = delete(Namespace)
+                session.exec(stmt)
+                session.commit()
+                
+        _LOGGER.info(msg="Creating database tables")
+
+        SQLModel.metadata.create_all(sqlite_engine)
+
 # TODO How to include second db ?
 class Database():
     debug_mode = os.getenv("APP_DEBUG_MODE", "False") == "True"
@@ -46,25 +72,7 @@ class Database():
 
     @classmethod
     def init_sqlite_db(cls, reset_db: bool) -> None:
-        # Fallback if database engine not found (init_sqlite_engine called before setting APP_DATABASE_DIR)
-        if cls.sqlite_engine is None:
-            return
-
-        _LOGGER.info(msg="Initializing SQLite database")
-            
-        # FIXME: Replace with cli option
-        if reset_db:            
-            _LOGGER.info(msg="Resetting database")
-            with Session(cls.sqlite_engine) as session:
-                stmt = delete(Connection)
-                session.exec(stmt)
-                stmt = delete(Namespace)
-                session.exec(stmt)
-                session.commit()
-                
-        _LOGGER.info(msg="Creating database tables")
-
-        SQLModel.metadata.create_all(cls.sqlite_engine)
+        SetupSqliteDatabase.setup(cls.sqlite_engine, reset_db)
 
     @classmethod
     @contextmanager
