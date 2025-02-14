@@ -48,6 +48,8 @@ def init_api_server() -> FastAPI:
     if os.getenv("APP_DISABLE_WEB", "False") == "False":
         import server.web.start as webserver
         _LOGGER.info("Mounting webserver")
-        app.mount("/dashboard", WSGIMiddleware(webserver.create_app()))
+        
+        flask_url = "/" + os.getenv("DASHBOARD_URL", "dashboard")
+        app.mount(flask_url, WSGIMiddleware(webserver.create_app()))
 
     return app
