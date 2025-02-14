@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import Engine, text, exc
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
+from server.database.models import GeneralOption, KeyValueBase
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -59,6 +60,42 @@ class SetupSqliteDatabase():
         _LOGGER.info(msg="Creating database tables")
 
         SQLModel.metadata.create_all(sqlite_engine)
+        
+        # Retrieve the default options from the General class
+        default_options = GeneralOption.get_default_options()
+
+        # Initialize an empty list to store existing options
+        existing_options = []
+
+        # Fetch all saved options from the database
+        saved_options: list[SQLModel] = Database.select_sqlite_db(table_model=GeneralOption, select_all=True)
+
+        # Iterate over each saved option
+        for option in saved_options:
+            # Check if the option key is in the default options
+            if option.key in default_options:
+                # If it is, add the option key to the existing options list
+                existing_options.append(option.key)
+
+        # Initialize an empty list to store options that need to be set
+        options_to_set = []
+
+        # Iterate over each key-value pair in the default options
+        for k, v in default_options.items():
+            # Check if the key is not in the existing options
+            if k not in existing_options:
+                # If it is not, create a new GeneralOption object and add it to the options_to_set list
+                options_to_set.append(GeneralOption(key=k, value=v))
+
+        # Insert the new options into the database
+        Database.insert_sqlite_db(options_to_set)
+        
+        pre_render_landing_page_triggers = cls._get_prerender_trigger()
+        with Session(sqlite_engine) as session:
+            session.begin()
+            for trigger in pre_render_landing_page_triggers:
+                session.exec(text(trigger))
+            session.commit()
 
 # TODO How to include second db ?
 class Database():
@@ -168,3 +205,57 @@ class Database():
             _LOGGER.debug(msg=f"Successfully deleted [{table_model.__class__.__name__}] with uuid [{uuid}]: {object_to_delete}")
             
             return object_to_delete
+    
+    @classmethod
+    def update_sqlite_db(cls, update: Union[SQLModel, list[SQLModel]], primary_key_value: str = None, primary_key_name = "uuid") -> Union[None, SQLModel, list[SQLModel]]:                
+        with cls.get_sqlite_session() as session:
+            if type(update) is list:
+                table_model = update[0].__class__
+                if issubclass(table_model, KeyValueBase):
+                    primary_key_name = "key"
+                
+                db_models = [session.get(table_model, getattr(model, primary_key_name)) for model in update]
+                if len(db_models) == 0:
+                    _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}'s] found with uuids: {[getattr(model, primary_key_name) for model in update]}")
+                    return None
+                
+                for db_model in db_models:
+                    for update_model in update:
+                        if getattr(update_model, primary_key_name) == getattr(db_model, primary_key_name):
+                            new_data = update_model.model_dump(exclude_unset=True)
+                            db_model.sqlmodel_update(new_data)
+                            session.add(db_model)
+
+                session.commit()
+                for db_model in db_models:
+                    session.refresh(db_model)
+                
+                _LOGGER.debug(msg=f"Successfully updated [{table_model.__class__.__name__}]: {update}")
+                
+                return db_models
+      
+            else:
+                if not primary_key_value:
+                    raise AttributeError("SQL-Update: No primary key value provided")
+                
+                table_model = update.__class__
+                if issubclass(table_model, KeyValueBase):
+                    primary_key_name = "key"
+                    
+                if primary_key_name == "uuid":
+                    primary_key_value = UUID(primary_key_value)
+                
+                db_model: SQLModel = session.get(table_model, primary_key_value)
+                if not db_model:
+                    _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with {primary_key_name}: {primary_key_value}")
+                    return None
+                
+                new_data = update.model_dump(exclude_unset=True)
+                db_model.sqlmodel_update(new_data)
+                session.add(db_model)
+                session.commit()
+                session.refresh(db_model)
+                
+                _LOGGER.debug(msg=f"Successfully updated [{table_model.__class__.__name__}] with {primary_key_name} [{primary_key_value}]: {db_model}")
+                
+                return db_model

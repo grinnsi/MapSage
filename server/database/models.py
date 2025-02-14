@@ -24,3 +24,17 @@ class Namespace(CoreModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, unique=True)
     name: str
     url: str
+
+class KeyValueBase(CoreModel):
+    key: str = Field(primary_key=True, unique=True)
+    value: str
+
+class GeneralOption(KeyValueBase, table=True):
+    
+    @classmethod
+    def get_default_options(cls) -> dict:
+        default_options = {
+            "service_title": "OGC Features API",
+            "service_description": "A OGC compliant Features API"
+        }
+        return default_options
