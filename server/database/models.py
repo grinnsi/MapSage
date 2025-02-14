@@ -28,3 +28,13 @@ class Namespace(CoreModel, table=True):
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)
     value: str
+
+class GeneralOption(KeyValueBase, table=True):
+    
+    @classmethod
+    def get_default_options(cls) -> dict:
+        default_options = {
+            "service_title": "OGC Features API",
+            "service_description": "A OGC compliant Features API"
+        }
+        return default_options
