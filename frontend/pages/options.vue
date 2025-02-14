@@ -21,14 +21,14 @@
               />
             </div>
           </template>
-          <div class="card-content">
-            <div class="connection-column">
+            <div class="base-column-container">
+              <div class="base-column">
               <span>Host:</span>
               <span>Port:</span>
               <span>Rolle:</span>
               <span>Datenbank:</span>
             </div>
-            <div class="connection-column">
+              <div class="base-column">
               <span>{{ connection.host }}</span>
               <span>{{ connection.port }}</span>
               <span>{{ connection.role }}</span>
