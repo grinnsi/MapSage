@@ -118,7 +118,7 @@ class Database():
             _LOGGER.debug(msg=f"Result of select query: {result}")
             
             if not result:
-                raise ValueError("SQL-Select: No results found")
+                return []
             
             return result
         
