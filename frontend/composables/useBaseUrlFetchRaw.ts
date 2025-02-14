@@ -1,7 +1,11 @@
 export const useBaseUrlFetchRaw: typeof $fetch.raw = (request, opts?) => {
   const config = useRuntimeConfig()
   
-  return $fetch.raw(request, { baseURL: config.public.baseURL, ...opts })
+  return $fetch.raw(request, { 
+    baseURL: config.public.serverBaseURL, 
+    lazy: true,
+    ...opts 
+  })
 }
 
 export default useBaseUrlFetchRaw

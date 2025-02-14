@@ -3,6 +3,10 @@
     <template #header-right>
       <TemplateButton tooltip="Neue Datenbankverbindung" iconName="flowbite:plus-outline" @click="useEmitter().value.emit('show-new-connection-dialog')"/>
     </template>
+    <TemplateFetchStatus 
+      :status="status"
+      errorTitle="Fehler beim Laden der gespeicherten Datenbankverbindungen"
+    >
     <div class="saved-db-connections">
       <template v-for="connection in data" :key="connection.uuid">
         <ElCard shadow="hover" style="width: 300px;">
@@ -17,14 +21,14 @@
               />
             </div>
           </template>
-          <div class="card-content">
-            <div class="connection-column">
+            <div class="base-column-container">
+              <div class="base-column">
               <span>Host:</span>
               <span>Port:</span>
               <span>Rolle:</span>
               <span>Datenbank:</span>
             </div>
-            <div class="connection-column">
+              <div class="base-column">
               <span>{{ connection.host }}</span>
               <span>{{ connection.port }}</span>
               <span>{{ connection.role }}</span>
@@ -34,6 +38,7 @@
         </ElCard>
       </template>
     </div>
+    </TemplateFetchStatus>
     <ClientOnly>
       <DialogsNewDBConn />
       <TemplateDialog
@@ -69,7 +74,7 @@ definePageMeta({
   name: "Einstellungen"
 });
 
-const { data, refresh } = await useBaseUrlFetch<Connection[]>('/data/connections', {
+const { status, data, refresh } = await useBaseUrlFetch<Connection[]>('/data/connections', {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json'

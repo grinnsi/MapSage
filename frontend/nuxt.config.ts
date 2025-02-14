@@ -9,11 +9,27 @@ export default defineNuxtConfig({
       // TODO Set name of application everywhere (here, in other pages, in nginx, ...; noted as [name])
       title: '[name] Dashboard',
     },
-    baseURL: "/dashboard/",
+    // If env-variable DASHBOARD_URL is set, the dashboard will be available under /DASHBOARD_URL/ else under /dashboard/
+    baseURL: (process.env.DASHBOARD_URL ? "/" + process.env.DASHBOARD_URL + "/" : "/dashboard/"),
   },
-  runtimeConfig: {
-    public: {
-      baseURL: '/dashboard/',
+  // Development and production configuration
+  // Both set the serverBaseURL to the correct value
+  $development: {
+    runtimeConfig: {
+      public: {
+        // Set serverBaseURL to: Base URL of Flask server + Port of FastAPI server + baseURL of Nuxt app (dashboard url)
+        // Needed for correct API requests (otherwise it will just send requests to the Nuxt server, which doesn't exist))
+        serverBaseURL: process.env.SERVER_BASE_URL + ":" + process.env.APISERVER_PORT + "/" + (process.env.DASHBOARD_URL ? process.env.DASHBOARD_URL + "/" : "dashboard/"),
+      }
+    }
+  },
+  $production: {
+    runtimeConfig: {
+      public: {
+        // Set serverBaseURL to: URL of current hosting server + baseURL of Nuxt app (dashboard url)
+        // For example if FastAPI server is hosted on https://localhost:8000 and the Flask portion serves this Nuxt app, the serverBaseURL will be https://localhost:8000/dashboard/
+        serverBaseURL: "/" + (process.env.DASHBOARD_URL ? process.env.DASHBOARD_URL + "/" : "dashboard/"),
+      }
     }
   },
   modules: [

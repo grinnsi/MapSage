@@ -18,6 +18,7 @@ import os, logging
 import markdown
 from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 from server.ogc_apis.features.apis.capabilities_api import router as CapabilitiesApiRouter
 from server.ogc_apis.features.apis.data_api import router as DataApiRouter
@@ -44,10 +45,22 @@ def init_api_server() -> FastAPI:
     app.include_router(CapabilitiesApiRouter)
     app.include_router(DataApiRouter)
     
+    if os.getenv("APP_DEBUG_MODE", "False") == "True":
+        _LOGGER.warning("Disabling CORS")
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+    
     # Mount webserver, if it's not disabled
     if os.getenv("APP_DISABLE_WEB", "False") == "False":
         import server.web.start as webserver
         _LOGGER.info("Mounting webserver")
-        app.mount("/dashboard", WSGIMiddleware(webserver.create_app()))
+        
+        flask_url = "/" + os.getenv("DASHBOARD_URL", "dashboard")
+        app.mount(flask_url, WSGIMiddleware(webserver.create_app()))
 
     return app

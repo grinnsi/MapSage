@@ -36,3 +36,16 @@
     }
   }
 }
+
+.base-column-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap; 
+  column-gap: $column-gap-size;
+
+  > .base-column {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+  }
+}
