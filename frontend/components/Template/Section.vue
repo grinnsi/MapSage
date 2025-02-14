@@ -9,6 +9,9 @@
     <div class="section-content">
       <slot>ABSCHNITTINHALT</slot>
     </div>
+    <div class="section-footer">
+      <slot name="footer"></slot>
+    </div>
   </section>
 </template>
 
@@ -19,7 +22,6 @@ defineProps({
     required: true,
     default: "Titel"
   },
-
 })
 </script>
 
@@ -32,7 +34,12 @@ defineProps({
 }
 
 .section-content {
-  display: flex;
+  display: block;
+  align-items: center;
+}
+
+.section-footer {
+  display: block;
   align-items: center;
 }
 </style>
