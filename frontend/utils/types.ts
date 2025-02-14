@@ -27,3 +27,8 @@ export interface Namespace {
   name: string,
   url: string
 }
+
+export interface GeneralOption {
+  key: string,
+  value: string
+}
