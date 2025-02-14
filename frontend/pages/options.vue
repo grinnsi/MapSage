@@ -1,4 +1,7 @@
 <template>
+  <TemplateSection section-title="Allgemeine Einstellungen:">
+    <FormsGeneralOptions />
+  </TemplateSection>
   <TemplateSection section-title="Gespeicherte Verbindungen:">
     <template #header-right>
       <TemplateButton tooltip="Neue Datenbankverbindung" iconName="flowbite:plus-outline" @click="useEmitter().value.emit('show-new-connection-dialog')"/>
@@ -7,37 +10,37 @@
       :status="status"
       errorTitle="Fehler beim Laden der gespeicherten Datenbankverbindungen"
     >
-    <div class="saved-db-connections">
-      <template v-for="connection in data" :key="connection.uuid">
-        <ElCard shadow="hover" style="width: 300px;">
-          <template #header>
-            <div class="card-header">
-              <span>{{ connection.name }}</span>
-              <TemplateButton 
-                tooltip="Verbindung löschen"
-                iconName="flowbite:trash-bin-outline"
-                type="danger"
-                @click="showConfirmationDialog(connection)"
-              />
-            </div>
-          </template>
+      <div class="saved-db-connections">
+        <template v-for="connection in data" :key="connection.uuid">
+          <ElCard shadow="hover" style="width: 300px;">
+            <template #header>
+              <div class="card-header">
+                <span>{{ connection.name }}</span>
+                <TemplateButton 
+                  tooltip="Verbindung löschen"
+                  iconName="flowbite:trash-bin-outline"
+                  type="danger"
+                  @click="showConfirmationDialog(connection)"
+                />
+              </div>
+            </template>
             <div class="base-column-container">
               <div class="base-column">
-              <span>Host:</span>
-              <span>Port:</span>
-              <span>Rolle:</span>
-              <span>Datenbank:</span>
-            </div>
+                <span>Host:</span>
+                <span>Port:</span>
+                <span>Rolle:</span>
+                <span>Datenbank:</span>
+              </div>
               <div class="base-column">
-              <span>{{ connection.host }}</span>
-              <span>{{ connection.port }}</span>
-              <span>{{ connection.role }}</span>
-              <span>{{ connection.database_name }}</span>
+                <span>{{ connection.host }}</span>
+                <span>{{ connection.port }}</span>
+                <span>{{ connection.role }}</span>
+                <span>{{ connection.database_name }}</span>
+              </div>
             </div>
-          </div>
-        </ElCard>
-      </template>
-    </div>
+          </ElCard>
+        </template>
+      </div>
     </TemplateFetchStatus>
     <ClientOnly>
       <DialogsNewDBConn />
