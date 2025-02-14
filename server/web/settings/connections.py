@@ -7,7 +7,7 @@ from server.database.db import Database
 def get_connections() -> Response:
     """Gets all connections to a (PostgreSQL) database from the internal database and returns a Response with the data and status"""
     
-    results: list[Union[Connection, None]] = Database.select_sqlite_db(table_model=Connection, select_all=True)
+    results: list[Connection] = Database.select_sqlite_db(table_model=Connection, select_all=True)
 
     json_data = [{
         "uuid": connection.id,
@@ -16,7 +16,7 @@ def get_connections() -> Response:
         "port": connection.port,
         "role": connection.role,
         "database_name": connection.database_name
-    } for connection in results if connection]
+    } for connection in results]
 
     return json_data
 
