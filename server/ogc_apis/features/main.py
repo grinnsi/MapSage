@@ -31,6 +31,12 @@ def init_api_server() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         _LOGGER.info("Starting FastAPI server")
+        
+        # Set uvicorn access logging to error if not in debug mode
+        if os.getenv("APP_DEBUG_MODE", "False") == "False":
+            logger = logging.getLogger("uvicorn.access")
+            logger.setLevel(logging.ERROR)
+        
         Database.init_sqlite_db(False)
         yield
         _LOGGER.info("Stopping FastAPI server")

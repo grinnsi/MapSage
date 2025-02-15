@@ -12,7 +12,7 @@ from server.database.models import GeneralOption, KeyValueBase
 # local logger
 _LOGGER = logging.getLogger("database")
 
-# Initialize SQLite database engine gets called twice when starting
+# Initialize SQLite database engine
 def init_sqlite_engine(sqlite_file_name: str, debug_mode: bool) -> Engine:
     """
     Initialize the SQLite database engine. If the database directory does not exist, it will be created.\n
@@ -90,12 +90,12 @@ class SetupSqliteDatabase():
         # Insert the new options into the database
         Database.insert_sqlite_db(options_to_set)
         
-        pre_render_landing_page_triggers = cls._get_prerender_trigger()
-        with Session(sqlite_engine) as session:
-            session.begin()
-            for trigger in pre_render_landing_page_triggers:
-                session.exec(text(trigger))
-            session.commit()
+        # pre_render_landing_page_triggers = cls._get_prerender_trigger()
+        # with Session(sqlite_engine) as session:
+        #     session.begin()
+        #     for trigger in pre_render_landing_page_triggers:
+        #         session.exec(text(trigger))
+        #     session.commit()
 
 # TODO How to include second db ?
 class Database():

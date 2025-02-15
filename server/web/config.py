@@ -7,4 +7,4 @@ class WebserverConfig(object):
         
         self.DEBUG = debug_mode           
         self.SECRET_KEY = "debug" if debug_mode else secrets.token_hex()
-        self.PORT = int(os.getenv("WEBSERVER_PORT", "4000"))
+        self.PORT = int(os.getenv("HOST_PORT_WEB_SERVER", "4000"))

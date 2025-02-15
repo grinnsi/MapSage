@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev --envName development --dotenv ../server/.env",
-    "generate": "nuxt generate --envName production --dotenv ../server/.env",
+    "dev": "nuxt dev --envName development --dotenv ../.env",
+    "generate": "nuxt generate --envName production --dotenv ../.env",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint ."

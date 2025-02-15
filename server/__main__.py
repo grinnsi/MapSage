@@ -5,20 +5,14 @@ import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 from server.config import *
-import server.web.start as web
-from server.database.db import Database
 
-import server.ogc_apis.start as api
-
-from dotenv import load_dotenv
-
-# FIXME function gets called twice when starting
 # Set environment variables from arguments, if they're not already set
 # Order: OS -> .env file (only in debug mode) -> cli arguments
 def set_env_variables(arguments: Arguments) -> None:
     # If debug enabled, load .env file
     if arguments.DEBUG_MODE:
-        load_dotenv(verbose=True)
+        from dotenv import load_dotenv
+        load_dotenv(dotenv_path="../.env", verbose=True)
     
     # Get all attributes and values from arguments
     env_variables = {"APP_" + attr_name: arguments.__getattribute__(attr_name) for attr_name in dir(arguments) if not attr_name.startswith('__')}
@@ -67,22 +61,26 @@ if __name__ == '__main__':
     logger = logging.getLogger()
     
     # Start api (fastapi) server, if it's not disabled
-    if not arguments.DISABLE_API:
+    if not (arguments.DISABLE_API or os.getenv("APP_DISABLE_API", "False") == "True"):
+        import server.ogc_apis.start as api 
         logger.info("Starting FastAPI Server")
-        if arguments.DEBUG_MODE:
+        
+        if arguments.DEBUG_MODE or os.getenv("APP_DEBUG_MODE", "False") == "True":
             # Start dev fastapi server
             api.start_dev_api_server()
         else:
             # Start prod fastapi server
-            server = api.start_api_server()
+            server = api.start_prod_api_server()
             try:
-                asyncio.run(server.serve())
-            except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
+                server.run()
+            except (KeyboardInterrupt, SystemExit):
                 logger.info("FastAPI Server stopped")
     else:
         # Start dev web (flask) server, if it's not disabled
         logger.info("FastAPI Server disabled")
-        if not arguments.DISABLE_WEB:
+        if not (arguments.DISABLE_WEB or os.getenv("APP_DISABLE_WEB", "False") == "True"):
             # Start dev flask server
+            import server.web.start as web
+            
             logger.info("Starting Flask Web Server")
             web.start_dev_web_server()

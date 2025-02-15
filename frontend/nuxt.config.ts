@@ -66,7 +66,7 @@ export default defineNuxtConfig({
     static: true,
     preset: 'static',
     output: {
-      publicDir: '../server/web/static',
+      publicDir: (process.env.BUILD_OUTPUT_DIR ? process.env.BUILD_OUTPUT_DIR : '../server/web/static'),
     }
   }
 })
