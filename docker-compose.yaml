@@ -6,7 +6,7 @@ services:
         DEBIAN_VERSION: ${DEBIAN_VERSION}
       context: .
       dockerfile: Dockerfile
-    container_name: ${DOCKER_CONTAINER_BASE_NAME}
+    container_name: ${DOCKER_CONTAINER_BASE_NAME}-dev
     command: ["python", "-u", "-m", "server"]
     user: root
     environment:
@@ -35,7 +35,7 @@ services:
         DEBIAN_VERSION: ${DEBIAN_VERSION}
       context: .
       dockerfile: Dockerfile
-    container_name: ${DOCKER_CONTAINER_BASE_NAME}
+    container_name: ${DOCKER_CONTAINER_BASE_NAME}-prod
     command: ["python", "-u", "-m", "server"]
     user: root
     environment:
