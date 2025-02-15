@@ -108,6 +108,6 @@ ENV APP_ENV="${APP_ENV}"
 #   Kopiere die gebaute Anwendung und die Abhängigkeiten in das finale Image.
 COPY --from=build-frontend ${DOCKER_CONTAINER_WORKDIR}/.output ${DOCKER_CONTAINER_WORKDIR}/server/web/static
 #   Kopiere das startup.sh Skript in das finale Image.
-COPY ./startup.sh .
+COPY ./server-startup.sh .
 
-ENTRYPOINT [ "./startup.sh" ]
+ENTRYPOINT [ "./server-startup.sh" ]
