@@ -1,0 +1,57 @@
+services:
+  map-sage-dev:
+    build:
+      args:
+        DOCKER_CONTAINER_WORKDIR: ${DOCKER_CONTAINER_WORKDIR}
+        DEBIAN_VERSION: ${DEBIAN_VERSION}
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${DOCKER_CONTAINER_BASE_NAME}
+    command: ["python", "-u", "-m", "server"]
+    user: root
+    environment:
+      LANG: ${LOCALE_LANG}
+      LC_ALL: ${LOCALE_LANGUAGE}.${LOCALE_ENCODING}
+      TZ: ${TIMEZONE}
+      APP_ENV: dev
+      # HOST_PORT_WEB_SERVER: ${HOST_PORT_WEB_SERVER}
+      HOST_PORT_API_SERVER: ${HOST_PORT_API_SERVER}
+      API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
+    expose:
+      - "${DOCKER_CONTAINER_PORT_SERVER}"
+    hostname: ${DOCKER_CONTAINER_HOSTNAME_PYTHON}
+    image: ${APPLICATION_NAME}.python.dev:${DEBIAN_VERSION}
+    ports:
+      - "${HOST_PORT_API_SERVER}:${DOCKER_CONTAINER_PORT_SERVER}"
+    working_dir: ${DOCKER_CONTAINER_WORKDIR}
+    volumes:
+      - ./data:${DOCKER_CONTAINER_WORKDIR}/data
+      - ./server:${DOCKER_CONTAINER_WORKDIR}/server
+
+  map-sage-prod:
+    build:
+      args:
+        DOCKER_CONTAINER_WORKDIR: ${DOCKER_CONTAINER_WORKDIR}
+        DEBIAN_VERSION: ${DEBIAN_VERSION}
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${DOCKER_CONTAINER_BASE_NAME}
+    command: ["python", "-u", "-m", "server"]
+    user: root
+    environment:
+      LANG: ${LOCALE_LANG}
+      LC_ALL: ${LOCALE_LANGUAGE}.${LOCALE_ENCODING}
+      TZ: ${TIMEZONE}
+      APP_ENV: prod
+      # HOST_PORT_WEB_SERVER: ${HOST_PORT_WEB_SERVER}
+      HOST_PORT_API_SERVER: ${HOST_PORT_API_SERVER}
+      API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
+    expose:
+      - "${DOCKER_CONTAINER_PORT_SERVER}"
+    hostname: ${DOCKER_CONTAINER_HOSTNAME_PYTHON}
+    image: ${APPLICATION_NAME}.python.prod:${DEBIAN_VERSION}
+    ports:
+      - "${HOST_PORT_API_SERVER}:${DOCKER_CONTAINER_PORT_SERVER}"
+    working_dir: ${DOCKER_CONTAINER_WORKDIR}
+    volumes:
+      - ./data:${DOCKER_CONTAINER_WORKDIR}/data
