@@ -38,3 +38,6 @@ class GeneralOption(KeyValueBase, table=True):
             "service_description": "A OGC compliant Features API"
         }
         return default_options
+
+class PreRenderedJson(KeyValueBase, table=True):
+    pass
