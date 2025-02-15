@@ -73,7 +73,7 @@ if __name__ == '__main__':
             api.start_dev_api_server()
         else:
             # Start prod fastapi server
-            server = api.start_api_server()
+            server = api.start_prod_api_server()
             try:
                 asyncio.run(server.serve())
             except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
