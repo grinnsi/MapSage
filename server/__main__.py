@@ -10,15 +10,14 @@ from server.database.db import Database
 
 import server.ogc_apis.start as api
 
-from dotenv import load_dotenv
-
 # FIXME function gets called twice when starting
 # Set environment variables from arguments, if they're not already set
 # Order: OS -> .env file (only in debug mode) -> cli arguments
 def set_env_variables(arguments: Arguments) -> None:
     # If debug enabled, load .env file
     if arguments.DEBUG_MODE:
-        load_dotenv(verbose=True)
+        from dotenv import load_dotenv
+        load_dotenv(dotenv_path="../.env", verbose=True)
     
     # Get all attributes and values from arguments
     env_variables = {"APP_" + attr_name: arguments.__getattribute__(attr_name) for attr_name in dir(arguments) if not attr_name.startswith('__')}
