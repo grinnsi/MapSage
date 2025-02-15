@@ -11,6 +11,8 @@ class Arguments(object):
     DATABASE_DIR = abspath("./data")
 
 def get_logger_config(debug_mode: bool) -> dict:
+    log_level = "DEBUG" if debug_mode else "INFO"
+    
     return {
         'version': 1,
         'formatters': {
@@ -43,7 +45,7 @@ def get_logger_config(debug_mode: bool) -> dict:
         },
         "loggers": {
             '': {
-                'level': 'DEBUG' if debug_mode else "WARNING",
+                'level': log_level,
                 'handlers': ['default'],
                 'propagate': False
             },
@@ -53,22 +55,22 @@ def get_logger_config(debug_mode: bool) -> dict:
                 'propagate': False
             },
             'uvicorn': {
-                'level': "DEBUG" if debug_mode else "WARNING",
+                'level': log_level,
                 'handlers': ['asgi'],
                 'propagate': False
             },
             "uvicorn.error": {
-                'level': "DEBUG" if debug_mode else "WARNING",
+                'level': log_level,
                 'handlers': ['asgi'],
                 'propagate': False
             },
             "uvicorn.access": {
-                'level': "DEBUG" if debug_mode else "WARNING",
+                'level': log_level,
                 'handlers': ['asgi'],
                 'propagate': False
             },
             "uvicorn.asgi": {
-                'level': "DEBUG" if debug_mode else "WARNING",
+                'level': log_level,
                 'handlers': ['asgi'],
                 'propagate': False
             }
