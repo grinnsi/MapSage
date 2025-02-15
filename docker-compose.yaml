@@ -7,6 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-dev
+    image: ${APPLICATION_NAME}.python.dev:${DEBIAN_VERSION}
     command: ["python", "-u", "-m", "server"]
     user: root
     environment:
@@ -20,9 +21,11 @@ services:
     expose:
       - "${DOCKER_CONTAINER_PORT_SERVER}"
     hostname: ${DOCKER_CONTAINER_HOSTNAME_PYTHON}
-    image: ${APPLICATION_NAME}.python.dev:${DEBIAN_VERSION}
     ports:
       - "${HOST_PORT_API_SERVER}:${DOCKER_CONTAINER_PORT_SERVER}"
+    networks:
+      my-network:
+        ipv4_address: 192.0.0.2
     working_dir: ${DOCKER_CONTAINER_WORKDIR}
     volumes:
       - ./data:${DOCKER_CONTAINER_WORKDIR}/data
@@ -36,6 +39,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-prod
+    image: ${APPLICATION_NAME}.python.prod:${DEBIAN_VERSION}
     command: ["python", "-u", "-m", "server"]
     user: root
     environment:
@@ -48,10 +52,32 @@ services:
       API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
     expose:
       - "${DOCKER_CONTAINER_PORT_SERVER}"
-    hostname: ${DOCKER_CONTAINER_HOSTNAME_PYTHON}
-    image: ${APPLICATION_NAME}.python.prod:${DEBIAN_VERSION}
     ports:
       - "${HOST_PORT_API_SERVER}:${DOCKER_CONTAINER_PORT_SERVER}"
+    networks:
+      my-network:
+        ipv4_address: 192.0.0.2
+    hostname: ${DOCKER_CONTAINER_HOSTNAME_PYTHON}
     working_dir: ${DOCKER_CONTAINER_WORKDIR}
     volumes:
       - ./data:${DOCKER_CONTAINER_WORKDIR}/data
+  
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: ${DOCKER_CONTAINER_BASE_NAME}-nginx
+    image: ${APPLICATION_NAME}.nginx
+    ports:
+      - "80:80"
+    networks:
+      my-network:
+        ipv4_address: 192.0.0.4
+
+networks:
+  my-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${DOCKER_NETWORK_SUBNET}
