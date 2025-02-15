@@ -15,7 +15,8 @@ def start_dev_api_server() -> None:
         log_level="debug",
         reload=True,
         reload_includes="./**/*.py",
-        factory=True
+        factory=True,
+        loop="asyncio"
     )
     
 def start_prod_api_server() -> uvicorn.Server:
@@ -26,6 +27,7 @@ def start_prod_api_server() -> uvicorn.Server:
         root_path=os.getenv("API_SERVER_ROOT_PATH", ""),
         proxy_headers=True,
         log_config=get_logger_config(False),
-        log_level="info"
+        log_level="info",
+        loop="uvloop"
     )
     return uvicorn.Server(config)

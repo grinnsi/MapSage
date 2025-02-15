@@ -72,8 +72,8 @@ if __name__ == '__main__':
             # Start prod fastapi server
             server = api.start_prod_api_server()
             try:
-                asyncio.run(server.serve())
-            except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
+                server.run()
+            except (KeyboardInterrupt, SystemExit):
                 logger.info("FastAPI Server stopped")
     else:
         # Start dev web (flask) server, if it's not disabled
