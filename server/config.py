@@ -1,3 +1,4 @@
+import os
 from os.path import abspath
 from logging.config import dictConfig
 import coloredlogs
@@ -11,6 +12,7 @@ class Arguments(object):
     DATABASE_DIR = abspath("./data")
 
 def get_logger_config(debug_mode: bool) -> dict:
+    debug_mode = debug_mode or os.getenv("APP_DEBUG_MODE", "False") == "True"
     log_level = "DEBUG" if debug_mode else "INFO"
     
     return {
