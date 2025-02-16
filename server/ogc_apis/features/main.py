@@ -54,6 +54,15 @@ def init_api_server() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+        
+        # Add middleware to log request processing time
+        @app.middleware("http")
+        async def add_process_time_header(request, call_next):
+            start_time = time.perf_counter_ns()
+            response = await call_next(request)
+            process_time = time.perf_counter_ns() - start_time
+            _LOGGER.debug(f"Request '{request.url.path}' took {process_time / 1_000_000} ms")
+            return response
     
     # Mount webserver, if it's not disabled
     if os.getenv("APP_DISABLE_WEB", "False") == "False":
