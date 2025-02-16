@@ -5,3 +5,4 @@ psycopg[binary,pool]==3.2.4
 python-dotenv==1.0.1
 coloredlogs==15.0.1
 markdown==3.7
+orjson>=3.10,<4

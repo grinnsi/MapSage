@@ -16,6 +16,7 @@
 from contextlib import asynccontextmanager
 import os, logging
 import markdown
+import time
 from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from server.ogc_apis.features.apis.capabilities_api import router as CapabilitiesApiRouter
 from server.ogc_apis.features.apis.data_api import router as DataApiRouter
 from server.database.db import Database
+from server.ogc_apis.features.fastapi_config import FEATURES_API_ROUTE
 
 _LOGGER = logging.getLogger("server.api")
 
@@ -45,7 +47,10 @@ def init_api_server() -> FastAPI:
         title="Building Blocks specified in the OGC API - Features - Part 1 and Part 2: Core and CRS standard",
         description=markdown.markdown("Common components used in the [OGC API - Features - Part 1: Core corrigendum standard](https://docs.ogc.org/is/17-069r4/17-069r4.html) and [OGC API - Features - Part 2: Coordinate Reference Systems by Reference corrigendum](https://docs.ogc.org/is/18-058r1/18-058r1.html).\n\nOGC API - Features - Part 1: Core corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nOGC API - Features - Part 2: Reference corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nThis is an informative document. The building blocks in this document are also available on the OGC schema repository.\n\n[OGC API - Features - Part 1: Core schema](http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml)\n\n[OGC API - Features - Part 2: Coordinate Reference Systems schema](https://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/ogcapi-features-2.yaml)\n\n"),
         version="1.0.1",
-        lifespan=lifespan
+        lifespan=lifespan,
+        openapi_url=f"/{FEATURES_API_ROUTE}.json",
+        docs_url=f"/{FEATURES_API_ROUTE}.html",
+        redoc_url=None
     )
 
     app.include_router(CapabilitiesApiRouter)
@@ -60,6 +65,15 @@ def init_api_server() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+        
+        # Add middleware to log request processing time
+        @app.middleware("http")
+        async def add_process_time_header(request, call_next):
+            start_time = time.perf_counter_ns()
+            response = await call_next(request)
+            process_time = time.perf_counter_ns() - start_time
+            _LOGGER.debug(f"Request '{request.url.path}' took {process_time / 1_000_000} ms")
+            return response
     
     # Mount webserver, if it's not disabled
     if os.getenv("APP_DISABLE_WEB", "False") == "False":

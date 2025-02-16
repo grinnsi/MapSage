@@ -4,6 +4,8 @@ from typing import Dict, List  # noqa: F401
 import importlib
 import pkgutil
 
+from fastapi.responses import ORJSONResponse
+import orjson
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
 import server.ogc_apis.features.implementation as implementation
 
@@ -17,6 +19,7 @@ from fastapi import (  # noqa: F401
     HTTPException,
     Path,
     Query,
+    Request,
     Response,
     Security,
     status,
@@ -104,10 +107,17 @@ async def get_conformance_declaration(
     tags=["Capabilities"],
     summary="landing page",
     response_model_by_alias=True,
+    # Using ORJSONResponse as response_class to directly return the dict of the JSON string of the LandingPage object
+    # Faster than returning the LandingPage object that gets serialized to a JSON string
+    response_class=ORJSONResponse,
 )
 async def get_landing_page(
+    request: Request,
 ) -> LandingPage:
     """The landing page provides links to the API definition, the conformance statements and to the feature collections in this dataset."""
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseCapabilitiesApi.subclasses[0]().get_landing_page()
+    landing_page: str = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
+    
+    # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads
+    return ORJSONResponse(content=orjson.loads(landing_page))
