@@ -89,13 +89,20 @@ async def get_collections(
     tags=["Capabilities"],
     summary="information about specifications that this API conforms to",
     response_model_by_alias=True,
+    # Using ORJSONResponse as response_class to directly return the dict of the JSON string of the ConfClass object
+    # Faster than returning the LandingPage object that gets serialized to a JSON string
+    response_class=ORJSONResponse,
 )
 async def get_conformance_declaration(
 ) -> ConfClasses:
     """A list of all conformance classes specified in a standard that the server conforms to."""
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration()
+    
+    conformance_declaration: str = await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration()
+    
+    # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads
+    return ORJSONResponse(content=orjson.loads(conformance_declaration))
 
 
 @router.get(
@@ -117,6 +124,7 @@ async def get_landing_page(
     """The landing page provides links to the API definition, the conformance statements and to the feature collections in this dataset."""
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
+
     landing_page: str = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
     
     # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads
