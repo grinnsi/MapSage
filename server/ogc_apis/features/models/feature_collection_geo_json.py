@@ -41,7 +41,7 @@ class FeatureCollectionGeoJSON(BaseModel):
     links: Optional[List[Link]] = None
     time_stamp: Optional[datetime] = Field(default=None, description="This property indicates the time and date when the response was generated.", alias="timeStamp")
     number_matched: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(default=None, description="The number of features of the feature type that match the selection parameters like `bbox`.", alias="numberMatched")
-    number_returned: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(default=None, description="The number of features in the feature collection.\n\nA server may omit this information in a response, if the information about the number of features is not known or difficult to compute.\n\nIf the value is provided, the value shall be identical to the number of items in the \"features\" array.", alias="numberReturned")
+    number_returned: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(default=None, description="The number of features in the feature collection.  A server may omit this information in a response, if the information about the number of features is not known or difficult to compute.  If the value is provided, the value shall be identical to the number of items in the \"features\" array.", alias="numberReturned")
     __properties: ClassVar[List[str]] = ["type", "features", "links", "timeStamp", "numberMatched", "numberReturned"]
 
     @field_validator('type')
@@ -64,8 +64,7 @@ class FeatureCollectionGeoJSON(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return self.model_dump_json(by_alias=True, exclude_unset=True)
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
