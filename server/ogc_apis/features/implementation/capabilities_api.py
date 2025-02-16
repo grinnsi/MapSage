@@ -5,10 +5,9 @@ from fastapi import Request
 from server.database.db import Database
 from server.database.models import PreRenderedJson
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
-from server.ogc_apis.features.implementation.pre_render.landing_page import generate_landing_page
+from server.ogc_apis.features.implementation.static_content.landing_page import generate_landing_page
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
-from server.ogc_apis.features.models.landing_page import LandingPage
 
 
 class CapabilitiesApi(BaseCapabilitiesApi):

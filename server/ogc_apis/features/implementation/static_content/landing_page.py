@@ -2,6 +2,7 @@ from server.ogc_apis.features.fastapi_config import FEATURES_API_ROUTE
 
 from server.database.db import Database
 from server.database.models import GeneralOption
+from server.ogc_apis.features.models.conf_classes import ConfClasses
 from server.ogc_apis.features.models.landing_page import LandingPage
 from server.ogc_apis.features.models.link import Link
 
