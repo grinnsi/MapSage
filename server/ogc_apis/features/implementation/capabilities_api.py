@@ -5,6 +5,7 @@ from fastapi import Request
 from server.database.db import Database
 from server.database.models import PreRenderedJson
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
+from server.ogc_apis.features.implementation.static_content.conformance import generate_conformance_declaration
 from server.ogc_apis.features.implementation.static_content.landing_page import generate_landing_page
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
@@ -29,13 +30,27 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         self,
     ) -> ConfClasses:
         """Return information about specifications that this API conforms to."""
-        raise NotImplementedError
+        
+        pre_rendered_conformance_declaration: Union[PreRenderedJson, list] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="conformance_declaration")
+        if not isinstance(pre_rendered_conformance_declaration, list):
+            # Returns the JSON string representation of the ConfClasses object
+            return pre_rendered_conformance_declaration.value
+        else:
+            generated_conformance_declaration = generate_conformance_declaration()
+            pre_rendered_json = PreRenderedJson(key="conformance_declaration", value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+            Database.insert_sqlite_db(data_object=pre_rendered_json)
+
+            # Returns the JSON string representation of the ConfClasses object
+            # This is because the response of the endpoint is ORJSONResponse which requires a dict
+            # However this will return a JSON string so it's in line with the pre_rendered_json.value in the IF-statement above
+            return generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True)
 
     async def get_landing_page(
         self, 
         request: Request
     ) -> str:
         """Return the landing page for the API."""
+        
         pre_rendered_landing_page: Union[PreRenderedJson, list] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="landing_page")
         if not isinstance(pre_rendered_landing_page, list):
             # Returns the JSON string representation of the LandingPage object
