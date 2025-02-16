@@ -145,13 +145,15 @@ class Database():
         return connection_successful
 
     @classmethod
-    def select_sqlite_db(cls, table_model: SQLModel = None, uuid: str = None, select_all: bool = True, statement = None) -> Union[SQLModel, list[SQLModel]]:
+    def select_sqlite_db(cls, table_model: SQLModel = None, primary_key_value: str = None, select_all: bool = True, statement = None) -> Union[SQLModel, list[SQLModel]]:
         with cls.get_sqlite_session() as session:
             result = None
             
-            if table_model is not None and uuid is not None:
-                uuid = UUID(uuid)
-                result = session.get(table_model, uuid)
+            if table_model is not None and primary_key_value is not None:
+                if not issubclass(table_model, KeyValueBase):
+                    primary_key_value = UUID(primary_key_value)
+                    
+                result = session.get(table_model, primary_key_value)
             elif table_model is not None and select_all:
                 result = session.exec(select(table_model)).all()
             elif statement is not None:
