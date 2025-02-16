@@ -108,12 +108,13 @@ class SetupSqliteDatabase():
         # Insert the new options into the database
         Database.insert_sqlite_db(options_to_set)
         
-        # pre_render_landing_page_triggers = cls._get_prerender_trigger()
-        # with Session(sqlite_engine) as session:
-        #     session.begin()
-        #     for trigger in pre_render_landing_page_triggers:
-        #         session.exec(text(trigger))
-        #     session.commit()
+        # Create trigger in database for changing landing page json, if title or description is updated
+        pre_render_landing_page_triggers = cls._get_prerender_trigger()
+        with Session(sqlite_engine) as session:
+            session.begin()
+            for trigger in pre_render_landing_page_triggers:
+                session.exec(text(trigger))
+            session.commit()
 
 # TODO How to include second db ?
 class Database():
