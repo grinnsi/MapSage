@@ -1,18 +1,17 @@
-from server.ogc_apis.route_config import API_ROUTE
+from server.ogc_apis.route_config import API_ROUTE, FEATURES_ROUTE
 
 from server.database.db import Database
 from server.database.models import GeneralOption
-from server.ogc_apis.features.models.conf_classes import ConfClasses
 from server.ogc_apis.features.models.landing_page import LandingPage
 from server.ogc_apis.features.models.link import Link
 
 
-def generate_landing_page(base_url: str, root_path: str) -> LandingPage:   
+def generate_landing_page(base_url: str) -> LandingPage:   
     title: GeneralOption = Database.select_sqlite_db(table_model=GeneralOption, primary_key_value="service_title")
     description: GeneralOption = Database.select_sqlite_db(table_model=GeneralOption, primary_key_value="service_description")
     
     domain = base_url.rstrip("/")
-    features_base_route = f"{domain}{root_path}"
+    features_base_route = f"{domain}{FEATURES_ROUTE}"
     
     known_links = [
         Link(href=features_base_route, rel="self", type="application/json", title="This document"),
