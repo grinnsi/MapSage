@@ -68,6 +68,10 @@ services:
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-nginx
     image: ${APPLICATION_NAME}.nginx
+    environment:
+      APP_ENV: ${APP_ENV}
+      API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
+      HOST_PORT_API_SERVER: ${HOST_PORT_API_SERVER}
     ports:
       - "80:80"
     networks:
