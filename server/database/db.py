@@ -164,7 +164,7 @@ class Database():
         return connection_successful
 
     @classmethod
-    def select_sqlite_db(cls, table_model: SQLModel = None, primary_key_value: str = None, select_all: bool = True, statement = None) -> Union[SQLModel, list[SQLModel]]:
+    def select_sqlite_db(cls, table_model: SQLModel = None, primary_key_value: str = None, select_all: bool = True, statement = None) -> Union[SQLModel, list[SQLModel], None]:
         with cls.get_sqlite_session() as session:
             result = None
             
@@ -182,8 +182,8 @@ class Database():
             
             _LOGGER.debug(msg=f"Result of select query: {result}")
             
-            if not result:
-                return []
+            if isinstance(result, list) and len(result) == 1:
+                result = result[0]
             
             return result
         
