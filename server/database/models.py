@@ -20,10 +20,16 @@ class Connection(CoreModel, table=True):
     password: str
     database_name: str
     
-class Namespace(CoreModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, unique=True)
-    name: str
-    url: str
+# class Namespace(TableBase, table=True):
+#     name: str
+#     url: str
+    
+# class Collection(TableBase, Collection, table=True):
+#     # id with index
+#     id: str = Field(index=True, unique=True)
+#     layer_name: str
+#     title: str
+#     description: str
 
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)
