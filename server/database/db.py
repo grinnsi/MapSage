@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import Engine, text, exc
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
-from server.database.models import GeneralOption, KeyValueBase, PreRenderedJson
+from server.database.models import GeneralOption, KeyValueBase, PreRenderedJson, TableBase
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -169,7 +169,7 @@ class Database():
             result = None
             
             if table_model is not None and primary_key_value is not None:
-                if not issubclass(table_model, KeyValueBase):
+                if issubclass(table_model, TableBase):
                     primary_key_value = UUID(primary_key_value)
                     
                 result = session.get(table_model, primary_key_value)
