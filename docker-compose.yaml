@@ -30,6 +30,7 @@ services:
     volumes:
       - ./data:${DOCKER_CONTAINER_WORKDIR}/data
       - ./server:${DOCKER_CONTAINER_WORKDIR}/server
+      - nuxt-generated-html:${DOCKER_CONTAINER_WORKDIR}/server/web/static
 
   map-sage-prod:
     build:
@@ -77,6 +78,28 @@ services:
     networks:
       my-network:
         ipv4_address: 192.0.0.4
+
+  postgis:
+    image: postgis/postgis:latest
+    container_name: ${DOCKER_CONTAINER_BASE_NAME}-postgis
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    networks:
+      my-network:
+        ipv4_address: 192.0.0.3
+
+volumes:
+  nuxt-generated-html:
+    driver: local
+    driver_opts:
+      type: none
+      device: "./server/web/static"
+      o: bind
+    name: ${APPLICATION_NAME}-nuxt-generated-html
 
 networks:
   my-network:
