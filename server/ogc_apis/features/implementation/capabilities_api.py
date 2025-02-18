@@ -56,7 +56,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
             # Returns the JSON string representation of the LandingPage object
             return pre_rendered_landing_page.value
         else:
-            generated_landing_page = generate_landing_page(base_url=str(request.base_url), root_path=request.scope.get("root_path", ""))
+            generated_landing_page = generate_landing_page(base_url=str(request.base_url))
             pre_rendered_json = PreRenderedJson(key="landing_page", value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_json)
 
