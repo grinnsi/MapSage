@@ -408,6 +408,36 @@ paths:
         schema:
           type: string
         style: form
+      - description: |-
+          The optional `bbox-crs` parameter is used to specify the coordinate reference system
+          of the bounding box. The value of the parameter is a URI identifying the coordinate
+          reference system.
+
+          If the parameter is omitted, the default coordinate reference system
+          http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or
+          http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used.
+        explode: false
+        in: query
+        name: bbox-crs
+        required: false
+        schema:
+          format: uri
+          type: string
+        style: form
+      - description: "The optional `crs` parameter is used to specify the coordinate\
+          \ reference system\nof the geometries in the response document. The value\
+          \ of the parameter is a\nURI identifying the coordinate reference system.\n\
+          \nIf the parameter is omitted, the default coordinate reference system \n\
+          http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or\nhttp://www.opengis.net/def/crs/OGC/0/CRS84h\
+          \ for 3D is used."
+        explode: false
+        in: query
+        name: crs
+        required: false
+        schema:
+          format: uri
+          type: string
+        style: form
       responses:
         "200":
           content:
@@ -525,6 +555,20 @@ paths:
         schema:
           type: string
         style: simple
+      - description: "The optional `crs` parameter is used to specify the coordinate\
+          \ reference system\nof the geometries in the response document. The value\
+          \ of the parameter is a\nURI identifying the coordinate reference system.\n\
+          \nIf the parameter is omitted, the default coordinate reference system \n\
+          http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or\nhttp://www.opengis.net/def/crs/OGC/0/CRS84h\
+          \ for 3D is used."
+        explode: false
+        in: query
+        name: crs
+        required: false
+        schema:
+          format: uri
+          type: string
+        style: form
       responses:
         "200":
           content:
@@ -635,6 +679,14 @@ components:
         type: array
       style: form
     bbox-crs:
+      description: |-
+        The optional `bbox-crs` parameter is used to specify the coordinate reference system
+        of the bounding box. The value of the parameter is a URI identifying the coordinate
+        reference system.
+
+        If the parameter is omitted, the default coordinate reference system
+        http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or
+        http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used.
       explode: false
       in: query
       name: bbox-crs
@@ -644,6 +696,14 @@ components:
         type: string
       style: form
     crs:
+      description: |-
+        The optional `crs` parameter is used to specify the coordinate reference system
+        of the geometries in the response document. The value of the parameter is a
+        URI identifying the coordinate reference system.
+
+        If the parameter is omitted, the default coordinate reference system
+        http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or
+        http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used.
       explode: false
       in: query
       name: crs
