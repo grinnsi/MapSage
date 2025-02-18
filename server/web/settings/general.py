@@ -1,3 +1,4 @@
+from typing import Union
 from fastapi.encoders import jsonable_encoder
 from flask import Response
 from server.database.db import Database
@@ -7,7 +8,10 @@ from server.database.models import GeneralOption
 def get_general_options() -> dict:
     """Gets the general options from the internal database and returns them as a dictionary/json"""
     
-    options: list[GeneralOption] = Database.select_sqlite_db(table_model=GeneralOption, select_all=True)
+    options: Union[list[GeneralOption], None] = Database.select_sqlite_db(table_model=GeneralOption, select_all=True)
+
+    if not options:
+        options = []
 
     return jsonable_encoder(options)
 

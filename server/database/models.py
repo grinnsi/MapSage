@@ -1,4 +1,4 @@
-import uuid
+import uuid as unique_id
 
 from sqlmodel import Field, SQLModel
 from sqlalchemy.orm import declared_attr
@@ -11,8 +11,10 @@ class CoreModel(SQLModel):
     def __tablename__(cls) -> str:
         return camel_to_snake(cls.__name__)
 
-class Connection(CoreModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, unique=True)
+class TableBase(CoreModel):
+    uuid: unique_id.UUID = Field(default_factory=unique_id.uuid4, primary_key=True)
+
+class Connection(TableBase, table=True):
     name: str
     host: str
     port: int
@@ -20,10 +22,16 @@ class Connection(CoreModel, table=True):
     password: str
     database_name: str
     
-class Namespace(CoreModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, unique=True)
-    name: str
-    url: str
+# class Namespace(TableBase, table=True):
+#     name: str
+#     url: str
+    
+# class Collection(TableBase, Collection, table=True):
+#     # id with index
+#     id: str = Field(index=True, unique=True)
+#     layer_name: str
+#     title: str
+#     description: str
 
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)

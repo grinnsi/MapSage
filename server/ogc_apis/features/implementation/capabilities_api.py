@@ -31,8 +31,8 @@ class CapabilitiesApi(BaseCapabilitiesApi):
     ) -> ConfClasses:
         """Return information about specifications that this API conforms to."""
         
-        pre_rendered_conformance_declaration: Union[PreRenderedJson, list] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="conformance_declaration")
-        if not isinstance(pre_rendered_conformance_declaration, list):
+        pre_rendered_conformance_declaration: Union[PreRenderedJson, None] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="conformance_declaration")
+        if pre_rendered_conformance_declaration:
             # Returns the JSON string representation of the ConfClasses object
             return pre_rendered_conformance_declaration.value
         else:
@@ -51,12 +51,12 @@ class CapabilitiesApi(BaseCapabilitiesApi):
     ) -> str:
         """Return the landing page for the API."""
         
-        pre_rendered_landing_page: Union[PreRenderedJson, list] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="landing_page")
-        if not isinstance(pre_rendered_landing_page, list):
+        pre_rendered_landing_page: Union[PreRenderedJson, None] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="landing_page")
+        if pre_rendered_landing_page:
             # Returns the JSON string representation of the LandingPage object
             return pre_rendered_landing_page.value
         else:
-            generated_landing_page = generate_landing_page(base_url=str(request.base_url), root_path=request.scope.get("root_path", ""))
+            generated_landing_page = generate_landing_page(base_url=str(request.base_url))
             pre_rendered_json = PreRenderedJson(key="landing_page", value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_json)
 

@@ -127,5 +127,5 @@ async def get_landing_page(
 
     landing_page: str = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
     
-    # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads
+    # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads (according to author)
     return ORJSONResponse(content=orjson.loads(landing_page))

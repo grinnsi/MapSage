@@ -2,4 +2,4 @@
 FROM nginx:latest
 
 # Copy your Nginx config file to the container
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY default.conf.template /etc/nginx/templates/default.conf.template

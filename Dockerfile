@@ -22,7 +22,11 @@ ENV BUILD_OUTPUT_DIR=.output
 WORKDIR ${DOCKER_CONTAINER_WORKDIR}
 
 #   Kopiere die Frontend App, installiere die Abhängigkeiten und generiere die statischen Dateien.
-COPY ./frontend ./ 
+COPY ./frontend ./frontend
+COPY .env .
+
+WORKDIR ${DOCKER_CONTAINER_WORKDIR}/frontend
+
 RUN npm install
 RUN npm run generate
 
@@ -106,7 +110,7 @@ ENV PYTHONPATH="${DOCKER_CONTAINER_WORKDIR}"
 ENV APP_ENV="${APP_ENV}"
 
 #   Kopiere die gebaute Anwendung und die Abhängigkeiten in das finale Image.
-COPY --from=build-frontend ${DOCKER_CONTAINER_WORKDIR}/.output ${DOCKER_CONTAINER_WORKDIR}/server/web/static
+COPY --from=build-frontend ${DOCKER_CONTAINER_WORKDIR}/frontend/.output ${DOCKER_CONTAINER_WORKDIR}/server/web/static
 #   Kopiere das startup.sh Skript in das finale Image.
 COPY ./server-startup.sh .
 
