@@ -22,7 +22,7 @@ class BaseDataApi:
         featureId: Annotated[StrictStr, Field(description="local identifier of a feature")],
         crs: Annotated[Optional[StrictStr], Field(description="The optional `crs` parameter is used to specify the coordinate reference system of the geometries in the response document. The value of the parameter is a URI identifying the coordinate reference system.  If the parameter is omitted, the default coordinate reference system  http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used.")],
     ) -> FeatureGeoJSON:
-        """Fetch the feature with id &#x60;featureId&#x60; in the feature collection with id &#x60;collectionId&#x60;.  Use content negotiation to request HTML or GeoJSON."""
+        """Fetch the feature with id `featureId` in the feature collection with id `collectionId`.  Use content negotiation to request HTML or GeoJSON."""
         ...
 
 
@@ -35,5 +35,5 @@ class BaseDataApi:
         bbox_crs: Annotated[Optional[StrictStr], Field(description="The optional `bbox-crs` parameter is used to specify the coordinate reference system of the bounding box. The value of the parameter is a URI identifying the coordinate reference system.  If the parameter is omitted, the default coordinate reference system http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used.")],
         crs: Annotated[Optional[StrictStr], Field(description="The optional `crs` parameter is used to specify the coordinate reference system of the geometries in the response document. The value of the parameter is a URI identifying the coordinate reference system.  If the parameter is omitted, the default coordinate reference system  http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used.")],
     ) -> FeatureCollectionGeoJSON:
-        """Fetch features of the feature collection with id &#x60;collectionId&#x60;.  Every feature in a dataset belongs to a collection. A dataset may consist of multiple feature collections. A feature collection is often a collection of features of a similar type, based on a common schema.  Use content negotiation to request HTML or GeoJSON."""
+        """Fetch features of the feature collection with id `collectionId`.  Every feature in a dataset belongs to a collection. A dataset may consist of multiple feature collections. A feature collection is often a collection of features of a similar type, based on a common schema.  Use content negotiation to request HTML or GeoJSON."""
         ...
