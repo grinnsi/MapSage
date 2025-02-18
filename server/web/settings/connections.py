@@ -13,7 +13,7 @@ def get_connections() -> Response:
         results = []
 
     json_data = [{
-        "uuid": connection.id,
+        "uuid": connection.uuid,
         "name": connection.name,
         "host": connection.host,
         "port": connection.port,
