@@ -8,6 +8,7 @@ from sqlalchemy import Engine, text, exc
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
 from server.database.models import GeneralOption, KeyValueBase, PreRenderedJson, TableBase
+import server.database.sql_triggers as sql_triggers
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -38,18 +39,6 @@ def init_sqlite_engine(sqlite_file_name: str, debug_mode: bool) -> Engine:
 class SetupSqliteDatabase():
     def __init__(self):
         raise RuntimeError("SetupSqliteDatabase class cannot be instantiated")
-    
-    @classmethod
-    def _get_prerender_trigger(cls) -> str:
-        return [f"""
-        DROP TRIGGER IF EXISTS pre_render_landing_page;""", f"""
-        CREATE TRIGGER IF NOT EXISTS pre_render_landing_page
-        AFTER UPDATE OF value ON "{GeneralOption.__tablename__}"
-        BEGIN
-            UPDATE {PreRenderedJson.__tablename__} SET value = json_replace(json_replace("value", '$.title', (SELECT value FROM "{GeneralOption.__tablename__}" WHERE "key" = 'service_title')), '$.description', (SELECT value FROM "{GeneralOption.__tablename__}" WHERE "key" = 'service_description')) 
-	        WHERE "key" = 'landing_page';
-        END;
-        """]
 
     @classmethod
     def setup(cls, sqlite_engine: Engine, reset_db: bool) -> None:
@@ -108,12 +97,15 @@ class SetupSqliteDatabase():
         # Insert the new options into the database
         Database.insert_sqlite_db(options_to_set)
         
-        # Create trigger in database for changing landing page json, if title or description is updated
-        pre_render_landing_page_triggers = cls._get_prerender_trigger()
+        # Create all triggers in database
+        # Drops them first, if reset_db param is True
+        all_sql_triggers = sql_triggers.get_all_triggers()
         with Session(sqlite_engine) as session:
             session.begin()
-            for trigger in pre_render_landing_page_triggers:
-                session.exec(text(trigger))
+            for trigger in all_sql_triggers:
+                if reset_db:
+                    session.exec(text(trigger[0]))
+                session.exec(text(trigger[1]))
             session.commit()
 
 # TODO How to include second db ?
