@@ -1,14 +1,16 @@
 from contextlib import contextmanager
 import os
 import logging
-from typing import Union
+from typing import Callable, Union
 from uuid import UUID
 
 from sqlalchemy import Engine, text, exc
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
 from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase
 import server.database.sql_triggers as sql_triggers
+from server.ogc_apis.features.implementation.static_content.licenses import get_default_licenses
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -39,6 +41,12 @@ def init_sqlite_engine(sqlite_file_name: str, debug_mode: bool) -> Engine:
 class SetupSqliteDatabase():
     def __init__(self):
         raise RuntimeError("SetupSqliteDatabase class cannot be instantiated")
+    
+    @classmethod
+    def get_default_db_data(cls) -> list[Callable]:
+        return [
+            get_default_licenses,
+        ]
 
     @classmethod
     def setup(cls, sqlite_engine: Engine, reset_db: bool) -> None:
@@ -108,6 +116,12 @@ class SetupSqliteDatabase():
                     session.exec(text(trigger[0]))
                 session.exec(text(trigger[1]))
             session.commit()
+            
+        # Insert default data into database
+        functions = cls.get_default_db_data()
+        for function in functions:
+            data = function()
+            Database.insert_sqlite_db(data, do_nothing_on_conflict=True)
 
 # TODO How to include second db ?
 class Database():
@@ -181,10 +195,13 @@ class Database():
             return result
         
     @classmethod
-    def insert_sqlite_db(cls, data_object: Union[CoreModel, list[CoreModel]] = None) -> Union[CoreModel, list[CoreModel]]:
+    def insert_sqlite_db(cls, data_object: Union[CoreModel, list[CoreModel]] = None, do_nothing_on_conflict: bool = False) -> Union[CoreModel, list[CoreModel]]:
         with cls.get_sqlite_session() as session:
-            if data_object is not None:
-                if type(data_object) is list:
+            if data_object is None:
+                raise AttributeError("SQL-Insert: No data object provided")
+                
+            if type(data_object) is list:
+                if not do_nothing_on_conflict:
                     session.add_all(data_object)
                     session.commit()
                     
@@ -192,16 +209,29 @@ class Database():
                         session.refresh(obj)
                         
                         _LOGGER.debug(msg=f"Successfully inserted [{obj.__class__.__name__}]: {obj}")
+
                 else:
+                    # Using pg_insert to be able to use on_conflict_do_nothing
+                    values = [obj.model_dump(by_alias=True, exclude_unset=True) for obj in data_object]
+                    statement = pg_insert(data_object[0].__class__).values(values).on_conflict_do_nothing()
+                    session.exec(statement)
+                    session.commit()
+                    
+                    _LOGGER.debug(msg=f"Successfully inserted [{data_object[0].__class__.__name__}]: {values}")
+            else:
+                if not do_nothing_on_conflict:
                     session.add(data_object)
                     session.commit()
                     session.refresh(data_object)
-            
-                    _LOGGER.debug(msg=f"Successfully inserted [{data_object.__class__.__name__}]: {data_object}")
+                else:
+                    values = data_object.model_dump(by_alias=True, exclude_unset=True)
+                    statement = pg_insert(data_object.__class__).values(values).on_conflict_do_nothing()
+                    session.exec(statement)
+                    session.commit()
+        
+                _LOGGER.debug(msg=f"Successfully inserted [{data_object.__class__.__name__}]: {data_object}")
 
-                return data_object
-            
-            raise AttributeError("SQL-Insert: No data object provided")
+            return data_object
         
     @classmethod
     def delete_sqlite_db(cls, table_model: CoreModel, uuid: str) -> Union[None, CoreModel]:

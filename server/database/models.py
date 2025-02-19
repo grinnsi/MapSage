@@ -1,3 +1,4 @@
+from typing import Optional
 import uuid as unique_id
 
 from sqlmodel import Field, SQLModel
@@ -25,13 +26,16 @@ class Connection(TableBase, table=True):
 # class Namespace(TableBase, table=True):
 #     name: str
 #     url: str
-    
-# class Collection(TableBase, Collection, table=True):
-#     # id with index
-#     id: str = Field(index=True, unique=True)
-#     layer_name: str
-#     title: str
-#     description: str
+
+class License(TableBase, table=True):
+    title: str = Field(unique=True)
+    url: str
+    type: str = Field(default="text/html")
+    alternative_url: Optional[str] = Field(default=None)
+    alternative_type: Optional[str] = Field(default=None)
+
+    pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON absolut nicht schön
+    pre_rendered_json_alternate: Optional[str] = Field(default=None)                                   # JSON
 
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)
