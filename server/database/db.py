@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import os
 import logging
-from typing import Union
+from typing import Callable, Union
 from uuid import UUID
 
 from sqlalchemy import Engine, text, exc
@@ -9,6 +9,7 @@ from sqlmodel import SQLModel, Session, create_engine, delete, select
 
 from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase
 import server.database.sql_triggers as sql_triggers
+from server.ogc_apis.features.implementation.static_content.licenses import get_default_licenses
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -39,6 +40,12 @@ def init_sqlite_engine(sqlite_file_name: str, debug_mode: bool) -> Engine:
 class SetupSqliteDatabase():
     def __init__(self):
         raise RuntimeError("SetupSqliteDatabase class cannot be instantiated")
+    
+    @classmethod
+    def get_default_db_data(cls) -> list[Callable]:
+        return [
+            get_default_licenses,
+        ]
 
     @classmethod
     def setup(cls, sqlite_engine: Engine, reset_db: bool) -> None:
