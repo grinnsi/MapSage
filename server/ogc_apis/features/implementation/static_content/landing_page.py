@@ -6,7 +6,7 @@ from server.ogc_apis.features.models.landing_page import LandingPage
 from server.ogc_apis.features.models.link import Link
 
 
-def generate_landing_page(base_url: str) -> LandingPage:   
+def generate_landing_page_object(base_url: str) -> LandingPage:   
     title: GeneralOption = Database.select_sqlite_db(table_model=GeneralOption, primary_key_value="service_title")
     description: GeneralOption = Database.select_sqlite_db(table_model=GeneralOption, primary_key_value="service_description")
     

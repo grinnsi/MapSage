@@ -1,6 +1,6 @@
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 
-def generate_conformance_declaration() -> ConfClasses:
+def generate_conformance_declaration_object() -> ConfClasses:
     conforms_to = [
         "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
         "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",

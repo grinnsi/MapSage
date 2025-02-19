@@ -5,8 +5,8 @@ from fastapi import Request
 from server.database.db import Database
 from server.database.models import PreRenderedJson
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
-from server.ogc_apis.features.implementation.static_content.conformance import generate_conformance_declaration
-from server.ogc_apis.features.implementation.static_content.landing_page import generate_landing_page
+from server.ogc_apis.features.implementation.static_content.conformance import generate_conformance_declaration_object
+from server.ogc_apis.features.implementation.static_content.landing_page import generate_landing_page_object
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 
@@ -36,7 +36,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
             # Returns the JSON string representation of the ConfClasses object
             return pre_rendered_conformance_declaration.value
         else:
-            generated_conformance_declaration = generate_conformance_declaration()
+            generated_conformance_declaration = generate_conformance_declaration_object()
             pre_rendered_json = PreRenderedJson(key="conformance_declaration", value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_json)
 
@@ -56,7 +56,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
             # Returns the JSON string representation of the LandingPage object
             return pre_rendered_landing_page.value
         else:
-            generated_landing_page = generate_landing_page(base_url=str(request.base_url))
+            generated_landing_page = generate_landing_page_object(base_url=str(request.base_url))
             pre_rendered_json = PreRenderedJson(key="landing_page", value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_json)
 
