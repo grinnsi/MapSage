@@ -10,7 +10,15 @@ from server.utils.string_utils import camel_to_snake
 class CoreModel(SQLModel):
     @declared_attr
     def __tablename__(cls) -> str:
-        return camel_to_snake(cls.__name__)
+        # Convert CamelCase class name to snake_case table name
+        name = camel_to_snake(cls.__name__)
+        
+        # Remove "table" from the end of the name and remove leading and trailing underscores
+        name = name.replace("table", "")
+        name = name.rstrip("_")
+        name = name.lstrip("_")
+        
+        return name
 
 class TableBase(CoreModel):
     uuid: unique_id.UUID = Field(default_factory=unique_id.uuid4, primary_key=True)
