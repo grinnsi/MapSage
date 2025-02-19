@@ -28,8 +28,8 @@
 <script setup lang="ts">
 const nav = [
   {path: '/', name: 'Startseite'},
-  {path: '/namespaces', name: 'Namespaces'},
-  // {path: '/layers', name: 'Ebenen'},
+  // {path: '/namespaces', name: 'Namespaces'},
+  {path: '/collections', name: 'Kollektionen'},
   {path: '/options', name: 'Einstellungen'},
 ];
 </script>
