@@ -48,9 +48,10 @@ class SetupSqliteDatabase():
 
         _LOGGER.info(msg="Initializing SQLite database")
         
-        # Drop pre_rendered_json table, so it will be generated again after restart
+        # Drop pre_rendered_json table, so all will be generated again after restart
         with Session(sqlite_engine) as session:
             session.begin()
+            session.exec(text("PRAGMA foreign_keys = ON"))
             session.exec(text(f"DROP TABLE IF EXISTS {PreRenderedJson.__tablename__}"))
             session.commit()
             
