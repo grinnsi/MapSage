@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import Engine, text, exc
 from sqlmodel import SQLModel, Session, create_engine, delete, select
 
-from server.database.models import GeneralOption, KeyValueBase, PreRenderedJson, TableBase
+from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase
 import server.database.sql_triggers as sql_triggers
 
 # local logger
@@ -75,7 +75,7 @@ class SetupSqliteDatabase():
         existing_options = []
 
         # Fetch all saved options from the database
-        saved_options: list[SQLModel] = Database.select_sqlite_db(table_model=GeneralOption, select_all=True)
+        saved_options: list[CoreModel] = Database.select_sqlite_db(table_model=GeneralOption, select_all=True)
 
         # Iterate over each saved option
         for option in saved_options:
@@ -156,7 +156,7 @@ class Database():
         return connection_successful
 
     @classmethod
-    def select_sqlite_db(cls, table_model: SQLModel = None, primary_key_value: str = None, select_all: bool = True, statement = None) -> Union[SQLModel, list[SQLModel], None]:
+    def select_sqlite_db(cls, table_model: CoreModel = None, primary_key_value: str = None, select_all: bool = True, statement = None) -> Union[CoreModel, list[CoreModel], None]:
         with cls.get_sqlite_session() as session:
             result = None
             
@@ -180,7 +180,7 @@ class Database():
             return result
         
     @classmethod
-    def insert_sqlite_db(cls, data_object: Union[SQLModel, list[SQLModel]] = None) -> Union[SQLModel, list[SQLModel]]:
+    def insert_sqlite_db(cls, data_object: Union[CoreModel, list[CoreModel]] = None) -> Union[CoreModel, list[CoreModel]]:
         with cls.get_sqlite_session() as session:
             if data_object is not None:
                 if type(data_object) is list:
@@ -203,7 +203,7 @@ class Database():
             raise AttributeError("SQL-Insert: No data object provided")
         
     @classmethod
-    def delete_sqlite_db(cls, table_model: SQLModel, uuid: str) -> Union[None, SQLModel]:
+    def delete_sqlite_db(cls, table_model: CoreModel, uuid: str) -> Union[None, CoreModel]:
         uuid = UUID(uuid)
 
         with cls.get_sqlite_session() as session:
@@ -220,7 +220,7 @@ class Database():
             return object_to_delete
     
     @classmethod
-    def update_sqlite_db(cls, update: Union[SQLModel, list[SQLModel]], primary_key_value: str = None, primary_key_name = "uuid") -> Union[None, SQLModel, list[SQLModel]]:                
+    def update_sqlite_db(cls, update: Union[CoreModel, list[CoreModel]], primary_key_value: str = None, primary_key_name = "uuid") -> Union[None, CoreModel, list[CoreModel]]:                
         with cls.get_sqlite_session() as session:
             if type(update) is list:
                 table_model = update[0].__class__
@@ -258,7 +258,7 @@ class Database():
                 if primary_key_name == "uuid":
                     primary_key_value = UUID(primary_key_value)
                 
-                db_model: SQLModel = session.get(table_model, primary_key_value)
+                db_model: CoreModel = session.get(table_model, primary_key_value)
                 if not db_model:
                     _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with {primary_key_name}: {primary_key_value}")
                     return None
