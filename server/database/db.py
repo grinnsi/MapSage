@@ -116,6 +116,12 @@ class SetupSqliteDatabase():
                     session.exec(text(trigger[0]))
                 session.exec(text(trigger[1]))
             session.commit()
+            
+        # Insert default data into database
+        functions = cls.get_default_db_data()
+        for function in functions:
+            data = function()
+            Database.insert_sqlite_db(data, do_nothing_on_conflict=True)
 
 # TODO How to include second db ?
 class Database():
