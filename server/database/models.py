@@ -1,7 +1,8 @@
 from typing import Optional
 import uuid as unique_id
 
-from sqlmodel import Field, SQLModel
+from sqlalchemy import Column, ForeignKey, String
+from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import declared_attr
 
 from server.utils.string_utils import camel_to_snake
@@ -44,6 +45,30 @@ class License(TableBase, table=True):
 
     pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON absolut nicht schön
     pre_rendered_json_alternate: Optional[str] = Field(default=None)                                   # JSON
+    
+    collections: list["CollectionTable"] = Relationship(back_populates="license")
+    
+class CollectionTable(TableBase, table=True):
+    # id with index for faster search when querying specific id
+    id: str = Field(index=True, unique=True)
+    layer_name: str
+    title: str
+    description: str
+    links: str                                                                                         # JSON
+    
+    license_title: Optional[str] = Field(sa_column=Column(String, ForeignKey(f"{License.__tablename__}.title", ondelete="SET NULL", onupdate="CASCADE"), nullable=True))
+    
+    bbox: Optional[str] = Field(default=None)                                                          # JSON
+    bbox_crs: Optional[str] = Field(default=None)
+    interval: Optional[str] = Field(default=None)                                                      # JSON
+
+    crs: str = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
+    storage_crs: str = Field(default="http://www.opengis.net/def/crs/OGC/1.3/CRS84")
+    storage_crs_coordinate_epoch: Optional[float] = Field(default=None)
+     
+    pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON
+    
+    license: Optional[License] = Relationship(back_populates="collections")
 
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)
