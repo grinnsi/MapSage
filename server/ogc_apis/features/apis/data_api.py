@@ -6,7 +6,7 @@ import pkgutil
 import markdown
 
 from server.ogc_apis.features.apis.data_api_base import BaseDataApi
-import implementation
+import server.ogc_apis.features.implementation as implementation
 
 from fastapi import (  # noqa: F401
     APIRouter,
