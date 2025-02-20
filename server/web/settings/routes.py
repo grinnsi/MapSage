@@ -15,7 +15,6 @@ def create_data_endpoints() -> Blueprint:
     @bp.route('/connections', methods=["GET", "POST", "DELETE"])
     def connections() -> Response:
         request_data = request.get_json() if request.data else ''
-        current_app.logger.debug(msg=f"Received following connections request: {request.method} {request_data}")
 
         try:
             if request.method == "GET":
