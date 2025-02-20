@@ -147,14 +147,15 @@ class Database():
             yield session
     
     @classmethod
-    def get_postgresql_connection_string(cls, data: dict) -> str:
-        return f"postgresql+psycopg://{data['role']}:{data['password']}@{data['host']}:{data['port']}/{data['database_name']}"
+    def get_postgresql_connection_string(cls, data: dict, include_psycopg: bool = False) -> str:
+        prefix = "postgresql+psycopg" if include_psycopg else "postgresql"
+        return f"{prefix}://{data['role']}:{data['password']}@{data['host']}:{data['port']}/{data['database_name']}"
 
     # Input connection parameters and returns if connection is successful
     @classmethod
     def test_pg_connection(cls, data: dict) -> bool:
         """Test the connection to a PostgreSQL database, using the connection parameters"""
-        pg_url = cls.get_postgresql_connection_string(data)
+        pg_url = cls.get_postgresql_connection_string(data, include_psycopg=True)
         pg_engine = create_engine(pg_url, echo=cls.debug_mode)
         
         connection_successful = False
@@ -189,8 +190,8 @@ class Database():
             
             _LOGGER.debug(msg=f"Result of select query: {result}")
             
-            if isinstance(result, list) and len(result) == 1:
-                result = result[0]
+            # if isinstance(result, list) and len(result) == 1:
+            #     result = result[0]
             
             return result
         

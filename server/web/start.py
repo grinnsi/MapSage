@@ -1,8 +1,9 @@
 import logging
 import os
-from flask import Flask, send_from_directory
+from flask import Flask, request, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from server.web.collections.collection_routes import create_collections_endpoints
 from server.web.settings.routes import create_data_endpoints
 from server.web.config import WebserverConfig
 from server.database.db import Database
@@ -31,6 +32,12 @@ def create_app(config: WebserverConfig = None) -> Flask:
     except OSError:
         app.logger.critical("Error while creating Instance-Directory", exc_info=OSError)
         raise
+    
+    # Add logging middleware if app in debug mode
+    if config.DEBUG:
+        @app.before_request
+        def log_request_info():
+            app.logger.debug(f"Flask Request: {request.url} {request.method} {request.get_json() if request.data else ''}")
 
     # Catch /dashboard/... requests; Send index.html, and necessary files
     @app.route('/' if os.getenv("APP_DISABLE_API", "False") == "False" else '/dashboard/')
@@ -43,6 +50,7 @@ def create_app(config: WebserverConfig = None) -> Flask:
         return send_from_directory(app.static_folder, path)
     
     app.register_blueprint(create_data_endpoints())
+    app.register_blueprint(create_collections_endpoints())
     
     return app
 

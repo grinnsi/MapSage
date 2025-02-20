@@ -32,6 +32,8 @@ class Connection(TableBase, table=True):
     password: str
     database_name: str
     
+    collections: list["CollectionTable"] = Relationship(back_populates="connection")
+    
 # class Namespace(TableBase, table=True):
 #     name: str
 #     url: str
@@ -65,10 +67,13 @@ class CollectionTable(TableBase, table=True):
     crs: str = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
     storage_crs: str = Field(default="http://www.opengis.net/def/crs/OGC/1.3/CRS84")
     storage_crs_coordinate_epoch: Optional[float] = Field(default=None)
-     
+    
+    connection_uuid: unique_id.UUID = Field(sa_column=Column(String, ForeignKey(f"{Connection.__tablename__}.uuid", ondelete="CASCADE", onupdate="CASCADE")))
+    
     pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON
     
     license: Optional[License] = Relationship(back_populates="collections")
+    connection: Connection = Relationship(back_populates="collections")
 
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)
