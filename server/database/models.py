@@ -4,6 +4,7 @@ import uuid as unique_id
 from sqlalchemy import Column, ForeignKey, String
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import declared_attr
+from sqlalchemy.dialects.postgresql import UUID as pg_uuid
 
 from server.utils.string_utils import camel_to_snake
 
@@ -55,20 +56,20 @@ class CollectionTable(TableBase, table=True):
     id: str = Field(index=True, unique=True)
     layer_name: str
     title: str
-    description: str
-    links: str                                                                                         # JSON
+    description: str = Field(default="")
+    links_json: str                                                                                         # JSON
     
-    license_title: Optional[str] = Field(sa_column=Column(String, ForeignKey(f"{License.__tablename__}.title", ondelete="SET NULL", onupdate="CASCADE"), nullable=True))
+    license_title: Optional[str] = Field(default=None, sa_column=Column(String, ForeignKey(f"{License.__tablename__}.title", ondelete="SET NULL", onupdate="CASCADE"), nullable=True))
     
-    bbox: Optional[str] = Field(default=None)                                                          # JSON
+    bbox_json: Optional[str] = Field(default=None)                                                          # JSON
     bbox_crs: Optional[str] = Field(default=None)
-    interval: Optional[str] = Field(default=None)                                                      # JSON
+    interval_json: Optional[str] = Field(default=None)                                                      # JSON
 
-    crs: str = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
+    crs_json: str = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
     storage_crs: str = Field(default="http://www.opengis.net/def/crs/OGC/1.3/CRS84")
     storage_crs_coordinate_epoch: Optional[float] = Field(default=None)
     
-    connection_uuid: unique_id.UUID = Field(sa_column=Column(String, ForeignKey(f"{Connection.__tablename__}.uuid", ondelete="CASCADE", onupdate="CASCADE")))
+    connection_uuid: unique_id.UUID = Field(sa_column=Column(pg_uuid(as_uuid=True), ForeignKey(f"{Connection.__tablename__}.uuid", ondelete="CASCADE", onupdate="CASCADE"), nullable=False))
     
     pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON
     
