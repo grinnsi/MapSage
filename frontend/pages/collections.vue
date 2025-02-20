@@ -47,8 +47,10 @@
       >
         <ElTableColumn prop="name" label="Name" />
         <ElTableColumn>
-          <template #default="scope">
-            <ElButton type="primary" @click="addCollections(scope.row.uuid)">Hinzufügen</ElButton>
+          <template #default="scope" >
+            <div style="display: flex; justify-content: end;">
+              <ElButton type="primary" @click="addCollections(scope.row.uuid)">Hinzufügen</ElButton>
+            </div>
           </template>
         </ElTableColumn>
       </ElTable>
