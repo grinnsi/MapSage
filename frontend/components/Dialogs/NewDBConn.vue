@@ -112,7 +112,7 @@ async function saveConnection() {
       method: 'POST',
       body: form
     });
-    if (!response.ok) throw new Error("Response not ok");
+    // if (!response.ok) throw new Error("Response not ok");
 
     ElMessage({
       type: 'success',

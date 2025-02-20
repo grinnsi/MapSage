@@ -82,14 +82,13 @@ function handlePageChange(newPage: number) {
 
 async function showConnectionsDialog() {
   try {
-    const respone = await useBaseUrlFetchRaw('/data/connections', {
+    const response: any = await useBaseUrlFetchRaw('/data/connections', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    if (!respone.ok) throw new Error('Failed to fetch connections');
-    connectionsTableData.value = JSON.parse(await respone.json());
+    connectionsTableData.value = response;
   } catch (error) {
     console.error(error);
     useServerErrorNotification();

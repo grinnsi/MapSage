@@ -100,7 +100,7 @@ async function deleteConnection(uuid: string) {
       },
       body: JSON.stringify({ uuid }),
     });
-    if (!response.ok) throw new Error('Antwort des Löschens nicht verständlich');
+    // if (!response.ok) throw new Error('Antwort des Löschens nicht verständlich');
     ElMessage({
       type: 'success',
       message: 'Verbindung erfolgreich gelöscht'
