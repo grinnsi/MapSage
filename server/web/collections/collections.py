@@ -11,8 +11,10 @@ def create_collection():
     pass
 
 def create_collections(form: dict):
-    connection: Connection = Database.select_sqlite_db(table_model=Connection, uuid=form["uuid"])
-    connection_string = Database.get_postgresql_connection_string(connection.model_dump(by_alias=True, exclude_unset=True))
+    connection: Connection = Database.select_sqlite_db(table_model=Connection, primary_key_value=form["uuid"])
+    connection_string = Database.get_postgresql_connection_string(connection.model_dump())
+    
+    gdal.UseExceptions()
     
     with gdal.OpenEx(connection_string) as dataset:
         print(dataset.GetLayerCount())
