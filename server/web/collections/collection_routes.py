@@ -17,8 +17,7 @@ def create_collections_endpoints() -> Blueprint:
 
         try:
             if request.method == "GET":
-                request_data = {"uuid":"a93c36386fe645d2aae9950fb1fc7b87"}
-                create_collections(request_data)
+                pass
             
             if request.method == "POST":
                 if request_data is None:
