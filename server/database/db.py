@@ -190,8 +190,8 @@ class Database():
             
             _LOGGER.debug(msg=f"Result of select query: {result}")
             
-            if isinstance(result, list) and len(result) == 1:
-                result = result[0]
+            # if isinstance(result, list) and len(result) == 1:
+            #     result = result[0]
             
             return result
         
