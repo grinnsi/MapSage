@@ -46,8 +46,8 @@ class License(TableBase, table=True):
     alternative_url: Optional[str] = Field(default=None)
     alternative_type: Optional[str] = Field(default=None)
 
-    pre_rendered_json: Optional[bytes] = Field(default=None)                                                  # JSON absolut nicht schön
-    pre_rendered_json_alternate: Optional[bytes] = Field(default=None)                                        # JSON
+    pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON absolut nicht schön
+    pre_rendered_json_alternate: Optional[str] = Field(default=None)                                   # JSON
     
     collections: list["CollectionTable"] = Relationship(back_populates="license")
     
@@ -57,21 +57,21 @@ class CollectionTable(TableBase, table=True):
     layer_name: str
     title: str
     description: str = Field(default="")
-    links_json: bytes                                                                                         # JSON
+    links_json: str                                                                                         # JSON
     
     license_title: Optional[str] = Field(default=None, sa_column=Column(String, ForeignKey(f"{License.__tablename__}.title", ondelete="SET NULL", onupdate="CASCADE"), nullable=True))
     
-    bbox_json: Optional[bytes] = Field(default=None)                                                          # JSON
+    bbox_json: Optional[str] = Field(default=None)                                                          # JSON
     bbox_crs: Optional[str] = Field(default=None)
-    interval_json: Optional[bytes] = Field(default=None)                                                      # JSON
+    interval_json: Optional[str] = Field(default=None)                                                      # JSON
 
-    crs_json: bytes = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
+    crs_json: str = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
     storage_crs: str = Field(default="http://www.opengis.net/def/crs/OGC/1.3/CRS84")
     storage_crs_coordinate_epoch: Optional[float] = Field(default=None)
     
     connection_uuid: unique_id.UUID = Field(sa_column=Column(pg_uuid(as_uuid=True), ForeignKey(f"{Connection.__tablename__}.uuid", ondelete="CASCADE", onupdate="CASCADE"), nullable=False))
     
-    pre_rendered_json: Optional[bytes] = Field(default=None)                                                  # JSON
+    pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON
     
     license: Optional[License] = Relationship(back_populates="collections")
     connection: Connection = Relationship(back_populates="collections")
