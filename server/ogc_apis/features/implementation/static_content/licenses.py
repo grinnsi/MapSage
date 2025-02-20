@@ -1,4 +1,5 @@
 from server.database.models import License
+from server.ogc_apis.features.implementation.static_content.pre_render import generate_link
 
 
 def get_default_licenses() -> list[License]:
@@ -57,24 +58,20 @@ def get_default_licenses() -> list[License]:
     licenses = [License(**license) for license in default_licenses]
     
     for license in licenses:
-        json, json_alt = generate_license_json(license)
-        license.pre_rendered_json = json
-        license.pre_rendered_json_alternate = json_alt
+        dict = {
+            "url" : license.url,
+            "type" : license.type,
+            "title" : license.title,
+            "rel": "license"
+        }
+        dict_alt = {
+            "url" : license.alternative_url,
+            "type" : license.alternative_type,
+            "title" : license.title,
+            "rel": "license"
+        }
+        
+        license.pre_rendered_json = generate_link(dict)
+        license.pre_rendered_json_alternate = generate_link(dict_alt)
     
     return licenses
-
-def generate_license_json(license: License) -> tuple[str]:
-    json = f"""{{
-        "href": "{license.url}",
-        "rel": "license",
-        "type": "{license.type}",
-        "title": "{license.title}"
-    }}"""
-    
-    json_alt = f"""{{
-        "href": "{license.alternative_url}",
-        "rel": "license",
-        "type": "{license.alternative_type}",
-        "title": "{license.title}"
-    }}"""
-    return json, json_alt
