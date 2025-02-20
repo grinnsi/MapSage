@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, request, Response, current_app
 
-from server.web.collections.collections import create_collections
+from server.web.collections.collections import create_collections, get_all_collections
 
 def create_collections_endpoints() -> Blueprint:
     bp_url_prefix = "/data/"
@@ -17,12 +17,13 @@ def create_collections_endpoints() -> Blueprint:
 
         try:
             if request.method == "GET":
-                pass
+                return get_all_collections()
             
             if request.method == "POST":
                 if request_data is None:
                     return Response(status=400, response="Bad request")
-                create_collections(request_data)
+                
+                return create_collections(request_data)
             
         except Exception as e:
             current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
