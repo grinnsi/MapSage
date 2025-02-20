@@ -39,6 +39,7 @@
       :dialog-type="DialogType.Blank"
       :dialog-style="StyleType.Normal"
     >
+      <h3 style="color: black;">Wählen Sie die gewünschte Datenquelle aus:</h3>
       <ElTable
         :data="connectionsTableData"
         stripe
@@ -62,7 +63,7 @@ definePageMeta({
 // FIXME: The client (Nuxt) fetches data from the server with an offset, so the client isnt overloaded (Server handles pagination)
 const { status, data, refresh } = useBaseUrlFetch<Collection[]>('/data/collections');
 
-const collectionsTableData = ref<Collection[] | null>([]);
+const collectionsTableData = ref<Collection[] | undefined>([]);
 const connectionsTableData = ref<Connection[]>([]);
 const pageSize = ref(20);
 const dialogRef = ref<any>(null);
