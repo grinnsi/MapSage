@@ -140,5 +140,24 @@ async function addCollections(uuid: string) {
 </script>
 
 <style scoped>
+.table-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 100%;
+}
 
+.collection-link {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: none;
+  display: block;
+  max-width: 100%;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+}
 </style>
