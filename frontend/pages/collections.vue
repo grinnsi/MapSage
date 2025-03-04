@@ -3,13 +3,12 @@
     <template #header-right>
       <TemplateButton tooltip="Neue Kollektion" iconName="flowbite:plus-outline" @click="showConnectionsDialog" />
     </template>
+    <div class="table-container">
     <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
-      <div class="saved-collections">
-        <!-- TODO: Use expanding rows or all informations and a edit button -->
+        <!-- TODO: Use expanding rows or all informations and an edit button -->
         <ElTable
           :data="collectionsTableData"
           stripe
-          style="width: 100%"
         >
           <ElTableColumn prop="title" label="Titel" />
           <ElTableColumn prop="id" label="ID" />
@@ -21,6 +20,10 @@
             </template>
           </ElTableColumn>
         </ElTable>
+      </TemplateFetchStatus>
+    </div>
+    <template #footer>
+      <div class="pagination-container">
         <ElPagination 
           layout="prev, pager, next" 
           :page-size="pageSize"
@@ -29,7 +32,7 @@
           @current-change="handlePageChange"  
         />
       </div>
-    </TemplateFetchStatus>
+    </template>
   </TemplateSection>
   <ClientOnly>
     <!-- FIXME: Testdialog, will be removed, once adding of collections properly implemented -->
