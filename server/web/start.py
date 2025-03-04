@@ -4,7 +4,7 @@ from flask import Flask, request, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from server.web.collections.collection_routes import create_collections_endpoints
-from server.web.settings.routes import create_data_endpoints
+from server.web.settings.routes import create_settings_endpoints
 from server.web.config import WebserverConfig
 from server.database.db import Database
 
@@ -49,8 +49,10 @@ def create_app(config: WebserverConfig = None) -> Flask:
 
         return send_from_directory(app.static_folder, path)
     
-    app.register_blueprint(create_data_endpoints())
-    app.register_blueprint(create_collections_endpoints())
+    main_data_endpint = "/data"
+    
+    app.register_blueprint(create_settings_endpoints(main_data_endpint))
+    app.register_blueprint(create_collections_endpoints(main_data_endpint))
     
     return app
 
