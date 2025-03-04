@@ -3,15 +3,15 @@ from flask import Blueprint, request, Response, current_app
 
 from server.web.collections.collections import create_collections, get_all_collections
 
-def create_collections_endpoints() -> Blueprint:
-    bp_url_prefix = "/data/"
+def create_collections_endpoints(main_endpoint: str) -> Blueprint:
+    bp_url_prefix = main_endpoint + "/collections"
     # If API is disabled, add /dashboard to the URL prefix, so that the endpoint is always /dashboard/data/...
     if os.getenv("APP_DISABLE_API", "False") == "True":
         bp_url_prefix = "/" + os.getenv("DASHBOARD_URL", "dashboard") + bp_url_prefix
 
     bp = Blueprint("collections_endpoints", __name__, url_prefix=bp_url_prefix)
     
-    @bp.route('/collections', methods=["GET", "POST"])
+    @bp.route('/', methods=["GET", "POST"])
     def collections() -> Response:
         request_data = request.get_json() if request.data else None
 
