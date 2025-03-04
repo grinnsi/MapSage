@@ -16,7 +16,14 @@
           <ElTableColumn prop="connection_name" label="Verbindung" />
           <ElTableColumn prop="url" label="URL" >
             <template #default="scope">
-              <a :href="scope.row.url" target="_blank">{{ scope.row.url }}</a>
+              <ElLink 
+                :href="scope.row.url" 
+                target="_blank" 
+                :underline="false"
+                class="collection-link"
+              >
+                {{ scope.row.url }}
+              </ElLink>
             </template>
           </ElTableColumn>
         </ElTable>
