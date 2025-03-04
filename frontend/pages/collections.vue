@@ -7,7 +7,7 @@
       <TemplateButton tooltip="Neue Kollektion" iconName="flowbite:plus-outline" @click="showConnectionsDialog" />
     </template>
     <div class="table-container">
-    <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
+      <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
         <!-- TODO: Use expanding rows or all informations and an edit button -->
         <ElTable
           :data="collectionsTableData"
