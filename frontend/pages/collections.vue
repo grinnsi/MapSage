@@ -100,7 +100,7 @@ function handlePageChange(newPage: number) {
 
 async function showConnectionsDialog() {
   try {
-    const response: any = await useBaseUrlFetchRaw('/data/connections', {
+    const response: any = await useBaseUrlFetchRaw('/data/settings/connections', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'

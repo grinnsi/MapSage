@@ -78,7 +78,7 @@ definePageMeta({
   name: "Einstellungen"
 });
 
-const { status, data, refresh } = await useBaseUrlFetch<Connection[]>('/data/connections', {
+const { status, data, refresh } = await useBaseUrlFetch<Connection[]>('/data/settings/connections', {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json'
@@ -94,7 +94,7 @@ async function deleteConnection(uuid: string) {
   confirmationDialogRef.value!.toggleVisibility();
 
   try {
-    const response = await useBaseUrlFetchRaw('/data/connections', {
+    const response = await useBaseUrlFetchRaw('/data/settings/connections', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'
