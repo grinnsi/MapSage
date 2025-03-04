@@ -34,12 +34,12 @@ defineProps({
 }
 
 .section-content {
-  display: block;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-footer {
-  display: block;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
 }
 </style>
