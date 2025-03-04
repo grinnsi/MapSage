@@ -72,13 +72,15 @@ const dialogRef = ref<any>(null);
 
 watchEffect(() => {
   if (status.value === 'success' && data.value) {
-    collectionsTableData.value = data.value.slice(0, pageSize.value);
+    handlePageChange(1);
   }
 });
 
 function handlePageChange(newPage: number) {
   if (data.value) {
     collectionsTableData.value = data.value.slice((newPage - 1) * pageSize.value, newPage * pageSize.value);
+  } else {
+    throw new Error('Collection data is not available');
   }
 }
 
