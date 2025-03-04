@@ -2,6 +2,7 @@
   <TemplateSection section-title="Allgemeine Einstellungen:">
     <FormsGeneralOptions />
   </TemplateSection>
+  <ElDivider style="margin-bottom: calc(24px - 1em);"/>
   <TemplateSection section-title="Gespeicherte Verbindungen:">
     <template #header-right>
       <TemplateButton tooltip="Neue Datenbankverbindung" iconName="flowbite:plus-outline" @click="useEmitter().value.emit('show-new-connection-dialog')"/>
