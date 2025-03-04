@@ -1,15 +1,17 @@
 <template>
-  <TemplateSection section-title="Gespeicherte Kollektionen">
+  <TemplateSection 
+    section-title="Gespeicherte Kollektionen" 
+    fill-space
+  >
     <template #header-right>
       <TemplateButton tooltip="Neue Kollektion" iconName="flowbite:plus-outline" @click="showConnectionsDialog" />
     </template>
-    <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
-      <div class="saved-collections">
-        <!-- TODO: Use expanding rows or all informations and a edit button -->
+    <div class="table-container">
+      <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
+        <!-- TODO: Use expanding rows or all informations and an edit button -->
         <ElTable
           :data="collectionsTableData"
           stripe
-          style="width: 100%"
         >
           <ElTableColumn prop="title" label="Titel" />
           <ElTableColumn prop="id" label="ID" />
@@ -17,18 +19,30 @@
           <ElTableColumn prop="connection_name" label="Verbindung" />
           <ElTableColumn prop="url" label="URL" >
             <template #default="scope">
-              <a :href="scope.row.url" target="_blank">{{ scope.row.url }}</a>
+              <ElLink 
+                :href="scope.row.url" 
+                target="_blank" 
+                :underline="false"
+                class="collection-link"
+              >
+                {{ scope.row.url }}
+              </ElLink>
             </template>
           </ElTableColumn>
         </ElTable>
+      </TemplateFetchStatus>
+    </div>
+    <template #footer>
+      <div class="pagination-container">
         <ElPagination 
           layout="prev, pager, next" 
           :page-size="pageSize"
-          :total="Math.ceil((data ? data.length/pageSize : 0))"  
+          :total="data?.length"
+          :hide-on-single-page="true"
           @current-change="handlePageChange"  
         />
       </div>
-    </TemplateFetchStatus>
+    </template>
   </TemplateSection>
   <ClientOnly>
     <!-- FIXME: Testdialog, will be removed, once adding of collections properly implemented -->
@@ -67,24 +81,26 @@ const { status, data, refresh } = useBaseUrlFetch<Collection[]>('/data/collectio
 
 const collectionsTableData = ref<Collection[] | undefined>([]);
 const connectionsTableData = ref<Connection[]>([]);
-const pageSize = ref(20);
+const pageSize = ref(10);
 const dialogRef = ref<any>(null);
 
 watchEffect(() => {
   if (status.value === 'success' && data.value) {
-    collectionsTableData.value = data.value.slice(0, pageSize.value);
+    handlePageChange(1);
   }
 });
 
 function handlePageChange(newPage: number) {
   if (data.value) {
     collectionsTableData.value = data.value.slice((newPage - 1) * pageSize.value, newPage * pageSize.value);
+  } else {
+    throw new Error('Collection data is not available');
   }
 }
 
 async function showConnectionsDialog() {
   try {
-    const response: any = await useBaseUrlFetchRaw('/data/connections', {
+    const response: any = await useBaseUrlFetchRaw('/data/settings/connections', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -124,5 +140,24 @@ async function addCollections(uuid: string) {
 </script>
 
 <style scoped>
+.table-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 100%;
+}
 
+.collection-link {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: none;
+  display: block;
+  max-width: 100%;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+}
 </style>

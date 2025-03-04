@@ -9,6 +9,16 @@
   padding-right: calc($main-content-padding - $main-content-padding-right);
 }
 
+.el-scrollbar .is-horizontal {
+  visibility: hidden;
+}
+
+.el-scrollbar__view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .el-card__body {
   padding: 10px;
 }
@@ -19,8 +29,4 @@
 
 .el-table th.column-header {
   color: var(--el-color-primary);
-}
-
-.el-scrollbar .is-horizontal {
-  visibility: hidden;
 }
