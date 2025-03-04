@@ -1,5 +1,8 @@
 <template>
-  <TemplateSection section-title="Gespeicherte Kollektionen">
+  <TemplateSection 
+    section-title="Gespeicherte Kollektionen" 
+    fill-space
+  >
     <template #header-right>
       <TemplateButton tooltip="Neue Kollektion" iconName="flowbite:plus-outline" @click="showConnectionsDialog" />
     </template>
