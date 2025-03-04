@@ -24,7 +24,8 @@
         <ElPagination 
           layout="prev, pager, next" 
           :page-size="pageSize"
-          :total="Math.ceil((data ? data.length/pageSize : 0))"  
+          :total="data?.length"
+          :hide-on-single-page="true"
           @current-change="handlePageChange"  
         />
       </div>
@@ -67,7 +68,7 @@ const { status, data, refresh } = useBaseUrlFetch<Collection[]>('/data/collectio
 
 const collectionsTableData = ref<Collection[] | undefined>([]);
 const connectionsTableData = ref<Connection[]>([]);
-const pageSize = ref(20);
+const pageSize = ref(10);
 const dialogRef = ref<any>(null);
 
 watchEffect(() => {
