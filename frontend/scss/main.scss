@@ -1,7 +1,16 @@
 @use "./variables.scss" as *;
 
+.body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
 .base-layout {
-  margin: $top-space $side-space;
+  margin-right: $side-space;
+  margin-left: $side-space;
   height: calc(100% - 2*$top-space);
 }
 
@@ -10,7 +19,7 @@
   border-radius: $layout-border-radius;
   border: $border-of-content;
   margin-left: 20px;
-  max-height: 86vh;
+  height: 100%;
   padding: $main-content-padding;
   padding-right: $main-content-padding-right;
 }
