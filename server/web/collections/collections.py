@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 from uuid import UUID
+import orjson
 from sqlmodel import select, text
 from flask import Response, request, current_app
 from server.database.db import Database
@@ -68,14 +69,15 @@ def create_collections(form: dict):
     connection: Connection = Database.select_sqlite_db(table_model=Connection, primary_key_value=form["uuid"])
     connection_string = Database.get_postgresql_connection_string(connection.model_dump())
     
-    # TODO: Send succesful and failed collections back to the user to show which collections were created and which failed
-    successful = []
+    successful_layers = []
+    failed_layers = []
     
     gdal.UseExceptions()
     
     dataset: gdal.Dataset
     with gdal.OpenEx(connection_string) as dataset:
-        for i in range (dataset.GetLayerCount()):
+        layer_count = dataset.GetLayerCount()
+        for i in range(layer_count):
             layer: ogr.Layer = dataset.GetLayerByIndex(i)
             layer_name = layer.GetName()
             
@@ -86,14 +88,14 @@ def create_collections(form: dict):
             
             try:
                 create_collection(data, connection_string, dataset)
-                successful.append(True)
+                successful_layers.append(layer_name)
             except Exception as e:
                 current_app.logger.error(f"Error creating collection for layer {layer_name}: {e}")
-                successful.append(False)
+                failed_layers.append(layer_name)
     
-    if all(successful):
-        return Response(status=201, response="Collections created")
-    elif all(successful) is False:
-        return Response(status=500, response="Error creating collections")
+    if len(successful_layers) == layer_count:
+        return Response(status=201, response=orjson.dumps({"message": "All collections created", "successful_layers": successful_layers}))
+    elif len(failed_layers) == layer_count:
+        return Response(status=500, response=orjson.dumps({"message": "All collections failed", "failed_layers": failed_layers}))
     else:
-        return Response(status=207, response="Some collections created")
+        return Response(status=207, response=orjson.dumps({"message": "Some collections created", "successful_layers": successful_layers, "failed_layers": failed_layers}))
