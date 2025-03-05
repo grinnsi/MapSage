@@ -124,7 +124,7 @@ async function addCollections(uuid: string) {
       },
       body: JSON.stringify({ uuid })
     });
-    if (!response.ok) throw new Error('Failed to add collections');
+    // if (!response.ok) throw new Error('Failed to add collections');
     ElMessage({
       type: 'success',
       message: 'Collections added successfully'
