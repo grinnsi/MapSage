@@ -38,10 +38,7 @@ def get_all_collections():
             "storage_crs_coordinate_epoch": collection.storage_crs_coordinate_epoch,
             "connection_name": collection.connection.name,
             "url": f"{app_url_root}features/collections/{collection.id}",
-        } for collection in collections]
-
-        print(json_data)
-        
+        } for collection in collections]      
         
         return json_data
 
@@ -81,16 +78,22 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     
     base_id = string_to_kebab(layer_name.split(".", 1)[-1])
     
-    # FIXME: This is a very bad way to generate unique ids
-    for i in range(0, 100):
-        id = base_id if i == 0 else f"{base_id}-{i}"
-        result = Database.select_sqlite_db(text(f" id FROM {CollectionTable.__tablename__} WHERE \"id\" = '{id}'"))
-        if result is None or len(result) == 0:
-            new_collection.id = id
-            break
+    result = Database.select_sqlite_db(statement=text(f"SELECT id FROM {CollectionTable.__tablename__} WHERE \"id\" = '{base_id}'"))
+    if result is None or len(result) == 0:
+        new_collection.id = base_id
+    else:
+        query = f"""
+            SELECT MAX(CAST(SUBSTR(id, LENGTH('{base_id}') + 2) AS INTEGER)) 
+            FROM {CollectionTable.__tablename__}
+            WHERE id LIKE '{base_id}' || '-%' AND SUBSTR(id, LENGTH('{base_id}') + 2) GLOB '[0-9]*'
+        """
+        result = Database.select_sqlite_db(statement=text(query))[0][0]
         
-        if i == 99:
-            raise ValueError("Could not find a unique id for the collection")
+        next_suffix = result + 1 if result is not None else 1
+        if next_suffix > 99:
+            raise ValueError(f"Too many collections with the same base id {base_id}")
+        
+        new_collection.id = f"{base_id}-{next_suffix:02d}"
     
     new_collection.layer_name = layer_name
     collection_title = base_id.replace("-", " ")
