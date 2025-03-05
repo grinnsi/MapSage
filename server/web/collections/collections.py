@@ -6,12 +6,10 @@ from flask import Response, request, current_app
 from server.database.db import Database
 from server.database.models import CollectionTable, Connection
 
-from osgeo import gdal, ogr, osr
+from osgeo import gdal, ogr
 
 from server.ogc_apis.features.implementation.collection_impl import generate_collection_table_object
-from server.ogc_apis.features.implementation.static_content.pre_render import generate_link
-from server.utils.crs_identifier import get_uri_of_spatial_ref
-from server.utils.string_utils import string_to_kebab
+from server.web.flask_utils import get_app_url_root
 
 # FIXME: Only return a page worth of collections at a time (handle pagination)
 def get_all_collections():
@@ -22,7 +20,7 @@ def get_all_collections():
         if not collections:
             collections = []
         
-        app_url_root = request.url_root.removesuffix(os.getenv("DASHBOARD_URL", "dashboard") + "/")
+        app_url_root = get_app_url_root()
         
         json_data = [{
             "uuid": collection.uuid,
@@ -51,11 +49,13 @@ def create_collection(form: dict, connection_string: str = None, dataset: gdal.D
     if count_existing_collection is not None and count_existing_collection[0] > 0:
         raise ValueError(f"Collection with layer name {form['layer_name']} already exists for this connection.")
     
+    app_url_root = get_app_url_root()
+    
     if dataset is None:
         with gdal.OpenEx(connection_string) as dataset:
-            new_collection = generate_collection_table_object(form["layer_name"], form["uuid"], dataset)
+            new_collection = generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
     else:
-        new_collection = generate_collection_table_object(form["layer_name"], form["uuid"], dataset)
+        new_collection = generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
     
     new_collection = Database.insert_sqlite_db(new_collection)
     
