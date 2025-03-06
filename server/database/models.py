@@ -137,9 +137,9 @@ class CollectionTable(TableBase, table=True):
     
     license_title: Optional[str] = Field(default=None, sa_column=Column(String, ForeignKey(f"{License.__tablename__}.title", ondelete="SET NULL", onupdate="CASCADE"), nullable=True))
     
-    bbox_json: Optional[str] = Field(default=None)                                                          # JSON
-    bbox_crs: Optional[str] = Field(default=None)
-    interval_json: Optional[str] = Field(default=None)                                                      # JSON
+    extent_json: Optional[str] = Field(default=None)                                                        # JSON
+    spatial_extent_crs: Optional[str] = Field(default=None)
+    temporal_extent_trs: Optional[str] = Field(default=None)                                                       
 
     crs_json: str = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
     storage_crs: str = Field(default="http://www.opengis.net/def/crs/OGC/1.3/CRS84")
@@ -147,7 +147,7 @@ class CollectionTable(TableBase, table=True):
     
     connection_uuid: unique_id.UUID = Field(sa_column=Column(pg_uuid(as_uuid=True), ForeignKey(f"{Connection.__tablename__}.uuid", ondelete="CASCADE", onupdate="CASCADE"), nullable=False))
     
-    pre_rendered_json: Optional[str] = Field(default=None)                                             # JSON
+    pre_rendered_json: Optional[str] = Field(default=None)                                                  # JSON
     
     license: Optional[License] = Relationship(back_populates="collections")
     connection: Connection = Relationship(back_populates="collections")
