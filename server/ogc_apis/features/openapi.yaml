@@ -1772,6 +1772,7 @@ components:
             additional enum values.
           enum:
           - http://www.opengis.net/def/crs/OGC/1.3/CRS84
+          - http://www.opengis.net/def/crs/OGC/0/CRS84h
           title: crs
           type: string
       title: extent_spatial
