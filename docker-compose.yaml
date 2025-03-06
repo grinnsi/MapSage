@@ -31,6 +31,11 @@ services:
       - ./data:${DOCKER_CONTAINER_WORKDIR}/data
       - ./server:${DOCKER_CONTAINER_WORKDIR}/server
       - nuxt-generated-html:${DOCKER_CONTAINER_WORKDIR}/server/web/static
+    logging:
+      driver: "local"
+      options:
+        max-size: "2m"
+        max-file: "2"
 
   map-sage-prod:
     build:
@@ -62,6 +67,11 @@ services:
     working_dir: ${DOCKER_CONTAINER_WORKDIR}
     volumes:
       - ./data:${DOCKER_CONTAINER_WORKDIR}/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
   
   nginx:
     build:
