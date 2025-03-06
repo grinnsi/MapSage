@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Self
 import uuid as unique_id
 
 from sqlalchemy import Column, ForeignKey, String
@@ -6,6 +6,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID as pg_uuid
 
+from server.ogc_apis.features.implementation import pre_render
 from server.utils.string_utils import camel_to_snake
 
 # All custom models should inherit from CoreModel, so they have snake_case tablenames in the sqlite db
@@ -50,6 +51,81 @@ class License(TableBase, table=True):
     pre_rendered_json_alternate: Optional[str] = Field(default=None)                                   # JSON
     
     collections: list["CollectionTable"] = Relationship(back_populates="license")
+    
+    @classmethod
+    def get_default_licenses(cls) -> list[Self]:
+        default_licenses = [
+            {
+            "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "type": "text/html",
+                "alternative_url": "https://creativecommons.org/publicdomain/zero/1.0/rdf",
+                "alternative_type": "application/rdf+xml",
+                "title": "CC0-1.0",
+            },
+            {
+                "url": "https://creativecommons.org/licenses/by/4.0/",
+                "type": "text/html",
+                "alternative_url": "https://creativecommons.org/licenses/by/4.0/rdf",
+                "alternative_type": "application/rdf+xml",
+                "title": "CC-BY-4.0",
+            },
+            {
+                "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+                "type": "text/html",
+                "alternative_url": "https://creativecommons.org/licenses/by-sa/4.0/rdf",
+                "alternative_type": "application/rdf+xml",
+                "title": "CC-BY-SA-4.0",
+            },
+            {
+                "url": "https://creativecommons.org/licenses/by-nc/4.0/",
+                "type": "text/html",
+                "alternative_url": "https://creativecommons.org/licenses/by-nc/4.0/rdf",
+                "alternative_type": "application/rdf+xml",
+                "title": "CC-BY-NC-4.0",
+            },
+            {
+                "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+                "type": "text/html",
+                "alternative_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/rdf",
+                "alternative_type": "application/rdf+xml",
+                "title": "CC-BY-NC-SA-4.0",
+            },
+            {
+                "url": "https://creativecommons.org/licenses/by-nd/4.0/",
+                "type": "text/html",
+                "alternative_url": "https://creativecommons.org/licenses/by-nd/4.0/rdf",
+                "alternative_type": "application/rdf+xml",
+                "title": "CC-BY-ND-4.0",
+            },
+            {
+                "url": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+                "type": "text/html",
+                "alternative_url": "https://creativecommons.org/licenses/by-nc-nd/4.0/rdf",
+                "alternative_type": "application/rdf+xml",
+                "title": "CC-BY-NC-ND-4.0",
+            }
+        ]
+        
+        licenses = [License(**license) for license in default_licenses]
+        
+        for license in licenses:
+            dict = {
+                "url" : license.url,
+                "type" : license.type,
+                "title" : license.title,
+                "rel": "license"
+            }
+            dict_alt = {
+                "url" : license.alternative_url,
+                "type" : license.alternative_type,
+                "title" : license.title,
+                "rel": "license"
+            }
+            
+            license.pre_rendered_json = pre_render.generate_link(dict)
+            license.pre_rendered_json_alternate = pre_render.generate_link(dict_alt)
+            
+        return licenses
     
 class CollectionTable(TableBase, table=True):
     # id with index for faster search when querying specific id

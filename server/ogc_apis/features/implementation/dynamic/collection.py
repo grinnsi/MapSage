@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlmodel import text
 from server.database.db import Database
 from server.database.models import CollectionTable
-from server.ogc_apis.features.implementation.static.pre_render import generate_link
+from server.ogc_apis.features.implementation import pre_render
 from server.utils.crs_identifier import get_uri_of_spatial_ref
 import orjson, math
 
@@ -86,6 +86,6 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
         "title": collection_title
     }
     
-    new_collection.links_json = generate_link([json_link_data, html_link_data])
+    new_collection.links_json = pre_render.generate_links([json_link_data, html_link_data])
     
     return new_collection

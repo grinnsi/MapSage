@@ -9,7 +9,7 @@ from server.database.models import CollectionTable, Connection
 
 from osgeo import gdal, ogr
 
-from server.ogc_apis.features.implementation.collection_impl import generate_collection_table_object
+from server.ogc_apis.features.implementation.dynamic import collection_impl
 from server.web.flask_utils import get_app_url_root
 
 # FIXME: Only return a page worth of collections at a time (handle pagination)
@@ -54,9 +54,9 @@ def create_collection(form: dict, connection_string: str = None, dataset: gdal.D
     
     if dataset is None:
         with gdal.OpenEx(connection_string) as dataset:
-            new_collection = generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
+            new_collection = collection_impl.generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
     else:
-        new_collection = generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
+        new_collection = collection_impl.generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
     
     new_collection = Database.insert_sqlite_db(new_collection)
     

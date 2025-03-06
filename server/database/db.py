@@ -6,11 +6,10 @@ from uuid import UUID
 
 from sqlalchemy import Engine, text, exc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlmodel import SQLModel, Session, create_engine, delete, select
+from sqlmodel import SQLModel, Session, create_engine, select
 
-from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase
+from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase, License
 import server.database.sql_triggers as sql_triggers
-from server.ogc_apis.features.implementation.static.licenses import get_default_licenses
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -45,7 +44,7 @@ class SetupSqliteDatabase():
     @classmethod
     def get_default_db_data(cls) -> list[Callable]:
         return [
-            get_default_licenses,
+            License.get_default_licenses,
         ]
 
     @classmethod
