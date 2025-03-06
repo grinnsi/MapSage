@@ -59,18 +59,18 @@ def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spat
     
     transformation: osr.CoordinateTransformation = osr.CreateCoordinateTransformation(source_spatial_ref, target_spatial_ref)
     
-    transformed_extent = transformation.TransformBounds(*extent[:4], densify_pts=21)
+    extent_transformed = transformation.TransformBounds(*extent[:4], densify_pts=21)
     if len(extent) == 6:
         min_pt = transformation.TransformPoint(extent[0], extent[1], extent[4])
         max_pt = transformation.TransformPoint(extent[2], extent[3], extent[5])
-        transformed_extent = (*transformed_extent, min_pt[2], max_pt[2])
+        extent_transformed = (*extent_transformed, min_pt[2], max_pt[2])
     
         if return_gdal_format:
-            return (transformed_extent[0], transformed_extent[2], transformed_extent[1], transformed_extent[3], transformed_extent[4], transformed_extent[5])
+            return (extent_transformed[0], extent_transformed[2], extent_transformed[1], extent_transformed[3], extent_transformed[4], extent_transformed[5])
         else:
-            return (transformed_extent[0], transformed_extent[1], transformed_extent[4], transformed_extent[2], transformed_extent[3], transformed_extent[5])
+            return (extent_transformed[0], extent_transformed[1], extent_transformed[4], extent_transformed[2], extent_transformed[3], extent_transformed[5])
     
     if return_gdal_format:
-        return (transformed_extent[0], transformed_extent[2], transformed_extent[1], transformed_extent[3])
+        return (extent_transformed[0], extent_transformed[2], extent_transformed[1], extent_transformed[3])
     else:
-        return transformed_extent
+        return extent_transformed
