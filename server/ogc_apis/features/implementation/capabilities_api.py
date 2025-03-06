@@ -5,8 +5,8 @@ from fastapi import Request
 from server.database.db import Database
 from server.database.models import PreRenderedJson
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
-from server.ogc_apis.features.implementation.static_content.conformance import generate_conformance_declaration_object
-from server.ogc_apis.features.implementation.static_content.landing_page import generate_landing_page_object
+from server.ogc_apis.features.implementation.static.conformance import generate_conformance_declaration_object
+from server.ogc_apis.features.implementation.static.landing_page import generate_landing_page_object
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 

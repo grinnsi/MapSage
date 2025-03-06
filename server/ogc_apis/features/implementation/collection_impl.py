@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlmodel import text
 from server.database.db import Database
 from server.database.models import CollectionTable
-from server.ogc_apis.features.implementation.static_content.pre_render import generate_link
+from server.ogc_apis.features.implementation.static.pre_render import generate_link
 from server.utils.crs_identifier import get_uri_of_spatial_ref
 import orjson, math
 

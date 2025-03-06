@@ -1,5 +1,5 @@
 from server.database.models import License
-from server.ogc_apis.features.implementation.static_content.pre_render import generate_link
+from server.ogc_apis.features.implementation.static.pre_render import generate_link
 
 
 def get_default_licenses() -> list[License]:

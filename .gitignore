@@ -4,7 +4,7 @@
 .nuxt
 .nitro
 .cache
-static
+server/web/static
 dist
 
 # Node dependencies

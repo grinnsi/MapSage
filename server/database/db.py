@@ -10,7 +10,7 @@ from sqlmodel import SQLModel, Session, create_engine, delete, select
 
 from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase
 import server.database.sql_triggers as sql_triggers
-from server.ogc_apis.features.implementation.static_content.licenses import get_default_licenses
+from server.ogc_apis.features.implementation.static.licenses import get_default_licenses
 
 # local logger
 _LOGGER = logging.getLogger("database")
