@@ -3,13 +3,30 @@ from sqlmodel import text
 from server.database.db import Database
 from server.database.models import CollectionTable
 from server.ogc_apis.features.implementation import pre_render
-from server.utils.crs_identifier import get_uri_of_spatial_ref
+from server.ogc_apis.features.models.collection import Collection
+from server.ogc_apis.features.models.extent import Extent
+from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
+from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
+from server.utils.gdal_utils import get_uri_of_spatial_ref
 import orjson, math
 
 from osgeo import gdal, ogr, osr
 
 from server.utils.string_utils import string_to_kebab
 
+def collection_model_to_collection(model: CollectionTable) -> Collection:    
+    values = {
+        "id": model.id,
+        "title": model.title,
+        "description": model.description,
+        "links": orjson.loads(model.links_json),
+        "extent": orjson.loads(model.extent_json),
+        "crs": orjson.loads(model.crs_json),
+        "storageCrs": model.storage_crs,
+        "storageCrsCoordinateEpoch": model.storage_crs_coordinate_epoch,
+    }
+    
+    return Collection.from_dict(values)
 
 def generate_collection_table_object(layer_name: str, connection_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
     gdal.UseExceptions()
@@ -35,10 +52,16 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     if extent_calc[4] != math.inf or extent_calc[5] != -math.inf:
         extent_ordered.append([extent_calc[4], extent_calc[5]])
     
-    new_collection.bbox_json = orjson.dumps(extent_ordered).decode("utf-8")
-    
     uri_of_spatial_ref = get_uri_of_spatial_ref(spatial_ref)
-    new_collection.bbox_crs = uri_of_spatial_ref
+    
+    # Here we assume that the layer is NEVER temporal, and we will need to change this in the future
+    spatial_extent = ExtentSpatial(bbox=[extent_ordered], crs=uri_of_spatial_ref)
+    tempora_extent = ExtentTemporal()
+    extent = Extent(spatial=spatial_extent, temporal=tempora_extent)
+    new_collection.extent_json = extent.to_json()
+    new_collection.spatial_extent_crs = uri_of_spatial_ref
+    # new_collection.temporal_extent_trs = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+    
     new_collection.crs_json = orjson.dumps(["http://www.opengis.net/def/crs/OGC/1.3/CRS84", uri_of_spatial_ref]).decode("utf-8")
     new_collection.storage_crs = uri_of_spatial_ref
     
@@ -88,4 +111,6 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     
     new_collection.links_json = pre_render.generate_links([json_link_data, html_link_data])
     
+    new_collection.pre_rendered_json = collection_model_to_collection(new_collection).to_json()
+
     return new_collection
