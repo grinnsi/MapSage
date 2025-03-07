@@ -197,6 +197,68 @@ class CollectionTable(TableBase, table=True):
     
     license: Optional[License] = Relationship(back_populates="collections")
     connection: Connection = Relationship(back_populates="collections")
+    
+    def to_collection(self) -> features_api_collection.Collection:
+        collection = features_api_collection.Collection(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            links=self.links_json,
+            extent=self.extent_json,
+            item_type="feature",
+            crs=self.crs_json,
+            storage_crs=self.storage_crs,
+            storage_crs_coordinate_epoch=self.storage_crs_coordinate_epoch
+        )
+        
+        return collection
+    
+    def pre_render(self, app_base_url: str = "") -> None:
+        link_root_json = {
+            "url": f"{app_base_url}/features/?f=json",
+            "rel": "root",
+            "type": "application/json",
+            "title": "Landing page of the server as JSON"
+        }
+        
+        link_root_html = {
+            "url": f"{app_base_url}/features/?f=html",
+            "rel": "root",
+            "type": "application/json",
+            "title": "Landing page of the server as HTML"
+        }
+
+        link_self_json = {
+            "url": f"{app_base_url}/features/collections/{self.id}?f=json",
+            "rel": "self",
+            "type": "application/json",
+            "title": "This document as JSON"
+        }
+        
+        link_self_html = {
+            "url": f"{app_base_url}/features/collections/{self.id}?f=html",
+            "rel": "alternate",
+            "type": "application/json",
+            "title": "This document as HTML"
+        }
+        
+        link_items_json = {
+            "url": f"{app_base_url}/features/collections/{self.id}/items?f=json",
+            "rel": "items",
+            "type": "application/geo+json",
+            "title": f"Items of '{self.title}' as GeoJSON"
+        }
+        
+        link_items_html = {
+            "url": f"{app_base_url}/features/collections/{self.id}/items?f=html",
+            "rel": "items",
+            "type": "text/html",
+            "title": f"Items of '{self.title}' as HTML"
+        }
+        
+        self.links_json = pre_render_helper.generate_links([link_root_json, link_root_html, link_self_json, link_self_html, link_items_json, link_items_html])
+        
+        self.pre_rendered_json = self.to_collection().to_json()
 
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)
