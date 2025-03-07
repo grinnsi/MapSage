@@ -34,16 +34,16 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         pre_rendered_conformance_declaration: Union[PreRenderedJson, None] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="conformance_declaration")
         if pre_rendered_conformance_declaration:
             # Returns the JSON string representation of the ConfClasses object
-            return pre_rendered_conformance_declaration.value
+            return pre_rendered_conformance_declaration.json_value
         else:
             generated_conformance_declaration = generate_conformance_declaration_object()
-            pre_rendered_json = PreRenderedJson(key="conformance_declaration", value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+            pre_rendered_json = PreRenderedJson(key="conformance_declaration", json_value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_json)
 
             # Returns the JSON string representation of the ConfClasses object
             # This is because the response of the endpoint is ORJSONResponse which requires a dict
             # However this will return a JSON string so it's in line with the pre_rendered_json.value in the IF-statement above
-            return generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True)
+            return pre_rendered_json.json_value
 
     async def get_landing_page(
         self, 
@@ -54,13 +54,13 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         pre_rendered_landing_page: Union[PreRenderedJson, None] = Database.select_sqlite_db(table_model=PreRenderedJson, primary_key_value="landing_page")
         if pre_rendered_landing_page:
             # Returns the JSON string representation of the LandingPage object
-            return pre_rendered_landing_page.value
+            return pre_rendered_landing_page.json_value
         else:
             generated_landing_page = generate_landing_page_object(base_url=str(request.base_url))
-            pre_rendered_json = PreRenderedJson(key="landing_page", value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+            pre_rendered_json = PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_json)
 
             # Returns the JSON string representation of the LandingPage object
             # This is because the response of the endpoint is ORJSONResponse which requires a dict
             # However this will return a JSON string so it's in line with the pre_rendered_json.value in the IF-statement above
-            return generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True)
+            return pre_rendered_json.json_value

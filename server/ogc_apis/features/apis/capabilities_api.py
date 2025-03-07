@@ -5,7 +5,6 @@ import importlib
 import pkgutil
 
 from fastapi.responses import ORJSONResponse
-import orjson
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
 import server.ogc_apis.features.implementation as implementation
 import server.ogc_apis.features.implementation.subclasses.capabilities_api
@@ -35,7 +34,6 @@ from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 from server.ogc_apis.features.models.exception import Exception
 from server.ogc_apis.features.models.landing_page import LandingPage
-import markdown
 
 
 router = APIRouter()
@@ -100,10 +98,10 @@ async def get_conformance_declaration(
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     
-    conformance_declaration: str = await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration()
+    conformance_declaration: dict = await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration()
     
     # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads
-    return ORJSONResponse(content=orjson.loads(conformance_declaration))
+    return ORJSONResponse(content=conformance_declaration)
 
 
 @router.get(
@@ -126,7 +124,7 @@ async def get_landing_page(
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
 
-    landing_page: str = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
+    landing_page: dict = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
     
     # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads (according to author)
-    return ORJSONResponse(content=orjson.loads(landing_page))
+    return ORJSONResponse(content=landing_page)

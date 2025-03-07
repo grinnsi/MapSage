@@ -260,6 +260,10 @@ class CollectionTable(TableBase, table=True):
         
         self.pre_rendered_json = self.to_collection().to_json()
 
+class PreRenderedJson(CoreModel, table=True):
+    key: str = Field(primary_key=True, unique=True)
+    json_value: str
+
 class KeyValueBase(CoreModel):
     key: str = Field(primary_key=True, unique=True)
     value: str
@@ -273,6 +277,3 @@ class GeneralOption(KeyValueBase, table=True):
             "service_description": "A OGC compliant Features API"
         }
         return default_options
-
-class PreRenderedJson(KeyValueBase, table=True):
-    pass
