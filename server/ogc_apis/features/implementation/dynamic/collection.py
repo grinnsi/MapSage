@@ -7,7 +7,7 @@ from server.ogc_apis.features.models.collection import Collection
 from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
-from server.utils.gdal_utils import get_uri_of_spatial_ref
+from server.utils import gdal_utils
 import orjson, math
 
 from osgeo import gdal, ogr, osr
@@ -41,28 +41,32 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     if spatial_ref is None:
         raise ValueError(f"Layer {layer_name} has no spatial reference")
     
+    uri_of_spatial_ref = gdal_utils.get_uri_of_spatial_ref(spatial_ref)
+    default_uri_of_crs = ""
+    extent_coordinate_count = 4
+    
     # Always calculate the bbx as 3D, just in case it is a 3D layer
     extent_calc: tuple[float] = layer.GetExtent3D()
-    
+    if extent_calc[4] == math.inf and extent_calc[5] == -math.inf:
+        default_uri_of_crs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    else:
+        default_uri_of_crs = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
+        extent_coordinate_count = 6
+        
     # Reorder the extent to be in the order of OGC API Features
     # FIXME: Order of axis are east, north; might need to be changed if the layer is in a different order
-    extent_ordered = [extent_calc[0], extent_calc[2], extent_calc[1], extent_calc[3]]
-    
-    # Remove all None/Null values from list, mainly to remove the Z values in 2D layers
-    if extent_calc[4] != math.inf or extent_calc[5] != -math.inf:
-        extent_ordered.append([extent_calc[4], extent_calc[5]])
-    
-    uri_of_spatial_ref = get_uri_of_spatial_ref(spatial_ref)
+    extent_ordered = gdal_utils.transform_extent(spatial_ref, default_uri_of_crs, extent_calc[:extent_coordinate_count], return_gdal_format=False)
     
     # Here we assume that the layer is NEVER temporal, and we will need to change this in the future
-    spatial_extent = ExtentSpatial(bbox=[extent_ordered], crs=uri_of_spatial_ref)
-    tempora_extent = ExtentTemporal()
-    extent = Extent(spatial=spatial_extent, temporal=tempora_extent)
+    spatial_extent = ExtentSpatial(bbox=[extent_ordered], crs=default_uri_of_crs)
+    temporal_extent = ExtentTemporal()
+    extent = Extent(spatial=spatial_extent, temporal=temporal_extent)
     new_collection.extent_json = extent.to_json()
     new_collection.spatial_extent_crs = uri_of_spatial_ref
     # new_collection.temporal_extent_trs = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
     
-    new_collection.crs_json = orjson.dumps(["http://www.opengis.net/def/crs/OGC/1.3/CRS84", uri_of_spatial_ref]).decode("utf-8")
+    crs_list = list(set([default_uri_of_crs, uri_of_spatial_ref]))
+    new_collection.crs_json = orjson.dumps(crs_list).decode("utf-8")
     new_collection.storage_crs = uri_of_spatial_ref
     
     if spatial_ref.IsDynamic():
