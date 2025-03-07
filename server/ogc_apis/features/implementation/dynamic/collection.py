@@ -2,31 +2,15 @@ from uuid import UUID
 from sqlmodel import text
 from server.database.db import Database
 from server.database.models import CollectionTable
-from server.ogc_apis.features.implementation import pre_render_helper
-from server.ogc_apis.features.models.collection import Collection
 from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
 from server.utils import gdal_utils
-import orjson, math
+import math
 
 from osgeo import gdal, ogr, osr
 
 from server.utils.string_utils import string_to_kebab
-
-def collection_model_to_collection(model: CollectionTable) -> Collection:    
-    values = {
-        "id": model.id,
-        "title": model.title,
-        "description": model.description,
-        "links": model.links_json,
-        "extent": model.extent_json,
-        "crs": model.crs_json,
-        "storageCrs": model.storage_crs,
-        "storageCrsCoordinateEpoch": model.storage_crs_coordinate_epoch,
-    }
-    
-    return Collection.from_dict(values)
 
 def generate_collection_table_object(layer_name: str, connection_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
     gdal.UseExceptions()
@@ -99,50 +83,6 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
 
     app_base_url = app_base_url.rstrip("/")
     
-    link_root_json = {
-        "url": f"{app_base_url}/features/?f=json",
-        "rel": "root",
-        "type": "application/json",
-        "title": "Landing page of the server as JSON"
-    }
-    
-    link_root_html = {
-        "url": f"{app_base_url}/features/?f=html",
-        "rel": "root",
-        "type": "application/json",
-        "title": "Landing page of the server as HTML"
-    }
-
-    link_self_json = {
-        "url": f"{app_base_url}/features/collections/{new_collection.id}?f=json",
-        "rel": "self",
-        "type": "application/json",
-        "title": "This document as JSON"
-    }
-    
-    link_self_html = {
-        "url": f"{app_base_url}/features/collections/{new_collection.id}?f=html",
-        "rel": "alternate",
-        "type": "application/json",
-        "title": "This document as HTML"
-    }
-    
-    link_items_json = {
-        "url": f"{app_base_url}/features/collections/{new_collection.id}/items?f=json",
-        "rel": "items",
-        "type": "application/geo+json",
-        "title": f"Items of '{collection_title}' as GeoJSON"
-    }
-    
-    link_items_html = {
-        "url": f"{app_base_url}/features/collections/{new_collection.id}/items?f=html",
-        "rel": "items",
-        "type": "text/html",
-        "title": f"Items of '{collection_title}' as HTML"
-    }
-    
-    new_collection.links_json = pre_render_helper.generate_links([link_root_json, link_root_html, link_self_json, link_self_html, link_items_json, link_items_html])
-    
-    new_collection.pre_rendered_json = collection_model_to_collection(new_collection).to_json()
+    new_collection.pre_render(app_base_url=app_base_url)
 
     return new_collection
