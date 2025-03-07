@@ -19,9 +19,9 @@ def collection_model_to_collection(model: CollectionTable) -> Collection:
         "id": model.id,
         "title": model.title,
         "description": model.description,
-        "links": orjson.loads(model.links_json),
-        "extent": orjson.loads(model.extent_json),
-        "crs": orjson.loads(model.crs_json),
+        "links": model.links_json,
+        "extent": model.extent_json,
+        "crs": model.crs_json,
         "storageCrs": model.storage_crs,
         "storageCrsCoordinateEpoch": model.storage_crs_coordinate_epoch,
     }
@@ -66,7 +66,7 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     # new_collection.temporal_extent_trs = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
     
     crs_list = list(set([default_uri_of_crs, uri_of_spatial_ref]))
-    new_collection.crs_json = orjson.dumps(crs_list).decode("utf-8")
+    new_collection.crs_json = crs_list
     new_collection.storage_crs = uri_of_spatial_ref
     
     if spatial_ref.IsDynamic():

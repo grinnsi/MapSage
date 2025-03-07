@@ -1,6 +1,8 @@
-from typing import Optional, Self
+from typing import Any, Optional, Self
 import uuid as unique_id
 
+import orjson
+from pydantic import field_validator, model_validator
 from sqlalchemy import Column, ForeignKey, String
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import declared_attr
@@ -22,6 +24,53 @@ class CoreModel(SQLModel):
         name = name.lstrip("_")
         
         return name
+    
+    # Overwrite __setattr__ to automatically convert list and dict to json strings, when directly setting the attribute
+    def __setattr__(self, name, value):
+        if 'json' in name.lower() and value is not None and not isinstance(value, str):
+            if isinstance(value, (list, dict)):
+                value = orjson.dumps(value).decode("utf-8")
+            else:
+                raise ValueError("JSON field must be a string, list or dictionary")
+        
+        super().__setattr__(name, value)
+    
+    # Overwrite __getattribute__ to automatically convert json strings to list or dict, when accessing the attribute
+    def __getattribute__(self, name):
+        if 'json' in name.lower():
+            value = super().__getattribute__(name)
+            if value is not None:
+                return orjson.loads(value)
+        
+        return super().__getattribute__(name)
+    
+    # Adding field validators for all fields containing 'json' in their name, when creating an instance of the class
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs):
+        super().__pydantic_init_subclass__(**kwargs)
+        
+        for field_name, _ in cls.model_fields.items():
+            if 'json' in field_name:
+                # Create a validator function for this specific field
+                field_validator(field_name, mode="before")(cls._create_json_field_validator(field_name))
+        
+    @classmethod
+    def _create_json_field_validator(cls, field_name):
+        def validate_json_field(value: Any) -> str:            
+            if value is None:
+                return None
+            
+            if not isinstance(value, (str, dict, list)):
+                raise ValueError("JSON Field must be a string, list or dictionary")
+            
+            if isinstance(value, str):
+                return value
+            
+            return orjson.dumps(value).decode("utf-8")
+        
+        # Set a name for the validator function for better error messages
+        validate_json_field.__name__ = f"validate_{field_name}"
+        return validate_json_field
 
 class TableBase(CoreModel):
     uuid: unique_id.UUID = Field(default_factory=unique_id.uuid4, primary_key=True)
@@ -35,10 +84,6 @@ class Connection(TableBase, table=True):
     database_name: str
     
     collections: list["CollectionTable"] = Relationship(back_populates="connection")
-    
-# class Namespace(TableBase, table=True):
-#     name: str
-#     url: str
 
 class License(TableBase, table=True):
     title: str = Field(unique=True)
@@ -109,7 +154,7 @@ class License(TableBase, table=True):
         licenses = [License(**license) for license in default_licenses]
         
         for license in licenses:
-            dict = {
+            dict_main = {
                 "url" : license.url,
                 "type" : license.type,
                 "title" : license.title,
@@ -122,7 +167,7 @@ class License(TableBase, table=True):
                 "rel": "license"
             }
             
-            license.pre_rendered_json = pre_render.generate_link(dict)
+            license.pre_rendered_json = pre_render.generate_link(dict_main)
             license.pre_rendered_json_alternate = pre_render.generate_link(dict_alt)
             
         return licenses
