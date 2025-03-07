@@ -8,6 +8,7 @@ from fastapi.responses import ORJSONResponse
 import orjson
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
 import server.ogc_apis.features.implementation as implementation
+import server.ogc_apis.features.implementation.subclasses.capabilities_api
 
 from fastapi import (  # noqa: F401
     APIRouter,

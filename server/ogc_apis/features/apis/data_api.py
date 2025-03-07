@@ -7,6 +7,7 @@ import markdown
 
 from server.ogc_apis.features.apis.data_api_base import BaseDataApi
 import server.ogc_apis.features.implementation as implementation
+import server.ogc_apis.features.implementation.subclasses.data_api
 
 from fastapi import (  # noqa: F401
     APIRouter,
