@@ -28,9 +28,18 @@ export interface Collection {
   title: string,
   description: string,
   license_title: string,
-  bbox: Array<number>,
-  bbox_crs: string,
-  interval: string,
+  extent: {
+    spatial: {
+      bbox: Array<Array<number>>,
+      crs: string
+    },
+    temporal: {
+      interval: Array<Array<string>>,
+      trs: string
+    }
+  },
+  spatial_extent_crs: string,
+  temporal_extent_trs: string,
   crs: Array<string>,
   storage_crs: string,
   storage_crs_coordinate_epoch: number,
