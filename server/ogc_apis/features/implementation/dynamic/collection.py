@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlmodel import text
 from server.database.db import Database
 from server.database.models import CollectionTable
-from server.ogc_apis.features.implementation import pre_render
+from server.ogc_apis.features.implementation import pre_render_helper
 from server.ogc_apis.features.models.collection import Collection
 from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
@@ -141,7 +141,7 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
         "title": f"Items of '{collection_title}' as HTML"
     }
     
-    new_collection.links_json = pre_render.generate_links([link_root_json, link_root_html, link_self_json, link_self_html, link_items_json, link_items_html])
+    new_collection.links_json = pre_render_helper.generate_links([link_root_json, link_root_html, link_self_json, link_self_html, link_items_json, link_items_html])
     
     new_collection.pre_rendered_json = collection_model_to_collection(new_collection).to_json()
 

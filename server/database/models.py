@@ -2,13 +2,14 @@ from typing import Any, Optional, Self
 import uuid as unique_id
 
 import orjson
-from pydantic import field_validator, model_validator
+from pydantic import field_validator
 from sqlalchemy import Column, ForeignKey, String
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID as pg_uuid
 
-from server.ogc_apis.features.implementation import pre_render
+from server.ogc_apis.features.models import collection as features_api_collection
+from server.ogc_apis.features.implementation import pre_render_helper
 from server.utils.string_utils import camel_to_snake
 
 # All custom models should inherit from CoreModel, so they have snake_case tablenames in the sqlite db
@@ -167,8 +168,8 @@ class License(TableBase, table=True):
                 "rel": "license"
             }
             
-            license.pre_rendered_json = pre_render.generate_link(dict_main)
-            license.pre_rendered_json_alternate = pre_render.generate_link(dict_alt)
+            license.pre_rendered_json = pre_render_helper.generate_link(dict_main)
+            license.pre_rendered_json_alternate = pre_render_helper.generate_link(dict_alt)
             
         return licenses
     
