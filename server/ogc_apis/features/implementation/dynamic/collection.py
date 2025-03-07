@@ -99,21 +99,49 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
 
     app_base_url = app_base_url.rstrip("/")
     
-    json_link_data = {
-        "url": f"{app_base_url}/features/collections/{new_collection.id}/items",
+    link_root_json = {
+        "url": f"{app_base_url}/features/?f=json",
+        "rel": "root",
+        "type": "application/json",
+        "title": "Landing page of the server as JSON"
+    }
+    
+    link_root_html = {
+        "url": f"{app_base_url}/features/?f=html",
+        "rel": "root",
+        "type": "application/json",
+        "title": "Landing page of the server as HTML"
+    }
+
+    link_self_json = {
+        "url": f"{app_base_url}/features/collections/{new_collection.id}?f=json",
+        "rel": "self",
+        "type": "application/json",
+        "title": "This document as JSON"
+    }
+    
+    link_self_html = {
+        "url": f"{app_base_url}/features/collections/{new_collection.id}?f=html",
+        "rel": "alternate",
+        "type": "application/json",
+        "title": "This document as HTML"
+    }
+    
+    link_items_json = {
+        "url": f"{app_base_url}/features/collections/{new_collection.id}/items?f=json",
         "rel": "items",
         "type": "application/geo+json",
-        "title": collection_title
+        "title": f"Items of '{collection_title}' as GeoJSON"
     }
     
-    html_link_data = {
-        "url": f"{app_base_url}/features/collections/{new_collection.id}/items.html",
+    link_items_html = {
+        "url": f"{app_base_url}/features/collections/{new_collection.id}/items?f=html",
         "rel": "items",
         "type": "text/html",
-        "title": collection_title
+        "title": f"Items of '{collection_title}' as HTML"
     }
     
-    new_collection.links_json = pre_render.generate_links([json_link_data, html_link_data])
+    new_collection.links_json = pre_render.generate_links([link_root_json, link_root_html, link_self_json, link_self_html, link_items_json, link_items_html])
     
     new_collection.pre_rendered_json = collection_model_to_collection(new_collection).to_json()
 
