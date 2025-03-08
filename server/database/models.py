@@ -213,6 +213,7 @@ class CollectionTable(TableBase, table=True):
         
         return collection
     
+    # FIXME: Delete column on restart
     def pre_render(self, app_base_url: str = "") -> None:
         link_root_json = {
             "url": f"{app_base_url}/features/?f=json",

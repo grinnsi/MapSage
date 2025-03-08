@@ -1,5 +1,6 @@
 import re
 import orjson
+import server.ogc_apis.route_config as route_config
 
 _link_attributes_regex = re.compile(r"(href|rel|type|title)\"[\s\n]*:[\s\n]*\"([^\"]*)")
 
@@ -38,7 +39,7 @@ def generate_links(obj: list[dict]) -> list[dict]:
     
     return [generate_link(item) for item in obj]
 
-def generate_html_from_json(json: str, title: str) -> str:
+def generate_basic_html_from_json(title: str, description: str, json: str) -> str:
     if not isinstance(json, str):
         raise ValueError("Input must be a JSON string")
     
@@ -46,17 +47,13 @@ def generate_html_from_json(json: str, title: str) -> str:
     obj = orjson.loads(json)
     json_formated_str = orjson.dumps(obj, option=orjson.OPT_INDENT_2).decode("utf-8")
     
-    print(_link_attributes_regex.findall(json_formated_str))
+    links = _link_attributes_regex.findall(json_formated_str)
 
-    html = f"""
-        <html>
-            <head>
-                <title>{title}</title>
-            </head>
-            <body>
-                <pre>{json_formated_str}</pre>
-            </body>
-        </html>
-    """
+    template = route_config.TEMPLATE_ENVIRONMENT.get_template("json.html")
+    html = template.render(
+        title=title,
+        description=description,
+        json=json_formated_str,
+    )
 
     return html

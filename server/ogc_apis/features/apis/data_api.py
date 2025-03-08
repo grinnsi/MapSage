@@ -45,7 +45,6 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     responses={
         200: {"model": FeatureGeoJSON, "description": "fetch the feature with id `featureId` in the feature collection with id `collectionId`"},
         404: {"description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value."},
-        500: {"model": Exception, "description": "A server error occurred."},
     },
     tags=["Data"],
     summary="fetch a single feature",
@@ -69,7 +68,6 @@ async def get_feature(
         200: {"model": FeatureCollectionGeoJSON, "description": "The response is a document consisting of features in the collection. The features included in the response are determined by the server based on the query parameters of the request. To support access to larger collections without overloading the client, the API supports paged access with links to the next page, if more features are selected that the page size.  The `bbox` and `datetime` parameter can be used to select only a subset of the features in the collection (the features that are in the bounding box or time interval). The `bbox` parameter matches all features in the collection that are not associated with a location, too. The `datetime` parameter matches all features in the collection that are not associated with a time stamp or interval, too.  The `limit` parameter may be used to control the subset of the selected features that should be returned in the response, the page size. Each page may include information about the number of selected and returned features (`numberMatched` and `numberReturned`) as well as links to support paging (link relation `next`)."},
         400: {"model": Exception, "description": "A query parameter has an invalid value."},
         404: {"description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value."},
-        500: {"model": Exception, "description": "A server error occurred."},
     },
     tags=["Data"],
     summary="fetch features",
