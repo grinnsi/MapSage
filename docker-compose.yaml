@@ -10,13 +10,11 @@ services:
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-dev
     image: ${APPLICATION_NAME}.python.dev:${DEBIAN_VERSION}
-    command: ["python", "-u", "-m", "server"]
     user: root
     environment:
       LANG: ${LOCALE_LANG}
       LC_ALL: ${LOCALE_LANGUAGE}.${LOCALE_ENCODING}
       TZ: ${TIMEZONE}
-      APP_ENV: dev
       # HOST_PORT_WEB_SERVER: ${HOST_PORT_WEB_SERVER}
       HOST_PORT_API_SERVER: ${HOST_PORT_API_SERVER}
       API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
@@ -50,13 +48,11 @@ services:
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-prod
     image: ${APPLICATION_NAME}.python.prod:${DEBIAN_VERSION}
-    command: ["python", "-u", "-m", "server"]
     user: root
     environment:
       LANG: ${LOCALE_LANG}
       LC_ALL: ${LOCALE_LANGUAGE}.${LOCALE_ENCODING}
       TZ: ${TIMEZONE}
-      APP_ENV: prod
       # HOST_PORT_WEB_SERVER: ${HOST_PORT_WEB_SERVER}
       HOST_PORT_API_SERVER: ${HOST_PORT_API_SERVER}
       API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
