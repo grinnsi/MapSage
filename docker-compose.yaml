@@ -23,6 +23,7 @@ services:
     hostname: ${DOCKER_CONTAINER_HOSTNAME_PYTHON}
     ports:
       - "${HOST_PORT_API_SERVER}:${DOCKER_CONTAINER_PORT_SERVER}"
+      - 5678:5678
     networks:
       my-network:
         ipv4_address: 192.0.0.2
@@ -98,6 +99,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
     networks:
       my-network:
         ipv4_address: 192.0.0.3
@@ -110,6 +113,9 @@ volumes:
       device: "./server/web/static"
       o: bind
     name: ${APPLICATION_NAME}-nuxt-generated-html
+  pg-data:
+    driver: local
+    name: ${APPLICATION_NAME}-pg-data
 
 networks:
   my-network:
