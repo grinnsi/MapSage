@@ -152,7 +152,7 @@ class License(TableBase, table=True):
             }
         ]
         
-        licenses = [License(**license) for license in default_licenses]
+        licenses = [License().model_validate(license) for license in default_licenses]
         
         for license in licenses:
             dict_main = {
@@ -225,7 +225,7 @@ class CollectionTable(TableBase, table=True):
         link_root_html = {
             "url": f"{app_base_url}/features/?f=html",
             "rel": "root",
-            "type": "application/json",
+            "type": "text/html",
             "title": "Landing page of the server as HTML"
         }
 
@@ -239,7 +239,7 @@ class CollectionTable(TableBase, table=True):
         link_self_html = {
             "url": f"{app_base_url}/features/collections/{self.id}?f=html",
             "rel": "alternate",
-            "type": "application/json",
+            "type": "text/html",
             "title": "This document as HTML"
         }
         
