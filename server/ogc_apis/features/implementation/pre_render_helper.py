@@ -38,22 +38,3 @@ def generate_links(obj: list[dict]) -> list[dict]:
         raise ValueError("Input must be a list of dictionaries")
     
     return [generate_link(item) for item in obj]
-
-def generate_basic_html_from_json(title: str, description: str, json: str) -> str:
-    if not isinstance(json, str):
-        raise ValueError("Input must be a JSON string")
-    
-    # Format JSON to be more readable
-    obj = orjson.loads(json)
-    json_formated_str = orjson.dumps(obj, option=orjson.OPT_INDENT_2).decode("utf-8")
-    
-    links = _link_attributes_regex.findall(json_formated_str)
-
-    template = route_config.TEMPLATE_ENVIRONMENT.get_template("json.html")
-    html = template.render(
-        title=title,
-        description=description,
-        json=json_formated_str,
-    )
-
-    return html
