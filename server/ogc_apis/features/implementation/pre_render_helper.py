@@ -38,7 +38,7 @@ def generate_links(obj: list[dict]) -> list[dict]:
     
     return [generate_link(item) for item in obj]
 
-def generate_html_from_json(json: str, title: str) -> str:
+def generate_basic_html_from_json(json: str, title: str) -> str:
     if not isinstance(json, str):
         raise ValueError("Input must be a JSON string")
     
