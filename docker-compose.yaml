@@ -1,20 +1,20 @@
 services:
   map-sage-dev:
+    profiles: ["dev"]
     build:
       args:
         DOCKER_CONTAINER_WORKDIR: ${DOCKER_CONTAINER_WORKDIR}
         DEBIAN_VERSION: ${DEBIAN_VERSION}
+        APP_ENV: dev
       context: .
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-dev
     image: ${APPLICATION_NAME}.python.dev:${DEBIAN_VERSION}
-    command: ["python", "-u", "-m", "server"]
     user: root
     environment:
       LANG: ${LOCALE_LANG}
       LC_ALL: ${LOCALE_LANGUAGE}.${LOCALE_ENCODING}
       TZ: ${TIMEZONE}
-      APP_ENV: dev
       # HOST_PORT_WEB_SERVER: ${HOST_PORT_WEB_SERVER}
       HOST_PORT_API_SERVER: ${HOST_PORT_API_SERVER}
       API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
@@ -23,6 +23,7 @@ services:
     hostname: ${DOCKER_CONTAINER_HOSTNAME_PYTHON}
     ports:
       - "${HOST_PORT_API_SERVER}:${DOCKER_CONTAINER_PORT_SERVER}"
+      - 5678:5678
     networks:
       my-network:
         ipv4_address: 192.0.0.2
@@ -38,21 +39,21 @@ services:
         max-file: "2"
 
   map-sage-prod:
+    profiles: ["prod"]
     build:
       args:
         DOCKER_CONTAINER_WORKDIR: ${DOCKER_CONTAINER_WORKDIR}
         DEBIAN_VERSION: ${DEBIAN_VERSION}
+        APP_ENV: prod 
       context: .
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-prod
     image: ${APPLICATION_NAME}.python.prod:${DEBIAN_VERSION}
-    command: ["python", "-u", "-m", "server"]
     user: root
     environment:
       LANG: ${LOCALE_LANG}
       LC_ALL: ${LOCALE_LANGUAGE}.${LOCALE_ENCODING}
       TZ: ${TIMEZONE}
-      APP_ENV: prod
       # HOST_PORT_WEB_SERVER: ${HOST_PORT_WEB_SERVER}
       HOST_PORT_API_SERVER: ${HOST_PORT_API_SERVER}
       API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}
@@ -98,6 +99,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
     networks:
       my-network:
         ipv4_address: 192.0.0.3
@@ -110,6 +113,9 @@ volumes:
       device: "./server/web/static"
       o: bind
     name: ${APPLICATION_NAME}-nuxt-generated-html
+  pg-data:
+    driver: local
+    name: ${APPLICATION_NAME}-pg-data
 
 networks:
   my-network:
