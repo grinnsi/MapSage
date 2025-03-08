@@ -4,7 +4,7 @@ from uuid import UUID
 import orjson
 from sqlmodel import select, text
 from flask import Response, request, current_app
-from server.database.db import Database
+from server.database.db import Database, DatabaseSession
 from server.database.models import CollectionTable, Connection
 
 from osgeo import gdal, ogr
@@ -15,7 +15,7 @@ from server.web.flask_utils import get_app_url_root
 # FIXME: Only return a page worth of collections at a time (handle pagination)
 def get_all_collections():
     # Not pretty, since we normally use the Database class to interact, but otherwise it would be more complicated
-    with Database.get_sqlite_session() as session:
+    with DatabaseSession() as session:
         collections: Optional[list[CollectionTable]] = session.exec(select(CollectionTable)).all()
         
         if not collections:
