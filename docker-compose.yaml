@@ -1,9 +1,11 @@
 services:
   map-sage-dev:
+    profiles: ["dev"]
     build:
       args:
         DOCKER_CONTAINER_WORKDIR: ${DOCKER_CONTAINER_WORKDIR}
         DEBIAN_VERSION: ${DEBIAN_VERSION}
+        APP_ENV: dev
       context: .
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-dev
@@ -38,10 +40,12 @@ services:
         max-file: "2"
 
   map-sage-prod:
+    profiles: ["prod"]
     build:
       args:
         DOCKER_CONTAINER_WORKDIR: ${DOCKER_CONTAINER_WORKDIR}
         DEBIAN_VERSION: ${DEBIAN_VERSION}
+        APP_ENV: prod 
       context: .
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-prod
