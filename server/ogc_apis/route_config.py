@@ -6,13 +6,20 @@ from typing_extensions import Annotated
 
 from fastapi import Query
 
-API_ROUTE = "/api"
-FEATURES_ROUTE = "/features"
 TEMPLATE_RESPONSE = Jinja2Templates(directory="./../jinja_templates")
 TEMPLATE_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.PackageLoader("server", "jinja_templates"),
     autoescape=jinja2.select_autoescape(),
 )
+
+def get_template(name: str) -> Jinja2Templates:
+    try:
+        return TEMPLATE_ENVIRONMENT.get_template(name)
+    except jinja2.exceptions.TemplateNotFound:
+        raise ValueError(f"Template {name} not found")
+
+API_ROUTE = "/api"
+FEATURES_ROUTE = "/features"
 
 class _ReturnFormat(str, Enum):
     json = "json"
