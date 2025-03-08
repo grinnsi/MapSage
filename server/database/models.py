@@ -257,7 +257,20 @@ class CollectionTable(TableBase, table=True):
             "title": f"Items of '{self.title}' as HTML"
         }
         
-        self.links_json = pre_render_helper.generate_links([link_root_json, link_root_html, link_self_json, link_self_html, link_items_json, link_items_html])
+        links = [
+            link_root_json, 
+            link_root_html, 
+            link_self_json, 
+            link_self_html, 
+            link_items_json, 
+            link_items_html,
+        ]
+        
+        if self.license is not None:
+            links.append(self.license.pre_rendered_json)
+            links.append(self.license.pre_rendered_json_alternate)
+        
+        self.links_json = pre_render_helper.generate_links(links)
         
         self.pre_rendered_json = self.to_collection().to_json()
 
