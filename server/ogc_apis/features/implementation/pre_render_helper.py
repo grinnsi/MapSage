@@ -57,6 +57,9 @@ def generate_multiple_link_types(
         mime_type = mimetypes.types_map["." + _format]
         param_f = mime_type.split("+")[1] if "+" in mime_type else _format
         
+        if "self" in rel and _format != ogc_api_config.ReturnFormat.get_default():
+            rel = "alternate"
+        
         links.append({
             "href": f"{href}{connect_char}f={param_f}",
             "rel": rel,
