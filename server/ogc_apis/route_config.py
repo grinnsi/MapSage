@@ -21,9 +21,9 @@ def get_template(name: str) -> Jinja2Templates:
 API_ROUTE = "/api"
 FEATURES_ROUTE = "/features"
 
-class _ReturnFormat(str, Enum):
+class ReturnFormat(str, Enum):
     json = "json"
     html = "html"
 
-def get_format_query(f: _ReturnFormat = Query(default=_ReturnFormat.json, description="Optional parameter which indicates the output format of the response")) -> None:
-    pass
+def get_format_query(f: Annotated[ReturnFormat, Field(default=ReturnFormat.json, description="Optional parameter which indicates the output format of the response")] = Query(default=ReturnFormat.json, description="Optional parameter which indicates the output format of the response")) -> None:
+    return f
