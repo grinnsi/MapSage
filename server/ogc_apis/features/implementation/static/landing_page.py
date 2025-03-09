@@ -11,12 +11,12 @@ def generate_landing_page_object(base_url: str) -> LandingPage:
     description: GeneralOption = Database.select_sqlite_db(table_model=GeneralOption, primary_key_value="service_description")
     
     domain = base_url.rstrip("/")
-    features_base_route = f"{domain}{ogc_api_config.FEATURES_ROUTE}"
+    features_base_route = f"{domain}{ogc_api_config.routes.FEATURES}"
     
     known_links = [
         Link(href=features_base_route, rel="self", type="application/json", title="This document"),
-        Link(href=f"{features_base_route}{ogc_api_config.API_ROUTE}.json", rel="service-desc", type="application/vnd.oai.openapi+json;version=3.0", title="the API definition"),
-        Link(href=f"{features_base_route}{ogc_api_config.API_ROUTE}.html", rel="service-doc", type="text/html", title="the API documentation"),
+        Link(href=f"{features_base_route}{ogc_api_config.routes.API}.json", rel="service-desc", type="application/vnd.oai.openapi+json;version=3.0", title="the API definition"),
+        Link(href=f"{features_base_route}{ogc_api_config.routes.API}.html", rel="service-doc", type="text/html", title="the API documentation"),
         Link(href=f"{features_base_route}/conformance", rel="conformance", type="application/json", title="OGC API conformance classes implemented by this server"),
         Link(href=f"{features_base_route}/collections", rel="data", type="application/json", title="Information about the feature collections"),
     ]

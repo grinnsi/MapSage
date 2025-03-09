@@ -1,2 +1,2 @@
-API_ROUTE = "/api"
-FEATURES_ROUTE = "/features"
+API = "/api"
+FEATURES = "/features"

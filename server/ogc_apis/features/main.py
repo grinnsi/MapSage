@@ -29,8 +29,8 @@ def init_api_server() -> FastAPI:
         title="Building Blocks specified in the OGC API - Features - Part 1 and Part 2: Core and CRS standard",
         description=markdown.markdown("Common components used in the [OGC API - Features - Part 1: Core corrigendum standard](https://docs.ogc.org/is/17-069r4/17-069r4.html) and [OGC API - Features - Part 2: Coordinate Reference Systems by Reference corrigendum](https://docs.ogc.org/is/18-058r1/18-058r1.html).\n\nOGC API - Features - Part 1: Core corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nOGC API - Features - Part 2: Reference corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nThis is an informative document. The building blocks in this document are also available on the OGC schema repository.\n\n[OGC API - Features - Part 1: Core schema](http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml)\n\n[OGC API - Features - Part 2: Coordinate Reference Systems schema](https://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/ogcapi-features-2.yaml)\n\n"),
         version="1.0.1",
-        openapi_url=f"{ogc_api_config.API_ROUTE}.json",
-        docs_url=f"{ogc_api_config.API_ROUTE}.html",
+        openapi_url=f"{ogc_api_config.routes.API}.json",
+        docs_url=f"{ogc_api_config.routes.API}.html",
         redoc_url=None,
     )
     

@@ -1,3 +1,3 @@
 from .formats import ReturnFormat
-from .paths import *
+from . import paths as routes
 from . import params, templates
