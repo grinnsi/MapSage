@@ -1,0 +1,17 @@
+{% extends "basic.html" %}
+{% block title %}Conformance{% endblock %}
+{% block heading %}Conformance Details{% endblock %}
+
+{% block content %}
+    {% if conf_classes.conformsTo %}
+    <div class="description-section">
+		<ul>
+			{% for conf in conf_classes.conformsTo %}
+			<li>
+				<a href="{{ conf }}" target="_blank">{{ conf }}</a>
+			</li>
+			{% endfor %}
+		</ul>
+    </div>
+    {% endif %}
+{% endblock %}

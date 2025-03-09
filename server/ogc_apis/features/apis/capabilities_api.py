@@ -101,20 +101,14 @@ async def get_collections(
     tags=["Capabilities"],
     summary="information about specifications that this API conforms to",
     response_model_by_alias=True,
-    # Using ORJSONResponse as response_class to directly return the dict of the JSON string of the ConfClass object
-    # Faster than returning the LandingPage object that gets serialized to a JSON string
-    response_class=ORJSONResponse,
 )
 async def get_conformance_declaration(
+    format: ogc_api_config.ReturnFormat = Depends(ogc_api_config.params.get_format_query)
 ) -> ConfClasses:
     """A list of all conformance classes specified in a standard that the server conforms to."""
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    
-    conformance_declaration: dict = await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration()
-    
-    # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads
-    return ORJSONResponse(content=conformance_declaration)
+    return await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration(format)
 
 
 @router.get(
