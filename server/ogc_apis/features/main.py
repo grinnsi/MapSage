@@ -41,14 +41,14 @@ def init_api_server() -> FastAPI:
         param_type = error["loc"][0]
         msg = error["msg"]
         
-        exception_object = exception.Exception(code="422", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
+        exception_object = exception.Exception(code="400", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
         accept = request.headers.get("accept", "application/json")
         if "text/html" in accept:
             html = ogc_api_config.templates.render("exception.html", **exception_object.to_dict())
-            return HTMLResponse(html, status_code=422)
+            return HTMLResponse(html, status_code=400)
         
         return JSONResponse(
-            status_code=422,
+            status_code=400,
             content=jsonable_encoder(exception_object),
         )
 
@@ -61,12 +61,12 @@ def init_api_server() -> FastAPI:
 
 def _get_api_responses() -> dict:
     return {
-        422: {
+        400: {
             "model": exception.Exception,
             "content": {
                 "application/json": {
                     "example": {
-                        "code": 422,
+                        "code": 400,
                         "description": "Input for parameter 'f' of type 'query' is invalid. Input should be 'json' or 'html'",
                     }
                 },
