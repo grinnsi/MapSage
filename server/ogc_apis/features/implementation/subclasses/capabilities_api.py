@@ -7,7 +7,7 @@ import sqlmodel
 
 from server.database.db import Database
 from server.database import models
-from server.ogc_apis import route_config
+from server.ogc_apis import ogc_api_config
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
 from server.ogc_apis.features.implementation.static.conformance import generate_conformance_declaration_object
 from server.ogc_apis.features.implementation.static.landing_page import generate_landing_page_object
@@ -22,7 +22,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         self,
         collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")],
         request: Request,
-        format: route_config.ReturnFormat,
+        format: ogc_api_config.ReturnFormat,
         session: sqlmodel.Session,
     ) -> Collection:
         """Return information about the feature collection with id `collectionId`."""
@@ -40,8 +40,8 @@ class CapabilitiesApi(BaseCapabilitiesApi):
             collection.pre_render(str(request.base_url))
             Database.update_sqlite_db(data_object=collection)
         
-        if format == route_config.ReturnFormat.html:
-            html = route_config.get_template("collection.html").render(
+        if format == ogc_api_config.ReturnFormat.html:
+            html = ogc_api_config.get_template("collection.html").render(
                 collection=collection,
             )
             

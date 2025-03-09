@@ -21,7 +21,7 @@ from fastapi import Depends, FastAPI, Request
 
 from server.ogc_apis.features.apis.capabilities_api import router as CapabilitiesApiRouter
 from server.ogc_apis.features.apis.data_api import router as DataApiRouter
-from server.ogc_apis import route_config
+from server.ogc_apis import ogc_api_config
 from server.ogc_apis.features.models import exception
 
 def init_api_server() -> FastAPI:    
@@ -29,8 +29,8 @@ def init_api_server() -> FastAPI:
         title="Building Blocks specified in the OGC API - Features - Part 1 and Part 2: Core and CRS standard",
         description=markdown.markdown("Common components used in the [OGC API - Features - Part 1: Core corrigendum standard](https://docs.ogc.org/is/17-069r4/17-069r4.html) and [OGC API - Features - Part 2: Coordinate Reference Systems by Reference corrigendum](https://docs.ogc.org/is/18-058r1/18-058r1.html).\n\nOGC API - Features - Part 1: Core corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nOGC API - Features - Part 2: Reference corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nThis is an informative document. The building blocks in this document are also available on the OGC schema repository.\n\n[OGC API - Features - Part 1: Core schema](http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml)\n\n[OGC API - Features - Part 2: Coordinate Reference Systems schema](https://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/ogcapi-features-2.yaml)\n\n"),
         version="1.0.1",
-        openapi_url=f"{route_config.API_ROUTE}.json",
-        docs_url=f"{route_config.API_ROUTE}.html",
+        openapi_url=f"{ogc_api_config.API_ROUTE}.json",
+        docs_url=f"{ogc_api_config.API_ROUTE}.html",
         redoc_url=None,
     )
     
@@ -44,8 +44,7 @@ def init_api_server() -> FastAPI:
         exception_object = exception.Exception(code="422", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
         accept = request.headers.get("accept", "application/json")
         if "text/html" in accept:
-            template = route_config.TEMPLATE_ENVIRONMENT.get_template("exception.html")
-            html = template.render(**exception_object.to_dict())
+            html = ogc_api_config.templates.render("exception.html", **exception_object.to_dict())
             return HTMLResponse(html, status_code=422)
         
         return JSONResponse(
@@ -55,8 +54,8 @@ def init_api_server() -> FastAPI:
 
     api_responses = _get_api_responses()
 
-    app.include_router(CapabilitiesApiRouter, dependencies=[Depends(route_config.get_format_query)], responses=api_responses)
-    app.include_router(DataApiRouter, dependencies=[Depends(route_config.get_format_query)], responses=api_responses)
+    app.include_router(CapabilitiesApiRouter, dependencies=[Depends(ogc_api_config.params.get_format_query)], responses=api_responses)
+    app.include_router(DataApiRouter, dependencies=[Depends(ogc_api_config.params.get_format_query)], responses=api_responses)
 
     return app
 

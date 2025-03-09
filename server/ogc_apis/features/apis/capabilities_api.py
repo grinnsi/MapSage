@@ -6,7 +6,7 @@ import pkgutil
 
 from fastapi.responses import ORJSONResponse
 from server.database.db import Database
-from server.ogc_apis import route_config
+from server.ogc_apis import ogc_api_config
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
 import server.ogc_apis.features.implementation as implementation
 import server.ogc_apis.features.implementation.subclasses.capabilities_api
@@ -70,7 +70,7 @@ async def describe_collection(
     collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")] = Path(..., description="local identifier of a collection"),
     request: Request = None,
     session = Depends(Database.get_sqlite_session),
-    format: route_config.ReturnFormat = Depends(route_config.get_format_query)
+    format: ogc_api_config.ReturnFormat = Depends(ogc_api_config.params.get_format_query)
 ) -> Collection:
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -92,7 +92,7 @@ async def get_collections(
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BaseCapabilitiesApi.subclasses[0]().get_collections()
 
-
+# FIXME: Fix the response model for the conformance declaration and landing page for HTML and so on
 @router.get(
     "/conformance",
     responses={
