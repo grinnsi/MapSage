@@ -214,63 +214,35 @@ class CollectionTable(TableBase, table=True):
         return collection
     
     # FIXME: Delete column on restart
-    def pre_render(self, app_base_url: str = "") -> None:
-        link_root_json = {
-            "url": f"{app_base_url}/features/?f=json",
+    def pre_render(self, app_base_url: str = "") -> None:       
+        link_root = {
+            "url": f"{app_base_url}/features/",
             "rel": "root",
-            "type": "application/json",
-            "title": "Landing page of the server as JSON"
+            "title": "Landing page of the server as {format_name}"
         }
         
-        link_root_html = {
-            "url": f"{app_base_url}/features/?f=html",
-            "rel": "root",
-            "type": "text/html",
-            "title": "Landing page of the server as HTML"
-        }
-
-        link_self_json = {
-            "url": f"{app_base_url}/features/collections/{self.id}?f=json",
+        link_self = {
+            "url": f"{app_base_url}/features/{self.id}",
             "rel": "self",
-            "type": "application/json",
-            "title": "This document as JSON"
+            "title": "This document as {format_name}"
         }
         
-        link_self_html = {
-            "url": f"{app_base_url}/features/collections/{self.id}?f=html",
-            "rel": "alternate",
-            "type": "text/html",
-            "title": "This document as HTML"
-        }
-        
-        link_items_json = {
-            "url": f"{app_base_url}/features/collections/{self.id}/items?f=json",
+        link_items = {
+            "url": f"{app_base_url}/features/collections/{self.id}/items",
             "rel": "items",
-            "type": "application/geo+json",
-            "title": f"Items of '{self.title}' as GeoJSON"
+            "title": f"Items of '{self.title}' as {{format_name}}"
         }
         
-        link_items_html = {
-            "url": f"{app_base_url}/features/collections/{self.id}/items?f=html",
-            "rel": "items",
-            "type": "text/html",
-            "title": f"Items of '{self.title}' as HTML"
-        }
+        links_json = pre_render_helper.generate_links([link_root, link_self], multiple_types=True)
+        links_items = pre_render_helper.generate_multiple_link_types(link_items, formats=["geojson", "html"])
         
-        links = [
-            link_root_json, 
-            link_root_html, 
-            link_self_json, 
-            link_self_html, 
-            link_items_json, 
-            link_items_html,
-        ]
+        links_json.extend(links_items)
         
         if self.license is not None:
-            links.append(self.license.pre_rendered_json)
-            links.append(self.license.pre_rendered_json_alternate)
+            links_json.append(pre_render_helper.generate_link(self.license.pre_rendered_json))
+            links_json.append(pre_render_helper.generate_link(self.license.pre_rendered_json_alternate))
         
-        self.links_json = pre_render_helper.generate_links(links)
+        self.links_json = links_json
         
         self.pre_rendered_json = self.to_collection().to_json()
 

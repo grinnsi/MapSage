@@ -1,6 +1,12 @@
 import mimetypes
 from enum import Enum
 
+_CUSTOM_MIMETYPES = {
+    "geojson": {
+        "type": "application/geo+json",
+        "name": "GeoJSON"
+    },
+}
 
 class ReturnFormat(str, Enum):
     json = "json"
@@ -11,15 +17,10 @@ class ReturnFormat(str, Enum):
         return cls.json
     
     @classmethod
-    def get_custom_mimetypes(cls):
-        return [
-            {
-                "ext": "geojson",
-                "type": "application/geo+json",
-            },
-        ]
+    def get_custon_mimetypes(cls):
+        return _CUSTOM_MIMETYPES
 
 mimetypes.init()
 
-for mimetype in ReturnFormat.get_custom_mimetypes():
-    mimetypes.add_type(type=mimetype["type"], ext="." + mimetype["ext"])
+for ext, mime_type in _CUSTOM_MIMETYPES.items():
+    mimetypes.add_type(type=mime_type["type"], ext="." + ext)

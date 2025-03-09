@@ -41,7 +41,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
             Database.update_sqlite_db(data_object=collection)
         
         if format == ogc_api_config.ReturnFormat.html:
-            html = ogc_api_config.get_template("collection.html").render(
+            html = ogc_api_config.templates.render("collection.html",
                 collection=collection,
             )
             
