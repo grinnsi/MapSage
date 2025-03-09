@@ -74,11 +74,11 @@ def init_main_api_server() -> FastAPI:
         
         # Add middleware to log request processing time
         @app.middleware("http")
-        async def add_process_time_header(request, call_next):
+        async def add_process_time_header(request: Request, call_next):
             start_time = time.perf_counter_ns()
             response = await call_next(request)
             process_time = time.perf_counter_ns() - start_time
-            _LOGGER.debug(f"Request '{request.url.path}' took {process_time / 1_000_000} ms")
+            _LOGGER.debug(f"Request {request.method} '{request.url.path}' took {process_time / 1_000_000} ms")
             return response
         
     app.mount(FEATURES_ROUTE, features_api.init_api_server(), name="OGC API - Features")

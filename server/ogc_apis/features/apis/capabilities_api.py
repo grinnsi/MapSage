@@ -5,9 +5,11 @@ import importlib
 import pkgutil
 
 from fastapi.responses import ORJSONResponse
-import orjson
+from server.database.db import Database
+from server.ogc_apis import route_config
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
 import server.ogc_apis.features.implementation as implementation
+import server.ogc_apis.features.implementation.subclasses.capabilities_api
 
 from fastapi import (  # noqa: F401
     APIRouter,
@@ -32,9 +34,7 @@ from typing_extensions import Annotated
 from server.ogc_apis.features.models.collection import Collection
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
-from server.ogc_apis.features.models.exception import Exception
 from server.ogc_apis.features.models.landing_page import LandingPage
-import markdown
 
 
 router = APIRouter()
@@ -47,9 +47,20 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
 @router.get(
     "/collections/{collectionId}",
     responses={
-        200: {"model": Collection, "description": "Information about the feature collection with id `collectionId`.\n\nThe response contains a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is 'feature')."},
+        200: {
+            "model": Collection,
+            "content": {
+                "application/json": {
+                    "description": "JSON representation of the feature collection with id `collectionId`.",
+                },
+                "text/html": {
+                    "description": "HTML representation of the feature collection with id `collectionId`.",
+                    "example": "string",
+                }
+            },
+            "description": "Information about the feature collection with id `collectionId`.\n\nThe response contains a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is 'feature').",
+        },
         404: {"description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value."},
-        500: {"model": Exception, "description": "A server error occurred."},
     },
     tags=["Capabilities"],
     summary="describe the feature collection with id `collectionId`",
@@ -57,17 +68,19 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
 )
 async def describe_collection(
     collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")] = Path(..., description="local identifier of a collection"),
+    request: Request = None,
+    session = Depends(Database.get_sqlite_session),
+    format: route_config.ReturnFormat = Depends(route_config.get_format_query)
 ) -> Collection:
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseCapabilitiesApi.subclasses[0]().describe_collection(collectionId)
+    return await BaseCapabilitiesApi.subclasses[0]().describe_collection(collectionId, request, format, session)
 
 
 @router.get(
     "/collections",
     responses={
         200: {"model": Collections, "description": "The feature collections shared by this API.\n\nThe dataset is organized as one or more feature collections. This resource provides information about and access to the collections.\n\nThe response contains the list of collections. For each collection, a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is 'feature')."},
-        500: {"model": Exception, "description": "A server error occurred."},
     },
     tags=["Capabilities"],
     summary="the feature collections in the dataset",
@@ -84,7 +97,6 @@ async def get_collections(
     "/conformance",
     responses={
         200: {"model": ConfClasses, "description": "The URIs of all conformance classes supported by the server.\n\nTo support 'generic' clients that want to access multiple OGC API Features implementations - and not 'just' a specific API / server, the server declares the conformance classes it implements and conforms to."},
-        500: {"model": Exception, "description": "A server error occurred."},
     },
     tags=["Capabilities"],
     summary="information about specifications that this API conforms to",
@@ -99,17 +111,16 @@ async def get_conformance_declaration(
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     
-    conformance_declaration: str = await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration()
+    conformance_declaration: dict = await BaseCapabilitiesApi.subclasses[0]().get_conformance_declaration()
     
     # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads
-    return ORJSONResponse(content=orjson.loads(conformance_declaration))
+    return ORJSONResponse(content=conformance_declaration)
 
 
 @router.get(
     "/",
     responses={
         200: {"model": LandingPage, "description": "The landing page provides links to the API definition (link relations `service-desc` and `service-doc`), the Conformance declaration (path `/conformance`, link relation `conformance`), and the Feature Collections (path `/collections`, link relation `data`)."},
-        500: {"model": Exception, "description": "A server error occurred."},
     },
     tags=["Capabilities"],
     summary="landing page",
@@ -125,7 +136,7 @@ async def get_landing_page(
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
 
-    landing_page: str = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
+    landing_page: dict = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
     
     # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads (according to author)
-    return ORJSONResponse(content=orjson.loads(landing_page))
+    return ORJSONResponse(content=landing_page)

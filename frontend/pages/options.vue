@@ -2,6 +2,7 @@
   <TemplateSection section-title="Allgemeine Einstellungen:">
     <FormsGeneralOptions />
   </TemplateSection>
+  <ElDivider style="margin-bottom: calc(24px - 1em);"/>
   <TemplateSection section-title="Gespeicherte Verbindungen:">
     <template #header-right>
       <TemplateButton tooltip="Neue Datenbankverbindung" iconName="flowbite:plus-outline" @click="useEmitter().value.emit('show-new-connection-dialog')"/>
@@ -77,7 +78,7 @@ definePageMeta({
   name: "Einstellungen"
 });
 
-const { status, data, refresh } = await useBaseUrlFetch<Connection[]>('/data/connections', {
+const { status, data, refresh } = await useBaseUrlFetch<Connection[]>('/data/settings/connections', {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json'
@@ -93,14 +94,14 @@ async function deleteConnection(uuid: string) {
   confirmationDialogRef.value!.toggleVisibility();
 
   try {
-    const response = await useBaseUrlFetchRaw('/data/connections', {
+    const response = await useBaseUrlFetchRaw('/data/settings/connections', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ uuid }),
     });
-    if (!response.ok) throw new Error('Antwort des Löschens nicht verständlich');
+    // if (!response.ok) throw new Error('Antwort des Löschens nicht verständlich');
     ElMessage({
       type: 'success',
       message: 'Verbindung erfolgreich gelöscht'

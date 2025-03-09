@@ -48,7 +48,6 @@ RUN apt-get update && \
 RUN apt-get install -y \
         python3 \
         python3-venv \
-        python3-pip \
         gdal-bin
 
 #                                                                                                                                              Locales
@@ -81,9 +80,10 @@ ARG DOCKER_CONTAINER_WORKDIR
 WORKDIR ${DOCKER_CONTAINER_WORKDIR}
 
 #   Erstelle ein virtuelles Environment und aktiviere es.
-RUN python3 -m venv ./.venv
+RUN python3 -m venv --system-site-packages ./.venv
 RUN . ./.venv/bin/activate
 ENV PATH="${DOCKER_CONTAINER_WORKDIR}/.venv/bin:$PATH"
+ENV PROJ_DIR="${DOCKER_CONTAINER_WORKDIR}/proj"
 
 #   Installiere die Abhängigkeiten für das Virtual Environment.
 WORKDIR ${DOCKER_CONTAINER_WORKDIR}/server
@@ -108,6 +108,7 @@ WORKDIR ${DOCKER_CONTAINER_WORKDIR}
 
 ENV PYTHONPATH="${DOCKER_CONTAINER_WORKDIR}"
 ENV APP_ENV="${APP_ENV}"
+ENV PROJ_DIR="${DOCKER_CONTAINER_WORKDIR}/proj"
 
 #   Kopiere die gebaute Anwendung und die Abhängigkeiten in das finale Image.
 COPY --from=build-frontend ${DOCKER_CONTAINER_WORKDIR}/frontend/.output ${DOCKER_CONTAINER_WORKDIR}/server/web/static

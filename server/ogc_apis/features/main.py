@@ -13,30 +13,83 @@
 """  # noqa: E501
 
 
-from contextlib import asynccontextmanager
-import os, logging
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse, JSONResponse
 import markdown
-import time
-from fastapi import FastAPI
-from fastapi.middleware.wsgi import WSGIMiddleware
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Depends, FastAPI, Request
 
 from server.ogc_apis.features.apis.capabilities_api import router as CapabilitiesApiRouter
 from server.ogc_apis.features.apis.data_api import router as DataApiRouter
-from server.database.db import Database
-from server.ogc_apis.route_config import API_ROUTE
+from server.ogc_apis import route_config
+from server.ogc_apis.features.models import exception
 
 def init_api_server() -> FastAPI:    
     app = FastAPI(
         title="Building Blocks specified in the OGC API - Features - Part 1 and Part 2: Core and CRS standard",
         description=markdown.markdown("Common components used in the [OGC API - Features - Part 1: Core corrigendum standard](https://docs.ogc.org/is/17-069r4/17-069r4.html) and [OGC API - Features - Part 2: Coordinate Reference Systems by Reference corrigendum](https://docs.ogc.org/is/18-058r1/18-058r1.html).\n\nOGC API - Features - Part 1: Core corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nOGC API - Features - Part 2: Reference corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nThis is an informative document. The building blocks in this document are also available on the OGC schema repository.\n\n[OGC API - Features - Part 1: Core schema](http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml)\n\n[OGC API - Features - Part 2: Coordinate Reference Systems schema](https://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/ogcapi-features-2.yaml)\n\n"),
         version="1.0.1",
-        openapi_url=f"{API_ROUTE}.json",
-        docs_url=f"{API_ROUTE}.html",
+        openapi_url=f"{route_config.API_ROUTE}.json",
+        docs_url=f"{route_config.API_ROUTE}.html",
         redoc_url=None,
     )
+    
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> exception.Exception:
+        error = exc.errors()[0]
+        param = error["loc"][1]
+        param_type = error["loc"][0]
+        msg = error["msg"]
+        
+        exception_object = exception.Exception(code="422", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
+        accept = request.headers.get("accept", "application/json")
+        if "text/html" in accept:
+            template = route_config.TEMPLATE_ENVIRONMENT.get_template("exception.html")
+            html = template.render(**exception_object.to_dict())
+            return HTMLResponse(html, status_code=422)
+        
+        return JSONResponse(
+            status_code=422,
+            content=jsonable_encoder(exception_object),
+        )
 
-    app.include_router(CapabilitiesApiRouter)
-    app.include_router(DataApiRouter)
+    api_responses = _get_api_responses()
+
+    app.include_router(CapabilitiesApiRouter, dependencies=[Depends(route_config.get_format_query)], responses=api_responses)
+    app.include_router(DataApiRouter, dependencies=[Depends(route_config.get_format_query)], responses=api_responses)
 
     return app
+
+def _get_api_responses() -> dict:
+    return {
+        422: {
+            "model": exception.Exception,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "code": 422,
+                        "description": "Input for parameter 'f' of type 'query' is invalid. Input should be 'json' or 'html'",
+                    }
+                },
+                "text/html": {
+                    "example": "string",
+                },
+            },
+            "description": "A query parameter has an invalid value",
+        },
+        500: {
+            "model": exception.Exception,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "code": 500,
+                        "description": "Internal server error",
+                    }
+                },
+                "text/html": {
+                    "example": "string",
+                },
+            },
+            "description": "A server error occured",
+        },
+    }

@@ -60,7 +60,7 @@ const rules = {
   }]
 }
 
-const { data, refresh } = await useBaseUrlFetch<GeneralOption[]>("/data/general", {
+const { data, refresh } = await useBaseUrlFetch<GeneralOption[]>("/data/settings/general", {
   method: "GET",
   onResponse({ request, response, options }) {
     (response._data as GeneralOption[]).forEach((option) => {
@@ -98,7 +98,7 @@ async function saveGeneralOptions() {
   try {
     loadingSubmitButton.value = true;
 
-    const response = await useBaseUrlFetchRaw('/data/general', {
+    const response = await useBaseUrlFetchRaw('/data/settings/general', {
       method: "PATCH",
       headers: {
         'Content-Type': 'application/json'

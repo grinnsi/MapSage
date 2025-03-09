@@ -43,8 +43,8 @@ class ExtentSpatial(BaseModel):
         if value is None:
             return value
 
-        if value not in ('http://www.opengis.net/def/crs/OGC/1.3/CRS84',):
-            raise ValueError("must be one of enum values ('http://www.opengis.net/def/crs/OGC/1.3/CRS84')")
+        if value not in ('http://www.opengis.net/def/crs/OGC/1.3/CRS84','http://www.opengis.net/def/crs/OGC/0/CRS84h'):
+            raise ValueError("must be one of enum values ('http://www.opengis.net/def/crs/OGC/1.3/CRS84', 'http://www.opengis.net/def/crs/OGC/0/CRS84h')")
         return value
 
     model_config = {

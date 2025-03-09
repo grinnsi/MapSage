@@ -6,11 +6,10 @@ from uuid import UUID
 
 from sqlalchemy import Engine, text, exc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlmodel import SQLModel, Session, create_engine, delete, select
+from sqlmodel import SQLModel, Session, create_engine, select
 
-from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase
+from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase, License
 import server.database.sql_triggers as sql_triggers
-from server.ogc_apis.features.implementation.static_content.licenses import get_default_licenses
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -45,9 +44,10 @@ class SetupSqliteDatabase():
     @classmethod
     def get_default_db_data(cls) -> list[Callable]:
         return [
-            get_default_licenses,
+            License.get_default_licenses,
         ]
 
+    # TODO: Check all avialabe collections on startup, to see if they are still available
     @classmethod
     def setup(cls, sqlite_engine: Engine, reset_db: bool) -> None:
         # Fallback if database engine not found (init_sqlite_engine called before setting APP_DATABASE_DIR)
@@ -135,9 +135,16 @@ class Database():
     @classmethod
     def init_sqlite_db(cls, reset_db: bool) -> None:
         SetupSqliteDatabase.setup(cls.sqlite_engine, reset_db)
+        
+    @classmethod
+    def get_sqlite_engine(cls) -> Engine:
+        if cls.sqlite_engine is None:
+            _LOGGER.error(msg=f"Error while getting session, database engine not found", exc_info=cls.debug_mode)
+            raise RuntimeError("Database engine not found")
+        
+        return cls.sqlite_engine
 
     @classmethod
-    @contextmanager
     def get_sqlite_session(cls):
         if cls.sqlite_engine is None:
             _LOGGER.error(msg=f"Error while getting session, database engine not found", exc_info=cls.debug_mode)
@@ -147,14 +154,15 @@ class Database():
             yield session
     
     @classmethod
-    def get_postgresql_connection_string(cls, data: dict) -> str:
-        return f"postgresql+psycopg://{data['role']}:{data['password']}@{data['host']}:{data['port']}/{data['database_name']}"
+    def get_postgresql_connection_string(cls, data: dict, include_psycopg: bool = False) -> str:
+        prefix = "postgresql+psycopg" if include_psycopg else "postgresql"
+        return f"{prefix}://{data['role']}:{data['password']}@{data['host']}:{data['port']}/{data['database_name']}"
 
     # Input connection parameters and returns if connection is successful
     @classmethod
     def test_pg_connection(cls, data: dict) -> bool:
         """Test the connection to a PostgreSQL database, using the connection parameters"""
-        pg_url = cls.get_postgresql_connection_string(data)
+        pg_url = cls.get_postgresql_connection_string(data, include_psycopg=True)
         pg_engine = create_engine(pg_url, echo=cls.debug_mode)
         
         connection_successful = False
@@ -172,7 +180,7 @@ class Database():
 
     @classmethod
     def select_sqlite_db(cls, table_model: CoreModel = None, primary_key_value: str = None, select_all: bool = True, statement = None) -> Union[CoreModel, list[CoreModel], None]:
-        with cls.get_sqlite_session() as session:
+        with DatabaseSession() as session:
             result = None
             
             if table_model is not None and primary_key_value is not None:
@@ -183,20 +191,22 @@ class Database():
             elif table_model is not None and select_all:
                 result = session.exec(select(table_model)).all()
             elif statement is not None:
+                if isinstance(statement, str):
+                    statement = text(statement)
                 result = session.exec(statement).all()
             else:
                 raise AttributeError("SQL-Select: Wrong combination of parameters")
             
             _LOGGER.debug(msg=f"Result of select query: {result}")
             
-            if isinstance(result, list) and len(result) == 1:
-                result = result[0]
+            # if isinstance(result, list) and len(result) == 1:
+            #     result = result[0]
             
             return result
         
     @classmethod
     def insert_sqlite_db(cls, data_object: Union[CoreModel, list[CoreModel]] = None, do_nothing_on_conflict: bool = False) -> Union[CoreModel, list[CoreModel]]:
-        with cls.get_sqlite_session() as session:
+        with DatabaseSession() as session:
             if data_object is None:
                 raise AttributeError("SQL-Insert: No data object provided")
                 
@@ -237,7 +247,7 @@ class Database():
     def delete_sqlite_db(cls, table_model: CoreModel, uuid: str) -> Union[None, CoreModel]:
         uuid = UUID(uuid)
 
-        with cls.get_sqlite_session() as session:
+        with DatabaseSession() as session:
             object_to_delete = session.get(table_model, uuid)
             if not object_to_delete:
                 _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with uuid: {uuid}")
@@ -252,7 +262,7 @@ class Database():
     
     @classmethod
     def update_sqlite_db(cls, update: Union[CoreModel, list[CoreModel]], primary_key_value: str = None, primary_key_name = "uuid") -> Union[None, CoreModel, list[CoreModel]]:                
-        with cls.get_sqlite_session() as session:
+        with DatabaseSession() as session:
             if type(update) is list:
                 table_model = update[0].__class__
                 if issubclass(table_model, KeyValueBase):
@@ -303,3 +313,16 @@ class Database():
                 _LOGGER.debug(msg=f"Successfully updated [{table_model.__class__.__name__}] with {primary_key_name} [{primary_key_value}]: {db_model}")
                 
                 return db_model
+            
+class DatabaseSession():
+    def __init__(self):
+        self.session = Session(Database.get_sqlite_engine())
+        
+    def __enter__(self):
+        return self.session
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            _LOGGER.critical(msg=f"Error while handling database session.\nType: {exc_type};\nValue: {exc_val}; Traceback: {exc_tb}", exc_info=Database.debug_mode)
+            self.session.rollback()
+        self.session.close()

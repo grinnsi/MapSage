@@ -1,35 +1,37 @@
 <template>
-  <ElContainer class="base-layout">
-    <ElAside class="sidebar" width="170px">
-      <ElMenu class="vertical-menu navigation-menu">
-        <template v-for="route in nav" :key="route.name">
-          <NuxtLink :to="route.path" class="navigation-link" :class="(route.path === $route.path)?'navigation-current-page':'navigation-different-page'">
-            <ElMenuItem :index="route.name?.toString()">
-              <span>{{ route.name }}</span>
-            </ElMenuItem>
-          </NuxtLink>
-        </template>
-      </ElMenu>
-    </ElAside>
-    <ElMain class="main-content">
-      <ElScrollbar>
-        <h2 class="page-name">{{ $route.name }}</h2>
-        <NuxtErrorBoundary>
-          <NuxtPage />
-          <template #error="{ error }">
-            <p>An error occured: {{ error }}</p>
+  <div class="body">
+    <ElContainer class="base-layout">
+      <ElAside class="sidebar" width="170px">
+        <ElMenu class="vertical-menu navigation-menu">
+          <template v-for="route in nav" :key="route.name">
+            <NuxtLink :to="route.path" class="navigation-link" :class="(route.path === $route.path)?'navigation-current-page':'navigation-different-page'">
+              <ElMenuItem :index="route.name?.toString()">
+                <span>{{ route.name }}</span>
+              </ElMenuItem>
+            </NuxtLink>
           </template>
-        </NuxtErrorBoundary>
-      </ElScrollbar>
-    </ElMain>
-  </ElContainer>
+        </ElMenu>
+      </ElAside>
+      <ElMain class="main-content">
+        <ElScrollbar>
+          <h2 class="page-name">{{ $route.name }}</h2>
+          <NuxtErrorBoundary>
+            <NuxtPage />
+            <template #error="{ error }">
+              <p>An error occured: {{ error }}</p>
+            </template>
+          </NuxtErrorBoundary>
+        </ElScrollbar>
+      </ElMain>
+    </ElContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
 const nav = [
   {path: '/', name: 'Startseite'},
-  {path: '/namespaces', name: 'Namespaces'},
-  // {path: '/layers', name: 'Ebenen'},
+  // {path: '/namespaces', name: 'Namespaces'},
+  {path: '/collections', name: 'Kollektionen'},
   {path: '/options', name: 'Einstellungen'},
 ];
 </script>
