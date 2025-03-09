@@ -34,6 +34,23 @@ def init_api_server() -> FastAPI:
         redoc_url=None,
     )
     
+    # Custom method to overwrite openapi schema
+    def _custom_openapi():
+        if not app.openapi_schema:
+            app.openapi_schema = FastAPI.openapi(app)
+            
+            for _, method_item in app.openapi_schema.get("paths").items():
+                for _, param in method_item.items():
+                    responses = param.get("responses")
+                    
+                    # Delete all 422 responses
+                    if '422' in responses:
+                        del responses['422']
+        
+        return app.openapi_schema
+    
+    app.openapi = _custom_openapi
+    
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> exception.Exception:
         error = exc.errors()[0]
