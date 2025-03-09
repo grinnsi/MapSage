@@ -1,11 +1,13 @@
 from typing import Collection, Union
+from fastapi.responses import HTMLResponse, ORJSONResponse
 from pydantic import Field, StrictStr
 from typing_extensions import Annotated
-from fastapi import Request
-
+from fastapi import HTTPException, Request
+import sqlmodel
 
 from server.database.db import Database
 from server.database import models
+from server.ogc_apis import route_config
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
 from server.ogc_apis.features.implementation.static.conformance import generate_conformance_declaration_object
 from server.ogc_apis.features.implementation.static.landing_page import generate_landing_page_object
@@ -19,9 +21,33 @@ class CapabilitiesApi(BaseCapabilitiesApi):
     async def describe_collection(
         self,
         collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")],
+        request: Request,
+        format: route_config.ReturnFormat,
+        session: sqlmodel.Session,
     ) -> Collection:
         """Return information about the feature collection with id `collectionId`."""
-        raise NotImplementedError
+        
+        collections: list[models.CollectionTable] = session.exec(
+            statement=sqlmodel.select(models.CollectionTable).where(models.CollectionTable.id == collectionId)
+        ).all()
+        if len(collections) == 0:
+            raise HTTPException(status_code=404, detail="The requested resource does not exist on the server. For example, a path parameter had an incorrect value.")
+        elif len(collections) > 1:
+            raise HTTPException(status_code=500, detail="Multiple collections with the same id found in the database.")
+        
+        collection = collections[0]
+        if collection.pre_rendered_json is None:
+            collection.pre_render(str(request.base_url))
+            Database.update_sqlite_db(data_object=collection)
+        
+        if format == route_config.ReturnFormat.html:
+            html = route_config.get_template("collection.html").render(
+                collection=collection,
+            )
+            
+            return HTMLResponse(status_code=200, content=html)
+
+        return ORJSONResponse(content=collection.pre_rendered_json, status_code=200)
 
     async def get_collections(
         self,
