@@ -76,20 +76,21 @@ class CapabilitiesApi(BaseCapabilitiesApi):
 
     async def get_landing_page(
         self, 
-        request: Request
+        request: Request,
+        format: ogc_api_config.ReturnFormat,
     ) -> str:
         """Return the landing page for the API."""
         
         pre_rendered_landing_page: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="landing_page")
-        if pre_rendered_landing_page:
-            # Returns the JSON string representation of the LandingPage object
-            return pre_rendered_landing_page.json_value
-        else:
+        if not pre_rendered_landing_page:
             generated_landing_page = generate_landing_page_object(base_url=str(request.base_url))
-            pre_rendered_json = models.PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
-            Database.insert_sqlite_db(data_object=pre_rendered_json)
-
-            # Returns the JSON string representation of the LandingPage object
-            # This is because the response of the endpoint is ORJSONResponse which requires a dict
-            # However this will return a JSON string so it's in line with the pre_rendered_json.value in the IF-statement above
-            return pre_rendered_json.json_value
+            pre_rendered_landing_page = models.PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+            Database.insert_sqlite_db(data_object=pre_rendered_landing_page)
+        
+        if format == ogc_api_config.ReturnFormat.html:
+            html = ogc_api_config.templates.render("landing_page.html",
+                landing_page=pre_rendered_landing_page.json_value,
+            )
+            return HTMLResponse(status_code=200, content=html)
+        
+        return ORJSONResponse(content=pre_rendered_landing_page.json_value, status_code=200)
