@@ -1,30 +1,26 @@
 import re
-import orjson
-import server.ogc_apis.route_config as route_config
-
-_link_attributes_regex = re.compile(r"(href|rel|type|title)\"[\s\n]*:[\s\n]*\"([^\"]*)")
 
 def generate_link(obj: dict) -> dict:
     if not isinstance(obj, dict):
-        raise ValueError("Object must be a dictionary")
+        raise TypeError("Object must be a dictionary")
     
     href = obj.get('url', None)
     if href is None:
         href = obj.get('href', None)
     if href is None:
-        raise ValueError("Object must have a 'url' or 'href' key")
+        raise KeyError("Object must have a 'url' or 'href' key")
     
     rel = obj.get('rel', None)
     if rel is None:
-        raise ValueError("Object must have a 'rel' key")
+        raise KeyError("Object must have a 'rel' key")
     
     doc_type = obj.get('type', None)
     if doc_type is None:
-        raise ValueError("Object must have a 'type' key")
+        raise KeyError("Object must have a 'type' key")
         
     title = obj.get('title', None)
     if title is None:
-        raise ValueError("Object must have a 'title' key")
+        raise KeyError("Object must have a 'title' key")
     
     return {
         "href": href,
@@ -35,6 +31,6 @@ def generate_link(obj: dict) -> dict:
     
 def generate_links(obj: list[dict]) -> list[dict]:
     if not isinstance(obj, list):
-        raise ValueError("Input must be a list of dictionaries")
+        raise TypeError("Input must be a list of dictionaries")
     
     return [generate_link(item) for item in obj]

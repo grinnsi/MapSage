@@ -4,15 +4,15 @@ import pyproj
 
 def get_code_and_authority_of_spatial_ref(spatial_ref: osr.SpatialReference) -> tuple[str, str]:
     if spatial_ref is None:
-        raise ValueError("Spatial reference is None")
+        raise TypeError("Spatial reference is None")
     
     authority = spatial_ref.GetAuthorityName(None)
     if authority is None:
-        raise ValueError("Spatial reference has no authority name")
+        raise KeyError("Spatial reference has no authority name")
     
     code = spatial_ref.GetAuthorityCode(None)
     if code is None:
-        raise ValueError("Spatial reference has no authority code")
+        raise KeyError("Spatial reference has no authority code")
     
     return code, authority
 
@@ -28,7 +28,7 @@ def get_urn_of_spatial_ref(spatial_ref: osr.SpatialReference) -> str:
 
 def get_spatial_ref_from_uri(uri: str) -> osr.SpatialReference:
     if uri is None:
-        raise ValueError("URI is None")
+        raise TypeError("URI is None")
     
     try:
         authority, code = re.findall(r"http://www.opengis.net/def/crs/(\w+)/[\d.]+/(.+)", uri)[0]
@@ -41,7 +41,7 @@ def get_spatial_ref_from_uri(uri: str) -> osr.SpatialReference:
 
 def get_spatial_ref_from_urn(urn: str) -> osr.SpatialReference:
     if urn is None:
-        raise ValueError("URN is None")
+        raise TypeError("URN is None")
     
     try:
         authority, code = re.findall(r"urn:ogc:def:crs:(\w+):[\d.]*:(.+)", urn)[0]
@@ -61,21 +61,21 @@ def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spat
     gdal.UseExceptions()
     
     if source_spatial_ref is None:
-        raise ValueError("Source spatial reference is None")
+        raise TypeError("Source spatial reference is None")
     
     if isinstance(source_spatial_ref, str):
         uri = source_spatial_ref
         source_spatial_ref = get_spatial_ref_from_uri(uri) if uri.startswith("http") else get_spatial_ref_from_urn(uri)
 
     if target_spatial_ref is None:
-        raise ValueError("Target spatial reference is None")
+        raise TypeError("Target spatial reference is None")
     
     if isinstance(target_spatial_ref, str):
         uri = target_spatial_ref
         target_spatial_ref = get_spatial_ref_from_uri(uri) if uri.startswith("http") else get_spatial_ref_from_urn(uri)
         
     if extent is None:
-        raise ValueError("Extent is None")
+        raise TypeError("Extent is None")
     
     if len(extent) == 4:
         extent = (extent[0], extent[2], extent[1], extent[3])
