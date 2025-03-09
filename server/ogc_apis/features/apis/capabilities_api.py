@@ -120,23 +120,75 @@ async def get_conformance_declaration(
 @router.get(
     "/",
     responses={
-        200: {"model": LandingPage, "description": "The landing page provides links to the API definition (link relations `service-desc` and `service-doc`), the Conformance declaration (path `/conformance`, link relation `conformance`), and the Feature Collections (path `/collections`, link relation `data`)."},
+        200: {
+            "model": LandingPage,
+            "content": {
+                "application/json": {
+                    "description": "JSON representation of the landing page.",
+                },
+                "text/html": {
+                    "description": "HTML representation of the landing page.",
+                    "example": "string",
+                }
+            },
+            "description": "The landing page provides links to the API definition (link relations `service-desc` and `service-doc`), the Conformance declaration (path `/conformance`, link relation `conformance`), and the Feature Collections (path `/collections`, link relation `data`)."
+        },
     },
     tags=["Capabilities"],
     summary="landing page",
     response_model_by_alias=True,
-    # Using ORJSONResponse as response_class to directly return the dict of the JSON string of the LandingPage object
-    # Faster than returning the LandingPage object that gets serialized to a JSON string
-    response_class=ORJSONResponse,
 )
 async def get_landing_page(
     request: Request,
+    format: ogc_api_config.ReturnFormat = Depends(ogc_api_config.params.get_format_query)
 ) -> LandingPage:
     """The landing page provides links to the API definition, the conformance statements and to the feature collections in this dataset."""
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
+    return await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request, format)
 
-    landing_page: dict = await BaseCapabilitiesApi.subclasses[0]().get_landing_page(request)
+@router.get(
+    "/api",
+    responses={
+        200: {
+            "model": None,
+            "content": {
+                "application/json": {
+                    "description": "The OpenAPI schema as JSON.",
+                },
+                "text/html": {
+                    "description": "The OpenAPI schema as HTML.",
+                },
+            },
+            "description": "Get the OpenAPI schema",
+        },
+    },
+    tags=["Capabilities"],
+    summary="API definition",
+)
+async def get_openapi_schema(
+    request: Request,
+):
+    """Get the OpenAPI schema in JSON or HTML format."""
     
-    # Using orjson.loads to convert the JSON string to a dict, up to 2x faster than json.loads (according to author)
-    return ORJSONResponse(content=landing_page)
+    accept_header = request.headers.get("accept", "application/json")
+    format = request.query_params.get("f")
+    app = request.app
+    
+    # Get the OpenAPI schema
+    openapi_schema = app.openapi()
+    
+    if ("text/html" in accept_header and format is None) or format == "html":
+        # Serve Swagger UI
+        from fastapi.openapi.docs import get_swagger_ui_html
+        html = get_swagger_ui_html(
+            openapi_url=str(request.url.remove_query_params("f")) + "?f=json",  # This will be requested with JSON Accept header
+            title=app.title + " - Swagger UI",
+            oauth2_redirect_url=None,
+            init_oauth=None,
+        )
+        
+        return html
+    else:
+        # Serve OpenAPI schema as JSON
+        return ORJSONResponse(content=openapi_schema)
