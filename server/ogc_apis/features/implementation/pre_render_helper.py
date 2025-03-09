@@ -37,7 +37,7 @@ def generate_link(obj: dict) -> dict:
     
 def generate_multiple_link_types(
     obj: dict, 
-    formats: list[str] = ["html", "json"], 
+    formats: list[str] = ogc_api_config.ReturnFormat.get_all(), 
 ) -> list[dict]:
     if not isinstance(obj, dict):
         raise TypeError("Object must be a dictionary")
@@ -66,7 +66,7 @@ def generate_multiple_link_types(
     
     return links
     
-def generate_links(obj: list[dict], multiple_types: bool = False, formats: list[str] = ["html", "json"]) -> list[dict]:
+def generate_links(obj: list[dict], multiple_types: bool = False, formats: list[str] = ogc_api_config.ReturnFormat.get_all()) -> list[dict]:
     if not isinstance(obj, list):
         raise TypeError("Input must be a list of dictionaries")
     

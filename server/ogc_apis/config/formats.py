@@ -19,6 +19,10 @@ class ReturnFormat(str, Enum):
     @classmethod
     def get_custon_mimetypes(cls):
         return _CUSTOM_MIMETYPES
+    
+    @classmethod
+    def get_all(cls):
+        return [_format.value for _format in cls]
 
 mimetypes.init()
 
