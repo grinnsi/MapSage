@@ -39,11 +39,17 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
         
     # Reorder the extent to be in the order of OGC API Features
     # FIXME: Order of axis are east, north; might need to be changed if the layer is in a different order
-    extent_ordered = gdal_utils.transform_extent(spatial_ref, default_uri_of_crs, extent_calc[:extent_coordinate_count], return_gdal_format=False)
+    extent_ordered = [gdal_utils.transform_extent(spatial_ref, default_uri_of_crs, extent_calc[:extent_coordinate_count], return_gdal_format=False)]
+    
+    # Setting the spatial extent, if one exists
+    if extent_ordered and len(extent_ordered[0]) >= 4:
+        spatial_extent = ExtentSpatial(bbox=extent_ordered, crs=default_uri_of_crs)
+    else:
+        spatial_extent = None
     
     # Here we assume that the layer is NEVER temporal, and we will need to change this in the future
-    spatial_extent = ExtentSpatial(bbox=[extent_ordered], crs=default_uri_of_crs)
-    temporal_extent = ExtentTemporal()
+    if True:
+        temporal_extent = None
     extent = Extent(spatial=spatial_extent, temporal=temporal_extent)
     new_collection.extent_json = extent.to_json()
     new_collection.spatial_extent_crs = uri_of_spatial_ref
@@ -80,8 +86,6 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     collection_title = " ".join(word.capitalize() for word in collection_title.split(" "))
     new_collection.title = collection_title
     new_collection.connection_uuid = UUID(connection_uuid)
-
-    app_base_url = app_base_url.rstrip("/")
     
     new_collection.pre_render(app_base_url=app_base_url)
 

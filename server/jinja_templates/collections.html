@@ -1,0 +1,67 @@
+{% extends "basic.html" %}
+{% block title %}Collections{% endblock %}
+{% block heading %}Collections{% endblock %}
+{% set links = collections.links %}
+{% block content %}
+<div class="collections-container">
+  {% if collections.crs %}
+  <div class="global-crs-section">
+    <h3>Global Coordinate Reference Systems</h3>
+    <p>The following CRS are supported by all collections:</p>
+    <ul>
+      {% for crs in collections.crs %}
+      <li>{{ crs }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <h2>Available Collections</h2>
+  <div class="collections-table-container">
+    <table class="collections-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Description</th>
+          <th>ID</th>
+          <th>Spatial Extent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for collection in collections.collections %}
+        <tr>
+          <td><a href="{{ (collection.links | selectattr('rel', 'equalto', 'alternate') | first).href }}">{{ collection.title }}</a></td>
+          <td>{{ collection.description if collection.description else "—" }}</td>
+          <td>{{ collection.id }}</td>
+          <td>
+            {% if collection.extent %}
+              {{ collection.extent.spatial.bbox | join(', ') }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- {% if collections.links %}
+  <div class="links-section">
+    <h3>Links</h3>
+    <ul>
+      {% for link in collections.links %}
+      <li>
+        <a href="{{ link.href }}" 
+           rel="{{ link.rel }}" 
+           {% if link.type %}type="{{ link.type }}"{% endif %}
+           {% if link.title %}title="{{ link.title }}"{% endif %}>
+          {{ link.title if link.title else link.rel }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %} -->
+</div>
+{% endblock %}
