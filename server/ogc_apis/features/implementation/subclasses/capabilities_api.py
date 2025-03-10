@@ -9,8 +9,7 @@ from server.database.db import Database
 from server.database import models
 from server.ogc_apis import ogc_api_config
 from server.ogc_apis.features.apis.capabilities_api_base import BaseCapabilitiesApi
-from server.ogc_apis.features.implementation.static.conformance import generate_conformance_declaration_object
-from server.ogc_apis.features.implementation.static.landing_page import generate_landing_page_object
+from server.ogc_apis.features.implementation import static
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 
@@ -51,9 +50,29 @@ class CapabilitiesApi(BaseCapabilitiesApi):
 
     async def get_collections(
         self,
+        request: Request,
+        format: ogc_api_config.ReturnFormat,
     ) -> Collections:
         """Return the feature collections shared by this API."""
-        raise NotImplementedError
+        
+        pre_rendered_collections: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="collections")
+        if not pre_rendered_collections:
+            collections_url = str(request.url).split("?")[0]
+            generated_collections = static.generate_collections_object(collections_url=collections_url)
+            pre_rendered_collections = models.PreRenderedJson(key="collections", json_value=generated_collections.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+            Database.insert_sqlite_db(data_object=pre_rendered_collections)
+            
+        if format == ogc_api_config.ReturnFormat.html:
+            html = ogc_api_config.templates.RESPONSE.TemplateResponse(
+                request=request,
+                name="collections.html",
+                context= {
+                    "collections": pre_rendered_collections.json_value,
+                }
+            )
+            return html
+        
+        return ORJSONResponse(content=pre_rendered_collections.json_value, status_code=200)
 
     async def get_conformance_declaration(
         self,
@@ -63,9 +82,9 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         
         pre_rendered_conformance_declaration: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="conformance_declaration")
         if not pre_rendered_conformance_declaration:
-            generated_conformance_declaration = generate_conformance_declaration_object()
-            pre_rendered_json = models.PreRenderedJson(key="conformance_declaration", json_value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
-            Database.insert_sqlite_db(data_object=pre_rendered_json)
+            generated_conformance_declaration = static.generate_conformance_declaration_object()
+            pre_rendered_conformance_declaration = models.PreRenderedJson(key="conformance_declaration", json_value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+            Database.insert_sqlite_db(data_object=pre_rendered_conformance_declaration)
 
         if format == ogc_api_config.ReturnFormat.html:
             html = ogc_api_config.templates.render("conformance_declaration.html",
@@ -84,7 +103,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         
         pre_rendered_landing_page: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="landing_page")
         if not pre_rendered_landing_page:
-            generated_landing_page = generate_landing_page_object(base_url=str(request.base_url))
+            generated_landing_page = static.generate_landing_page_object(base_url=str(request.base_url))
             pre_rendered_landing_page = models.PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_landing_page)
         

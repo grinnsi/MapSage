@@ -87,10 +87,12 @@ async def describe_collection(
     response_model_by_alias=True,
 )
 async def get_collections(
+    request: Request,
+    format: ogc_api_config.ReturnFormat = Depends(ogc_api_config.params.get_format_query)
 ) -> Collections:
     if not BaseCapabilitiesApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseCapabilitiesApi.subclasses[0]().get_collections()
+    return await BaseCapabilitiesApi.subclasses[0]().get_collections(request, format)
 
 # FIXME: Fix the response model for the conformance declaration and landing page for HTML and so on
 @router.get(
@@ -176,7 +178,7 @@ async def get_openapi_schema(
         # Serve Swagger UI
         from fastapi.openapi.docs import get_swagger_ui_html
         html = get_swagger_ui_html(
-            openapi_url=str(request.url.remove_query_params("f")) + "?f=json",  # This will be requested with JSON Accept header
+            openapi_url=request.url.path + "?f=json",  # This will be requested with JSON Accept header
             title=app.title + " - Swagger UI",
             oauth2_redirect_url=None,
             init_oauth=None,
