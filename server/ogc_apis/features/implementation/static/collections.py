@@ -4,8 +4,7 @@ from server.database.models import CollectionTable
 from server.ogc_apis.features.implementation import pre_render_helper
 from server.ogc_apis.features.models.collections import Collections
 
-
-def generate_collections_object(collections_url: str) -> Collections:
+def generate_object(collections_url: str) -> Collections:
     link_self = {
         "url": collections_url,
         "rel": "self",

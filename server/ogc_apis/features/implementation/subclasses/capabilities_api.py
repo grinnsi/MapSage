@@ -58,7 +58,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         pre_rendered_collections: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="collections")
         if not pre_rendered_collections:
             collections_url = str(request.url).split("?")[0]
-            generated_collections = static.generate_collections_object(collections_url=collections_url)
+            generated_collections = static.collections.generate_object(collections_url=collections_url)
             pre_rendered_collections = models.PreRenderedJson(key="collections", json_value=generated_collections.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_collections)
             
@@ -82,7 +82,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         
         pre_rendered_conformance_declaration: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="conformance_declaration")
         if not pre_rendered_conformance_declaration:
-            generated_conformance_declaration = static.generate_conformance_declaration_object()
+            generated_conformance_declaration = static.conformance.generate_object()
             pre_rendered_conformance_declaration = models.PreRenderedJson(key="conformance_declaration", json_value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_conformance_declaration)
 
@@ -103,7 +103,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         
         pre_rendered_landing_page: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="landing_page")
         if not pre_rendered_landing_page:
-            generated_landing_page = static.generate_landing_page_object(base_url=str(request.base_url))
+            generated_landing_page = static.landing_page.generate_object(base_url=str(request.base_url))
             pre_rendered_landing_page = models.PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_landing_page)
         
