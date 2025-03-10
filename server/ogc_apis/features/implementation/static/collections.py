@@ -28,6 +28,17 @@ def generate_object(collections_url: str) -> Collections:
     return Collections(links=links, collections=all_collections_model, crs=shared_crs)
 
 def update_database_object(collections_url: str = None, app_base_url: str = None) -> PreRenderedJson:
+    """
+    Generates the collections model and updates or inserts it as a pre rendered object into the database.
+    
+    Parameters:
+        collections_url (str, optional): The URL of the collections, defaults to None.
+        app_base_url (str, optional): The base url of the application, defaults to None.
+        
+    Returns:
+        PreRenderedJson: The pre-rendered object (table model) of the collections model.
+    """
+    
     if collections_url is None and app_base_url is None:
         raise ValueError("Either collections_url or base_url must be provided.")
     
