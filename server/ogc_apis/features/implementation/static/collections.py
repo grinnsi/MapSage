@@ -27,7 +27,7 @@ def generate_object(collections_url: str) -> Collections:
     
     return Collections(links=links, collections=all_collections_model, crs=shared_crs)
 
-def update_database_object(collections_url: str = None, app_base_url: str = None) -> dict:
+def update_database_object(collections_url: str = None, app_base_url: str = None) -> PreRenderedJson:
     if collections_url is None and app_base_url is None:
         raise ValueError("Either collections_url or base_url must be provided.")
     
@@ -45,4 +45,4 @@ def update_database_object(collections_url: str = None, app_base_url: str = None
         session.commit()
         session.refresh(collections_object)
 
-    return pre_rendered_collections.json_value
+    return pre_rendered_collections

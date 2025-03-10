@@ -58,9 +58,7 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         pre_rendered_collections: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="collections")
         if not pre_rendered_collections:
             collections_url = str(request.url).split("?")[0]
-            generated_collections = static.collections.generate_object(collections_url=collections_url)
-            pre_rendered_collections = models.PreRenderedJson(key="collections", json_value=generated_collections.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
-            Database.insert_sqlite_db(data_object=pre_rendered_collections)
+            pre_rendered_collections = static.collections.update_database_object(collections_url=collections_url)
             
         if format == ogc_api_config.ReturnFormat.html:
             html = ogc_api_config.templates.RESPONSE.TemplateResponse(
