@@ -222,7 +222,7 @@ class CollectionTable(TableBase, table=True):
         }
         
         link_self = {
-            "url": f"{app_base_url}/features/{self.id}",
+            "url": f"{app_base_url}/features/collections/{self.id}",
             "rel": "self",
             "title": "This document as {format_name}"
         }
