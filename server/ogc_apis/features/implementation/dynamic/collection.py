@@ -80,8 +80,6 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     collection_title = " ".join(word.capitalize() for word in collection_title.split(" "))
     new_collection.title = collection_title
     new_collection.connection_uuid = UUID(connection_uuid)
-
-    app_base_url = app_base_url.rstrip("/")
     
     new_collection.pre_render(app_base_url=app_base_url)
 
