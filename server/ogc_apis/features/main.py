@@ -21,7 +21,7 @@ from fastapi import Depends, FastAPI, Request
 
 from server.ogc_apis.features.apis.capabilities_api import router as CapabilitiesApiRouter
 from server.ogc_apis.features.apis.data_api import router as DataApiRouter
-from server.ogc_apis import route_config
+from server.ogc_apis import ogc_api_config
 from server.ogc_apis.features.models import exception
 
 def init_api_server() -> FastAPI:    
@@ -29,10 +29,27 @@ def init_api_server() -> FastAPI:
         title="Building Blocks specified in the OGC API - Features - Part 1 and Part 2: Core and CRS standard",
         description=markdown.markdown("Common components used in the [OGC API - Features - Part 1: Core corrigendum standard](https://docs.ogc.org/is/17-069r4/17-069r4.html) and [OGC API - Features - Part 2: Coordinate Reference Systems by Reference corrigendum](https://docs.ogc.org/is/18-058r1/18-058r1.html).\n\nOGC API - Features - Part 1: Core corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nOGC API - Features - Part 2: Reference corrigendum 1.0.1 is an OGC Standard.\n\nCopyright (c) 2022 Open Geospatial Consortium.\n\nTo obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .\n\nThis is an informative document. The building blocks in this document are also available on the OGC schema repository.\n\n[OGC API - Features - Part 1: Core schema](http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml)\n\n[OGC API - Features - Part 2: Coordinate Reference Systems schema](https://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/ogcapi-features-2.yaml)\n\n"),
         version="1.0.1",
-        openapi_url=f"{route_config.API_ROUTE}.json",
-        docs_url=f"{route_config.API_ROUTE}.html",
+        openapi_url=None,  # Set to None - we'll handle this manually
+        docs_url=None,     # Set to None - we'll handle this manually
         redoc_url=None,
     )
+    
+    # Custom method to overwrite openapi schema
+    def _custom_openapi():
+        if not app.openapi_schema:
+            app.openapi_schema = FastAPI.openapi(app)
+            
+            for _, method_item in app.openapi_schema.get("paths").items():
+                for _, param in method_item.items():
+                    responses = param.get("responses")
+                    
+                    # Delete all 422 responses
+                    if '422' in responses:
+                        del responses['422']
+        
+        return app.openapi_schema
+    
+    app.openapi = _custom_openapi
     
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> exception.Exception:
@@ -41,33 +58,32 @@ def init_api_server() -> FastAPI:
         param_type = error["loc"][0]
         msg = error["msg"]
         
-        exception_object = exception.Exception(code="422", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
+        exception_object = exception.Exception(code="400", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
         accept = request.headers.get("accept", "application/json")
         if "text/html" in accept:
-            template = route_config.TEMPLATE_ENVIRONMENT.get_template("exception.html")
-            html = template.render(**exception_object.to_dict())
-            return HTMLResponse(html, status_code=422)
+            html = ogc_api_config.templates.render("exception.html", **exception_object.to_dict())
+            return HTMLResponse(html, status_code=400)
         
         return JSONResponse(
-            status_code=422,
+            status_code=400,
             content=jsonable_encoder(exception_object),
         )
 
     api_responses = _get_api_responses()
 
-    app.include_router(CapabilitiesApiRouter, dependencies=[Depends(route_config.get_format_query)], responses=api_responses)
-    app.include_router(DataApiRouter, dependencies=[Depends(route_config.get_format_query)], responses=api_responses)
+    app.include_router(CapabilitiesApiRouter, dependencies=[Depends(ogc_api_config.params.get_format_query)], responses=api_responses)
+    app.include_router(DataApiRouter, dependencies=[Depends(ogc_api_config.params.get_format_query)], responses=api_responses)
 
     return app
 
 def _get_api_responses() -> dict:
     return {
-        422: {
+        400: {
             "model": exception.Exception,
             "content": {
                 "application/json": {
                     "example": {
-                        "code": 422,
+                        "code": 400,
                         "description": "Input for parameter 'f' of type 'query' is invalid. Input should be 'json' or 'html'",
                     }
                 },

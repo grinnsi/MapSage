@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from server.database.db import Database
 import server.ogc_apis.features.main as features_api
 from server.config import get_logger_config
-from server.ogc_apis.route_config import API_ROUTE, FEATURES_ROUTE
+from server.ogc_apis import ogc_api_config
 
 _LOGGER = logging.getLogger("server.api")
 
@@ -34,8 +34,8 @@ def init_main_api_server() -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
         root_path=os.getenv("API_SERVER_ROOT_PATH", "/"),
-        openapi_url=f"{API_ROUTE}.json",
-        docs_url=f"{API_ROUTE}.html",
+        openapi_url=f"{ogc_api_config.routes.API}.json",
+        docs_url=f"{ogc_api_config.routes.API}.html",
         redoc_url=None,
     )
     
@@ -53,7 +53,7 @@ def init_main_api_server() -> FastAPI:
                         "title": "This document" 
                     },
                     {
-                        "href": str(request.url).rstrip("/") + FEATURES_ROUTE,
+                        "href": str(request.url).rstrip("/") + ogc_api_config.routes.FEATURES,
                         "rel": "service",
                         "type": "application/json",
                         "title": "OGC API - Features"
@@ -81,7 +81,7 @@ def init_main_api_server() -> FastAPI:
             _LOGGER.debug(f"Request {request.method} '{request.url.path}' took {process_time / 1_000_000} ms")
             return response
         
-    app.mount(FEATURES_ROUTE, features_api.init_api_server(), name="OGC API - Features")
+    app.mount(ogc_api_config.routes.FEATURES, features_api.init_api_server(), name="OGC API - Features")
     
     # Mount webserver, if it's not disabled
     if os.getenv("APP_DISABLE_WEB", "False") == "False":

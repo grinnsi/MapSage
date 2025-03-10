@@ -1,89 +1,66 @@
-<html>
-  <head>
-    <title>{{ collection.title }}</title>
-  </head>
-  <body>
-    <h1>{{ collection.title }}</h1>
-    <div class="collection-details">
-      <p class="collection-id"><strong>ID:</strong> {{ collection.id }}</p>
-      <p class="collection-description">{{ collection.description }}</p>
+{% extends "basic.html" %}
+{% block title %}{{ collection.title }}{% endblock %}
+{% block heading %}{{ collection.title }}{% endblock %}
+{% set links = collection.links_json %}
+{% block content %}
+<div class="collection-details">
+    <p class="collection-id"><strong>ID:</strong> {{ collection.id }}</p>
+    <p class="collection-description">{{ collection.description }}</p>
 
-      {% if collection.license %}
-      <div class="license-info">
-        <h3>License</h3>
-        <p>
-          <a
-            href="{{ collection.license.url }}"
-            rel="license"
-            type="{{ collection.license.type }}"
-            target="_blank"
-          >
-            {{ collection.license.title }}
-          </a>
-        </p>
-      </div>
-      {% endif %}
-
-      {% if collection.extent_json %}
-      <div class="extent-section">
-        <h3>Extent</h3>
-        {% if collection.extent_json.spatial %}
-        <h4>Spatial</h4>
-        <p>
-          Bounding box: {{ collection.extent_json.spatial.bbox | join(', ') }}
-          {% if collection.spatial_extent_crs %}
-          <br>CRS: {{ collection.spatial_extent_crs }}
-          {% endif %}
-        </p>
-        {% endif %}
-        {% if collection.extent_json.temporal %}
-        <h4>Temporal</h4>
-        <p>
-          Interval: {{ collection.extent_json.temporal.interval | join(' to ') }}
-          {% if collection.temporal_extent_trs %}
-          <br>TRS: {{ collection.temporal_extent_trs }}
-          {% endif %}
-        </p>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      <div class="crs-section">
-        <h3>Coordinate Reference Systems</h3>
-        <p><strong>Storage CRS:</strong> {{ collection.storage_crs }}</p>
-        {% if collection.storage_crs_coordinate_epoch %}
-        <p><strong>Coordinate Epoch:</strong> {{ collection.storage_crs_coordinate_epoch }}</p>
-        {% endif %}
-        {% if collection.crs_json %}
-        <p><strong>Available CRS:</strong></p>
-        <ul>
-          {% for crs in collection.crs_json %}
-          <li>{{ crs }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
-    </div>
-
-    {% if collection.links_json %}
-    <div class="links-section">
-      <h3>Links</h3>
-      <ul>
-        {% for link in collection.links_json %}
-        <li>
-          <a
-            href="{{ link.href }}"
-            rel="{{ link.rel }}"
-            type="{{ link.type }}"
-            target="_blank"
-          >
-            {{ link.title or link.href }}
-          </a>
-          <span class="link-details">{{ link.rel }} ({{ link.type }})</span>
-        </li>
-        {% endfor %}
-      </ul>
+    {% if collection.license %}
+    <div class="license-info">
+    <h3>License</h3>
+    <p>
+        <a
+        href="{{ collection.license.url }}"
+        rel="license"
+        type="{{ collection.license.type }}"
+        target="_blank"
+        >
+        {{ collection.license.title }}
+        </a>
+    </p>
     </div>
     {% endif %}
-  </body>
-</html>
+
+    {% if collection.extent_json %}
+    <div class="extent-section">
+    <h3>Extent</h3>
+    {% if collection.extent_json.spatial %}
+    <h4>Spatial</h4>
+    <p>
+        Bounding box: {{ collection.extent_json.spatial.bbox | join(', ') }}
+        {% if collection.spatial_extent_crs %}
+        <br>CRS: {{ collection.spatial_extent_crs }}
+        {% endif %}
+    </p>
+    {% endif %}
+    {% if collection.extent_json.temporal %}
+    <h4>Temporal</h4>
+    <p>
+        Interval: {{ collection.extent_json.temporal.interval | join(' to ') }}
+        {% if collection.temporal_extent_trs %}
+        <br>TRS: {{ collection.temporal_extent_trs }}
+        {% endif %}
+    </p>
+    {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="crs-section">
+    <h3>Coordinate Reference Systems</h3>
+    <p><strong>Storage CRS:</strong> {{ collection.storage_crs }}</p>
+    {% if collection.storage_crs_coordinate_epoch %}
+    <p><strong>Coordinate Epoch:</strong> {{ collection.storage_crs_coordinate_epoch }}</p>
+    {% endif %}
+    {% if collection.crs_json %}
+    <p><strong>Available CRS:</strong></p>
+    <ul>
+        {% for crs in collection.crs_json %}
+        <li>{{ crs }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}

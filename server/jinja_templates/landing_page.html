@@ -1,0 +1,12 @@
+{% extends "basic.html" %}
+{% block title %}{{ landing_page.title }}{% endblock %}
+{% block heading %}{{ landing_page.title }}{% endblock %}
+{% set links = landing_page.links %}
+
+{% block content %}    
+    {% if landing_page.description %}
+    <div class="description-section">
+        <p class="landing-page-description">{{ landing_page.description }}</p>
+    </div>
+    {% endif %}
+{% endblock %}
