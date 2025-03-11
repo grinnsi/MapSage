@@ -1,6 +1,8 @@
 import os
 from flask import Blueprint, request, Response, current_app
 
+from server.ogc_apis.features.implementation import static
+from server.web.flask_utils import get_app_url_root
 from server.web.settings.connections import create_new_connection, delete_connection, get_connections
 from server.web.settings.general import get_general_options, update_general_options
 
@@ -42,7 +44,10 @@ def create_settings_endpoints(main_endpoint: str) -> Blueprint:
                 return get_general_options()
             
             if request.method == "PATCH":
-                return update_general_options(request_data)
+                response = update_general_options(request_data)
+                static.landing_page.update_database_object(app_base_url=get_app_url_root())
+                return response
+            
         except Exception as e:
             current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
             return Response(status=500, response="Internal server error")

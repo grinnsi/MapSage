@@ -101,9 +101,8 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         
         pre_rendered_landing_page: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="landing_page")
         if not pre_rendered_landing_page:
-            generated_landing_page = static.landing_page.generate_object(base_url=str(request.base_url))
-            pre_rendered_landing_page = models.PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
-            Database.insert_sqlite_db(data_object=pre_rendered_landing_page)
+            base_url = str(request.base_url)
+            pre_rendered_landing_page = static.landing_page.update_database_object(app_base_url=base_url)
         
         if format == ogc_api_config.ReturnFormat.html:
             html = ogc_api_config.templates.render("landing_page.html",
