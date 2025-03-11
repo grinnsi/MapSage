@@ -1,7 +1,9 @@
 import os
 from flask import Blueprint, request, Response, current_app
 
+from server.ogc_apis.features.implementation import static
 from server.web.collections.collections import create_collections, get_all_collections
+from server.web.flask_utils import get_app_url_root
 
 def create_collections_endpoints(main_endpoint: str) -> Blueprint:
     bp_url_prefix = main_endpoint + "/collections"
@@ -23,7 +25,9 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
                 if request_data is None:
                     return Response(status=400, response="Bad request")
                 
-                return create_collections(request_data)
+                response = create_collections(request_data)
+                static.collections.update_database_object(app_base_url=get_app_url_root())
+                return response
             
         except Exception as e:
             current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
