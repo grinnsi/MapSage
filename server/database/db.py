@@ -9,7 +9,6 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import SQLModel, Session, create_engine, select
 
 from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase, License
-import server.database.sql_triggers as sql_triggers
 
 # local logger
 _LOGGER = logging.getLogger("database")
