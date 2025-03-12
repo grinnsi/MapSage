@@ -65,12 +65,12 @@ class CapabilitiesApi(BaseCapabilitiesApi):
                 request=request,
                 name="collections.html",
                 context= {
-                    "collections": pre_rendered_collections.json_value,
+                    "collections": pre_rendered_collections.json_data,
                 }
             )
             return html
         
-        return ORJSONResponse(content=pre_rendered_collections.json_value, status_code=200)
+        return ORJSONResponse(content=pre_rendered_collections.json_data, status_code=200)
 
     async def get_conformance_declaration(
         self,
@@ -81,16 +81,16 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         pre_rendered_conformance_declaration: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="conformance_declaration")
         if not pre_rendered_conformance_declaration:
             generated_conformance_declaration = static.conformance.generate_object()
-            pre_rendered_conformance_declaration = models.PreRenderedJson(key="conformance_declaration", json_value=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+            pre_rendered_conformance_declaration = models.PreRenderedJson(key="conformance_declaration", json_data=generated_conformance_declaration.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
             Database.insert_sqlite_db(data_object=pre_rendered_conformance_declaration)
 
         if format == ogc_api_config.ReturnFormat.html:
             html = ogc_api_config.templates.render("conformance_declaration.html",
-                conf_classes=pre_rendered_conformance_declaration.json_value,
+                conf_classes=pre_rendered_conformance_declaration.json_data,
             )
             return HTMLResponse(status_code=200, content=html)
         
-        return ORJSONResponse(content=pre_rendered_conformance_declaration.json_value, status_code=200)
+        return ORJSONResponse(content=pre_rendered_conformance_declaration.json_data, status_code=200)
 
     async def get_landing_page(
         self, 
@@ -101,14 +101,13 @@ class CapabilitiesApi(BaseCapabilitiesApi):
         
         pre_rendered_landing_page: Union[models.PreRenderedJson, None] = Database.select_sqlite_db(table_model=models.PreRenderedJson, primary_key_value="landing_page")
         if not pre_rendered_landing_page:
-            generated_landing_page = static.landing_page.generate_object(base_url=str(request.base_url))
-            pre_rendered_landing_page = models.PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
-            Database.insert_sqlite_db(data_object=pre_rendered_landing_page)
+            base_url = str(request.base_url)
+            pre_rendered_landing_page = static.landing_page.update_database_object(app_base_url=base_url)
         
         if format == ogc_api_config.ReturnFormat.html:
             html = ogc_api_config.templates.render("landing_page.html",
-                landing_page=pre_rendered_landing_page.json_value,
+                landing_page=pre_rendered_landing_page.json_data,
             )
             return HTMLResponse(status_code=200, content=html)
         
-        return ORJSONResponse(content=pre_rendered_landing_page.json_value, status_code=200)
+        return ORJSONResponse(content=pre_rendered_landing_page.json_data, status_code=200)

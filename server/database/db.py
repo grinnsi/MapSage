@@ -9,7 +9,6 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import SQLModel, Session, create_engine, select
 
 from server.database.models import CoreModel, GeneralOption, KeyValueBase, PreRenderedJson, TableBase, License
-import server.database.sql_triggers as sql_triggers
 
 # local logger
 _LOGGER = logging.getLogger("database")
@@ -101,21 +100,10 @@ class SetupSqliteDatabase():
             # Check if the key is not in the existing options
             if k not in existing_options:
                 # If it is not, create a new GeneralOption object and add it to the options_to_set list
-                options_to_set.append(GeneralOption(key=k, value=v))
+                options_to_set.append(GeneralOption(key=k, data=v))
 
         # Insert the new options into the database
         Database.insert_sqlite_db(options_to_set)
-        
-        # Create all triggers in database
-        # Drops them first, if reset_db param is True
-        all_sql_triggers = sql_triggers.get_all_triggers()
-        with Session(sqlite_engine) as session:
-            session.begin()
-            for trigger in all_sql_triggers:
-                if reset_db:
-                    session.exec(text(trigger[0]))
-                session.exec(text(trigger[1]))
-            session.commit()
             
         # Insert default data into database
         functions = cls.get_default_db_data()

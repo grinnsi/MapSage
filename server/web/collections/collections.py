@@ -6,7 +6,6 @@ from sqlmodel import select, text
 from flask import Response, request, current_app
 from server.database.db import Database, DatabaseSession
 from server.database.models import CollectionTable, Connection
-from server.ogc_apis.features.implementation import static
 
 from osgeo import gdal, ogr
 
@@ -93,8 +92,6 @@ def create_collections(form: dict):
             except Exception as e:
                 current_app.logger.error(f"Error creating collection for layer {layer_name}: {e}")
                 failed_layers.append(layer_name)
-    
-    static.collections.update_database_object(app_base_url=get_app_url_root())
     
     if len(successful_layers) == layer_count:
         return Response(status=201, response=orjson.dumps({"message": "All collections created", "successful_layers": successful_layers}))
