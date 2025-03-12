@@ -48,7 +48,7 @@ def update_database_object(collections_url: str = None, app_base_url: str = None
     
     with DatabaseSession() as session:
         generated_collections = generate_object(collections_url)
-        pre_rendered_collections = PreRenderedJson(key="collections", json_value=generated_collections.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+        pre_rendered_collections = PreRenderedJson(key="collections", json_data=generated_collections.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
         collections_object = session.get(PreRenderedJson, pre_rendered_collections.key)
         if collections_object:      # If the prerendered json with the key already exists
             collections_object.sqlmodel_update(pre_rendered_collections)

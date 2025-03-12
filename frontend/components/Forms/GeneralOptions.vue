@@ -65,7 +65,7 @@ const { data, refresh } = await useBaseUrlFetch<GeneralOption[]>("/data/settings
   onResponse({ request, response, options }) {
     (response._data as GeneralOption[]).forEach((option) => {
       if (option.key in form) {
-        form[option.key] = option.value;
+        form[option.key] = option.data;
       } 
     });
   },
@@ -79,10 +79,10 @@ async function saveGeneralOptions() {
   if (!data.value) throw new Error("Error fetching general options");
 
   for (const key in form) {
-    if (form[key] !== data.value.find((option) => option.key === key)?.value) {
+    if (form[key] !== data.value.find((option) => option.key === key)?.data) {
       changedOptions.push({
         key: key,
-        value: form[key]
+        data: form[key]
       });
     }
   }
@@ -105,7 +105,7 @@ async function saveGeneralOptions() {
       },
       body: JSON.stringify(changedOptions)
     });
-    if (!response.ok) throw new Error(await response.text());
+    // if (!response.ok) throw new Error(await response.text());
     ElMessage({
       type: 'success',
       message: 'Allgemeine Einstellungen erfolgreich gespeichert',

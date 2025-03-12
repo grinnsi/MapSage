@@ -101,7 +101,7 @@ class SetupSqliteDatabase():
             # Check if the key is not in the existing options
             if k not in existing_options:
                 # If it is not, create a new GeneralOption object and add it to the options_to_set list
-                options_to_set.append(GeneralOption(key=k, value=v))
+                options_to_set.append(GeneralOption(key=k, data=v))
 
         # Insert the new options into the database
         Database.insert_sqlite_db(options_to_set)

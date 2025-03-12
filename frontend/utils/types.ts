@@ -56,5 +56,5 @@ export interface Namespace {
 
 export interface GeneralOption {
   key: string,
-  value: string
+  data: string
 }

@@ -48,7 +48,7 @@ def generate_object(base_url: str) -> LandingPage:
         "title": "The API documentation",
     })
     
-    landing_page = LandingPage(title=title.value, description=description.value, links=links)
+    landing_page = LandingPage(title=title.data, description=description.data, links=links)
     
     return landing_page
 
@@ -68,7 +68,7 @@ def update_database_object(app_base_url: str) -> PreRenderedJson:
     
     with DatabaseSession() as session:
         generated_landing_page = generate_object(base_url=app_base_url)
-        pre_rendered_landing_page = PreRenderedJson(key="landing_page", json_value=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
+        pre_rendered_landing_page = PreRenderedJson(key="landing_page", json_data=generated_landing_page.model_dump_json(by_alias=True, exclude_unset=True, exclude_none=True))
         landing_page_object = session.get(PreRenderedJson, pre_rendered_landing_page.key)
         if landing_page_object:
             landing_page_object.sqlmodel_update(pre_rendered_landing_page)
