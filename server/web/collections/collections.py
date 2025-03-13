@@ -36,7 +36,7 @@ def get_all_collections():
             "storage_crs": collection.storage_crs,
             "storage_crs_coordinate_epoch": collection.storage_crs_coordinate_epoch,
             "connection_name": collection.connection.name,
-            "url": f"{app_url_root}features/collections/{collection.id}",
+            "url": f"{app_url_root}/features/collections/{collection.id}",
         } for collection in collections]      
         
         return json_data
