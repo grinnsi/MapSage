@@ -17,3 +17,11 @@ def render(template_name: str, **args) -> str:
     template = get(template_name)
     html = template.render(**args)
     return html
+
+def response(template_name: str, request, context: dict, headers: dict) -> str:
+    return RESPONSE.TemplateResponse(  
+        name=template_name,
+        request=request,
+        context=context,
+        headers=headers
+    )

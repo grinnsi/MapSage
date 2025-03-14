@@ -57,10 +57,12 @@ class DataApi(BaseDataApi):
             "Content-Crs": "<" + crs + ">",
         }
         if format == ogc_api_config.ReturnFormat.html:
-            return ogc_api_config.templates.RESPONSE.TemplateResponse("collection.html",
+            return ogc_api_config.templates.response("feature.html",
                 request=request,
                 context={
-                    
+                    "feature": feature_json,
+                    "collection": collection,
+                    "crs_wkt": gdal_utils.get_wkt_from_uri(crs),
                 },
                 headers=headers
             )

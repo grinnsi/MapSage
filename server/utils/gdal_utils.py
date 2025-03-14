@@ -57,6 +57,14 @@ def get_spatial_ref_from_urn(urn: str) -> osr.SpatialReference:
         return spatial_ref
     except Exception:
         raise ValueError("URN format is invalid or does not contain authority and code")
+
+def get_wkt_from_uri(uri: str) -> str:
+    if uri is None:
+        raise TypeError("URI is None")
+    
+    spatial_ref = get_spatial_ref_from_uri(uri)
+    
+    return spatial_ref.ExportToWkt()
     
 def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spatial_ref: osr.SpatialReference | str, extent: list[float], return_gdal_format: bool = True) -> list[float]:
     """

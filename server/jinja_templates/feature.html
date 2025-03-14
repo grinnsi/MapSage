@@ -1,0 +1,159 @@
+{% extends "basic.html" %}
+{% block head %}
+  {{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.0/proj4.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ol-proj4@4.0.1/dist/ol-proj4.min.js"></script>
+{% endblock %}
+{% block title %}{{ collection.title }}: {{ feature.id }}{% endblock %}
+{% block heading %}{{ collection.title }}: {{ feature.id }}{% endblock %}
+
+{% block content %}
+<div class="feature-details">
+  <p class="feature-id"><strong>ID:</strong> {{ feature.id }}</p>
+
+  <div class="main-feature-information">
+    <div class="map-container">
+      <h3>Map View</h3>
+      <div id="feature-map"></div>
+    </div>
+    {% if feature.properties %}
+    <div class="feature-properties">
+      <h3>Properties</h3>
+      <dl>
+        {% for key, value in feature.properties.items() %}
+        <dt>{{ key }}</dt>
+        <dd>{{ value }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+    {% endif %}
+  </div>
+
+
+  {% if feature.geometry %}
+  <div class="feature-geometry">
+    <h3>Geometry</h3>
+    <p><strong>Type:</strong> {{ feature.geometry.type }}</p>
+  </div>
+  {% endif %}
+
+  {% if feature.links %}
+  <div class="feature-links">
+    <h3>Links</h3>
+    <ul>
+      {% for link in feature.links %}
+      <li>
+        <a href="{{ link.href }}" 
+          rel="{{ link.rel }}"
+          type="{{ link.type }}"
+          title="{{ link.title }}"
+          target="_blank">
+          {{ link.title if link.title else link.href }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+<script>
+  // Register UTM Zone 32N projection+
+  let projWkt = '{{ crs_wkt | safe}}';
+  proj4.defs('CustomProj', projWkt);
+  ol.proj.proj4.register(proj4);
+  
+  console.debug({{ feature | safe }});
+
+  let featureData = new ol.format.GeoJSON().readFeatures({{ feature | safe }}, {
+    dataProjection: 'CustomProj',
+    featureProjection: 'CustomProj'
+  });
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    let vectorLayer = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: featureData
+      })
+    });
+
+    let view = new ol.View({
+      center: ol.proj.fromLonLat([0, 0]),
+      zoom: 2,
+      projection: "CustomProj",
+      maxZoom: 20,
+      minZoom: 2
+    });
+
+    const map = new ol.Map({
+      target: 'feature-map',
+      layers: [
+        new ol.layer.Tile({
+          source: new ol.source.OSM(),
+        }),
+        vectorLayer, 
+      ],
+      view,
+    });
+
+    await new Promise(r => setTimeout(r, 500));
+
+    let extent = vectorLayer.getSource().getExtent();
+    let resolution = view.getResolutionForExtent(extent);
+    let zoom = view.getZoomForResolution(resolution);
+    let center = ol.extent.getCenter(extent);
+
+    view.animate({center: center});
+    view.animate({zoom: zoom});
+  });
+</script>
+
+<style>
+dl {
+  display: grid;
+  grid-template-columns: max-content auto;
+}
+
+dt {
+  grid-column-start: 1;
+}
+
+dd {
+  grid-column-start: 2;
+}
+
+.main-feature-information {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.main-feature-information > div {
+  /* flex: 1; */
+  min-width: 0;
+}
+
+.feature-properties {
+  flex: 0.3;
+}
+
+.map-container {
+  flex: 0.7;
+}
+
+.map-container {
+  width: 100%;
+}
+
+/* .map-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+
+#feature-map {
+  height: 600px;
+  width: 100%;
+}
+</style>
+{% endblock %}
