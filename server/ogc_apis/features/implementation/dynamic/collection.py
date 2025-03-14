@@ -6,7 +6,7 @@ from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
 from server.utils import gdal_utils
-import math
+import math, sqlmodel
 
 from osgeo import gdal, ogr, osr
 
@@ -91,3 +91,14 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     new_collection.pre_render(app_base_url=app_base_url)
 
     return new_collection
+
+def get_collection_by_id(id: str, session: sqlmodel.Session = None) -> list[CollectionTable]:
+    statement = sqlmodel.select(CollectionTable).where(CollectionTable.id == id)
+    found_collections: list[CollectionTable]
+    
+    if session is None:
+        found_collections = Database.select_sqlite_db(statement=statement)
+    else:
+        found_collections = session.exec(statement=statement).all()
+        
+    return found_collections

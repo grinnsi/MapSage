@@ -118,7 +118,7 @@ async def get_feature(
     """Fetch the feature with id `featureId` in the feature collection with id `collectionId`.  Use content negotiation to request HTML or GeoJSON."""
     if not BaseDataApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseDataApi.subclasses[0]().get_feature(collectionId, featureId, crs)
+    return await BaseDataApi.subclasses[0]().get_feature(collectionId, featureId, crs, format, request, session)
 
 
 @router.get(
