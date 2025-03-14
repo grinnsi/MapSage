@@ -35,6 +35,7 @@ from server.ogc_apis.features.models.collection import Collection
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 from server.ogc_apis.features.models.landing_page import LandingPage
+from server.ogc_apis.features.models.exception import Exception as OGCException
 
 
 router = APIRouter()
@@ -60,7 +61,21 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
             },
             "description": "Information about the feature collection with id `collectionId`.\n\nThe response contains a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is 'feature').",
         },
-        404: {"description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value."},
+        404: {
+            "model": OGCException,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "code": 404,
+                        "description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value.",
+                    }
+                },
+                "text/html": {
+                    "example": "string",
+                },
+            },
+            "description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value."
+        },
     },
     tags=["Capabilities"],
     summary="describe the feature collection with id `collectionId`",

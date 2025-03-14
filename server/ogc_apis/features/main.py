@@ -13,16 +13,17 @@
 """  # noqa: E501
 
 
+import os
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 import markdown
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 
 from server.ogc_apis.features.apis.capabilities_api import router as CapabilitiesApiRouter
 from server.ogc_apis.features.apis.data_api import router as DataApiRouter
 from server.ogc_apis import ogc_api_config
-from server.ogc_apis.features.models import exception
+from server.ogc_apis.features.models.exception import Exception as OGCException
 
 def init_api_server() -> FastAPI:    
     app = FastAPI(
@@ -39,6 +40,13 @@ def init_api_server() -> FastAPI:
         if not app.openapi_schema:
             app.openapi_schema = FastAPI.openapi(app)
             
+            # Manually set the server URL
+            app.openapi_schema["servers"] = [
+                {
+                    "url": os.getenv("API_SERVER_ROOT_PATH", "/").rstrip("/") + ogc_api_config.routes.FEATURES
+                }
+            ]
+            
             for _, method_item in app.openapi_schema.get("paths").items():
                 for _, param in method_item.items():
                     responses = param.get("responses")
@@ -51,22 +59,29 @@ def init_api_server() -> FastAPI:
     
     app.openapi = _custom_openapi
     
+    @app.exception_handler(500)
+    @app.exception_handler(HTTPException)
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> exception.Exception:
-        error = exc.errors()[0]
-        param = error["loc"][1]
-        param_type = error["loc"][0]
-        msg = error["msg"]
+    async def validation_exception_handler(request: Request, exc: Exception) -> OGCException:
+        if isinstance(exc, RequestValidationError):
+            error = exc.errors()[0]
+            param = error["loc"][1]
+            param_type = error["loc"][0]
+            msg = error["msg"]
+            exception = OGCException(code="400", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
+        elif isinstance(exc, HTTPException):
+            exception = OGCException(code=str(exc.status_code), description=exc.detail)
+        else:
+            exception = OGCException(code="500", description="Internal server error")
         
-        exception_object = exception.Exception(code="400", description=f"Input for parameter '{param}' of type '{param_type}' is invalid. {msg}")
         accept = request.headers.get("accept", "application/json")
         if "text/html" in accept:
-            html = ogc_api_config.templates.render("exception.html", **exception_object.to_dict())
-            return HTMLResponse(html, status_code=400)
+            html = ogc_api_config.templates.render("exception.html", **exception.to_dict())
+            return HTMLResponse(html, status_code=int(exception.code))
         
         return JSONResponse(
-            status_code=400,
-            content=jsonable_encoder(exception_object),
+            status_code=int(exception.code),
+            content=jsonable_encoder(exception),
         )
 
     api_responses = _get_api_responses()
@@ -79,7 +94,7 @@ def init_api_server() -> FastAPI:
 def _get_api_responses() -> dict:
     return {
         400: {
-            "model": exception.Exception,
+            "model": OGCException,
             "content": {
                 "application/json": {
                     "example": {
@@ -94,7 +109,7 @@ def _get_api_responses() -> dict:
             "description": "A query parameter has an invalid value",
         },
         500: {
-            "model": exception.Exception,
+            "model": OGCException,
             "content": {
                 "application/json": {
                     "example": {
