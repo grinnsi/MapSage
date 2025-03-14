@@ -6,13 +6,13 @@ from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
 from server.utils import gdal_utils
-import math
+import math, sqlmodel
 
 from osgeo import gdal, ogr, osr
 
 from server.utils.string_utils import string_to_kebab
 
-def generate_collection_table_object(layer_name: str, connection_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
+def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
     gdal.UseExceptions()
     
     new_collection = CollectionTable()
@@ -25,25 +25,26 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     if spatial_ref is None:
         raise ValueError(f"Layer {layer_name} has no spatial reference")
     
-    uri_of_spatial_ref = gdal_utils.get_uri_of_spatial_ref(spatial_ref)
-    default_uri_of_crs = ""
+    spatial_ref_uri = gdal_utils.get_uri_of_spatial_ref(spatial_ref)
+    default_crs_uri = ""
     extent_coordinate_count = 4
     
     # Always calculate the bbx as 3D, just in case it is a 3D layer
     extent_calc: tuple[float] = layer.GetExtent3D()
     if extent_calc[4] == math.inf and extent_calc[5] == -math.inf:
-        default_uri_of_crs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+        default_crs_uri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
     else:
-        default_uri_of_crs = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
+        default_crs_uri = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
         extent_coordinate_count = 6
+        new_collection.is_3D = True
         
     # Reorder the extent to be in the order of OGC API Features
     # FIXME: Order of axis are east, north; might need to be changed if the layer is in a different order
-    extent_ordered = [gdal_utils.transform_extent(spatial_ref, default_uri_of_crs, extent_calc[:extent_coordinate_count], return_gdal_format=False)]
+    extent_ordered = [gdal_utils.transform_extent(spatial_ref, default_crs_uri, extent_calc[:extent_coordinate_count], return_gdal_format=False)]
     
     # Setting the spatial extent, if one exists
     if extent_ordered and len(extent_ordered[0]) >= 4:
-        spatial_extent = ExtentSpatial(bbox=extent_ordered, crs=default_uri_of_crs)
+        spatial_extent = ExtentSpatial(bbox=extent_ordered, crs=default_crs_uri)
     else:
         spatial_extent = None
     
@@ -52,12 +53,12 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
         temporal_extent = None
     extent = Extent(spatial=spatial_extent, temporal=temporal_extent)
     new_collection.extent_json = extent.to_json()
-    new_collection.spatial_extent_crs = uri_of_spatial_ref
+    # new_collection.spatial_extent_crs = default_crs_uri
     # new_collection.temporal_extent_trs = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
     
-    crs_list = list(set([default_uri_of_crs, uri_of_spatial_ref]))
+    crs_list = list(set([default_crs_uri, spatial_ref_uri]))
     new_collection.crs_json = crs_list
-    new_collection.storage_crs = uri_of_spatial_ref
+    new_collection.storage_crs = spatial_ref_uri
     
     if spatial_ref.IsDynamic():
         new_collection.storage_crs_coordinate_epoch = spatial_ref.GetCoordinateEpoch()
@@ -85,8 +86,19 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     collection_title = base_id.replace("-", " ")
     collection_title = " ".join(word.capitalize() for word in collection_title.split(" "))
     new_collection.title = collection_title
-    new_collection.connection_uuid = UUID(connection_uuid)
+    new_collection.dataset_uuid = UUID(dataset_uuid)
     
     new_collection.pre_render(app_base_url=app_base_url)
 
     return new_collection
+
+def get_collection_by_id(id: str, session: sqlmodel.Session = None) -> list[CollectionTable]:
+    statement = sqlmodel.select(CollectionTable).where(CollectionTable.id == id)
+    found_collections: list[CollectionTable]
+    
+    if session is None:
+        found_collections = Database.select_sqlite_db(statement=statement)
+    else:
+        found_collections = session.exec(statement=statement).all()
+        
+    return found_collections

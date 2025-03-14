@@ -5,7 +5,7 @@ import orjson
 from sqlmodel import select, text
 from flask import Response, request, current_app
 from server.database.db import Database, DatabaseSession
-from server.database.models import CollectionTable, Connection
+from server.database import models
 
 from osgeo import gdal, ogr
 
@@ -16,7 +16,7 @@ from server.web.flask_utils import get_app_url_root
 def get_all_collections():
     # Not pretty, since we normally use the Database class to interact, but otherwise it would be more complicated
     with DatabaseSession() as session:
-        collections: Optional[list[CollectionTable]] = session.exec(select(CollectionTable)).all()
+        collections: Optional[list[models.CollectionTable]] = session.exec(select(models.CollectionTable)).all()
         
         if not collections:
             collections = []
@@ -30,55 +30,55 @@ def get_all_collections():
             "description": collection.description,
             "license_title": collection.license_title,
             "extent": collection.extent_json,
-            "spatial_extent_crs": collection.spatial_extent_crs,
-            "temporal_extent_trs": collection.temporal_extent_trs,
+            # "spatial_extent_crs": collection.spatial_extent_crs,
+            # "temporal_extent_trs": collection.temporal_extent_trs,
             "crs": collection.crs_json,
             "storage_crs": collection.storage_crs,
             "storage_crs_coordinate_epoch": collection.storage_crs_coordinate_epoch,
-            "connection_name": collection.connection.name,
-            "url": f"{app_url_root}features/collections/{collection.id}",
+            "connection_name": collection.dataset.name,
+            "url": f"{app_url_root}/features/collections/{collection.id}",
         } for collection in collections]      
         
         return json_data
 
-def create_collection(form: dict, connection_string: str = None, dataset: gdal.Dataset = None):
+def create_collection(form: dict, connection_string: str = None, gdal_dataset: gdal.Dataset = None):
     if connection_string is None:    
-        connection: Connection = Database.select_sqlite_db(table_model=Connection, primary_key_value=form["uuid"])
-        connection_string = Database.get_postgresql_connection_string(connection.model_dump())
+        table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
+        connection_string = table_dataset.path
     
-    count_existing_collection = Database.select_sqlite_db(text(f" Count(*) FROM {CollectionTable.__tablename__} WHERE \"layer_name\" = '{form['layer_name']}' AND \"connection_uuid\" = '{UUID(form['uuid']).hex}'"))
+    count_existing_collection = Database.select_sqlite_db(text(f" Count(*) FROM {models.CollectionTable.__tablename__} WHERE \"layer_name\" = '{form['layer_name']}' AND \"dataset_uuid\" = '{UUID(form['uuid']).hex}'"))
     if count_existing_collection is not None and count_existing_collection[0] > 0:
         raise ValueError(f"Collection with layer name {form['layer_name']} already exists for this connection.")
     
     app_url_root = get_app_url_root()
     
-    if dataset is None:
-        with gdal.OpenEx(connection_string) as dataset:
-            new_collection = collection_impl.generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
+    if gdal_dataset is None:
+        with gdal.OpenEx(connection_string) as gdal_dataset:
+            new_collection = collection_impl.generate_collection_table_object(form["layer_name"], form["uuid"], gdal_dataset, app_url_root)
     else:
-        new_collection = collection_impl.generate_collection_table_object(form["layer_name"], form["uuid"], dataset, app_url_root)
+        new_collection = collection_impl.generate_collection_table_object(form["layer_name"], form["uuid"], gdal_dataset, app_url_root)
     
     new_collection = Database.insert_sqlite_db(new_collection)
     
-    if connection_string is None and dataset is None:
+    if connection_string is None and gdal_dataset is None:
         return Response(status=201, response="Collection created")
     else:
         return new_collection
 
 def create_collections(form: dict):
-    connection: Connection = Database.select_sqlite_db(table_model=Connection, primary_key_value=form["uuid"])
-    connection_string = Database.get_postgresql_connection_string(connection.model_dump())
+    table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
+    connection_string = table_dataset.path
     
     successful_layers = []
     failed_layers = []
     
     gdal.UseExceptions()
     
-    dataset: gdal.Dataset
-    with gdal.OpenEx(connection_string) as dataset:
-        layer_count = dataset.GetLayerCount()
+    gdal_dataset: gdal.Dataset
+    with gdal.OpenEx(connection_string) as gdal_dataset:
+        layer_count = gdal_dataset.GetLayerCount()
         for i in range(layer_count):
-            layer: ogr.Layer = dataset.GetLayerByIndex(i)
+            layer: ogr.Layer = gdal_dataset.GetLayerByIndex(i)
             layer_name = layer.GetName()
             
             data = {
@@ -87,7 +87,7 @@ def create_collections(form: dict):
             }
             
             try:
-                create_collection(data, connection_string, dataset)
+                create_collection(data, connection_string, gdal_dataset)
                 successful_layers.append(layer_name)
             except Exception as e:
                 current_app.logger.error(f"Error creating collection for layer {layer_name}: {e}")

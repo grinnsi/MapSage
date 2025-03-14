@@ -5,6 +5,8 @@ import importlib
 import pkgutil
 import markdown
 
+from server.database.db import Database
+from server.ogc_apis import ogc_api_config
 from server.ogc_apis.features.apis.data_api_base import BaseDataApi
 import server.ogc_apis.features.implementation as implementation
 import server.ogc_apis.features.implementation.subclasses.data_api
@@ -19,6 +21,7 @@ from fastapi import (  # noqa: F401
     HTTPException,
     Path,
     Query,
+    Request,
     Response,
     Security,
     status,
@@ -32,34 +35,90 @@ from server.ogc_apis.features.models.exception import Exception
 from server.ogc_apis.features.models.feature_collection_geo_json import FeatureCollectionGeoJSON
 from server.ogc_apis.features.models.feature_geo_json import FeatureGeoJSON
 
-
 router = APIRouter()
 
 ns_pkg = implementation
 for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     importlib.import_module(name)
 
-
+# FIXME: Use ogc Exception model for error 404
 @router.get(
     "/collections/{collectionId}/items/{featureId}",
     responses={
-        200: {"model": FeatureGeoJSON, "description": "fetch the feature with id `featureId` in the feature collection with id `collectionId`"},
+        200: {
+            "model": FeatureGeoJSON,
+            "content": {
+                "application/geo+json": {
+                    "description": "GeoJSON representation of the feature with id `featureId` in the feature collection with id `collectionId`.",
+                    "example": {
+                        "type": "Feature",
+                        "links": [
+                            {
+                                "href": "http://data.example.com/id/building/123",
+                                "rel": "canonical",
+                                "title": "canonical URI of the building"
+                            },
+                            {
+                                "href": "http://data.example.com/collections/buildings/items/123.json",
+                                "rel": "self",
+                                "type": "application/geo+json",
+                                "title": "this document"
+                            },
+                            {
+                                "href": "http://data.example.com/collections/buildings/items/123.html",
+                                "rel": "alternate",
+                                "type": "text/html",
+                                "title": "this document as HTML"
+                            },
+                            {
+                                "href": "http://data.example.com/collections/buildings",
+                                "rel": "collection",
+                                "type": "application/geo+json",
+                                "title": "the collection document"
+                            }
+                        ],
+                        "id": "123",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                            "..."
+                            ]
+                        },
+                        "properties": {
+                            "function": "residential",
+                            "floors": "2",
+                            "lastUpdate": "2015-08-01T12:34:56Z"
+                        }
+                    }
+                },
+                "text/html": {
+                    "description": "HTML representation of the feature with id `featureId` in the feature collection with id `collectionId`.",
+                    "example": "string",
+                }
+            },
+            "description": "fetch the feature with id `featureId` in the feature collection with id `collectionId`"
+        },
         404: {"description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value."},
     },
     tags=["Data"],
     summary="fetch a single feature",
     response_model_by_alias=True,
     response_model_exclude_none=True,
+    response_class=ogc_api_config.formats.GeoJSONResponse,
 )
 async def get_feature(
+    *,
     collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")] = Path(..., description=markdown.markdown("local identifier of a collection")),
     featureId: Annotated[StrictStr, Field(description="local identifier of a feature")] = Path(..., description=markdown.markdown("local identifier of a feature")),
     crs: Annotated[Optional[StrictStr], Field(description="The optional `crs` parameter is used to specify the coordinate reference system of the geometries in the response document. The value of the parameter is a URI identifying the coordinate reference system.  If the parameter is omitted, the default coordinate reference system  http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used.")] = Query(None, description=markdown.markdown("The optional `crs` parameter is used to specify the coordinate reference system of the geometries in the response document. The value of the parameter is a URI identifying the coordinate reference system.  If the parameter is omitted, the default coordinate reference system  http://www.opengis.net/def/crs/OGC/1.3/CRS84 for 2D or http://www.opengis.net/def/crs/OGC/0/CRS84h for 3D is used."), alias="crs"),
+    format: ogc_api_config.ReturnFormat = Depends(ogc_api_config.params.get_format_query),
+    request: Request,
+    session = Depends(Database.get_sqlite_session),
 ) -> FeatureGeoJSON:
     """Fetch the feature with id `featureId` in the feature collection with id `collectionId`.  Use content negotiation to request HTML or GeoJSON."""
     if not BaseDataApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseDataApi.subclasses[0]().get_feature(collectionId, featureId, crs)
+    return await BaseDataApi.subclasses[0]().get_feature(collectionId, featureId, crs, format, request, session)
 
 
 @router.get(
