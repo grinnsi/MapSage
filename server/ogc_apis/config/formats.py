@@ -1,5 +1,9 @@
 import mimetypes
 from enum import Enum
+from typing import Any
+
+from fastapi import Response
+import orjson
 
 _CUSTOM_MIMETYPES = {
     "geojson": {
@@ -8,13 +12,23 @@ _CUSTOM_MIMETYPES = {
     },
 }
 
+class GeoJSONResponse(Response):
+    media_type = _CUSTOM_MIMETYPES["geojson"]["type"]
+    
+    def render(self, content: Any) -> bytes:
+        if type(content) is dict:
+            return orjson.dumps(content)
+        if type(content) is str:
+            return content.encode("utf-8")
+        raise ValueError("Invalid content type. Expected a dictionary or string.")
+
 class ReturnFormat(str, Enum):
     json = "json"
     html = "html"
     
     @classmethod
     def get_default(cls):
-        return cls.json
+        return cls.json.name
     
     @classmethod
     def get_custon_mimetypes(cls):
@@ -22,7 +36,9 @@ class ReturnFormat(str, Enum):
     
     @classmethod
     def get_all(cls):
-        return [_format.value for _format in cls]
+        formats = [_format.value for _format in cls]
+        formats.insert(0, cls.get_default())
+        return list(set(formats))
 
 mimetypes.init()
 
