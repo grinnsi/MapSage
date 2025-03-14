@@ -1,6 +1,12 @@
+from enum import Enum
 import re
 from osgeo import gdal, osr
 import pyproj
+import sqlmodel
+
+from server.database.models import CollectionTable
+
+gdal.UseExceptions()
 
 def get_code_and_authority_of_spatial_ref(spatial_ref: osr.SpatialReference) -> tuple[str, str]:
     if spatial_ref is None:
@@ -58,7 +64,6 @@ def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spat
     Extent is in order of [xmin, xmax, ymin, ymax, zmin, zmax] if 3D, else [xmin, xmax, ymin, ymax] \n
     If return_gdal_format is False, the extent is returned in the order of [xmin, ymin, zmin, xmax, ymax, zmax] if 3D, else [xmin, ymin, xmax, ymax]
     """
-    gdal.UseExceptions()
     
     if source_spatial_ref is None:
         raise TypeError("Source spatial reference is None")
@@ -101,3 +106,38 @@ def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spat
         return (extent_transformed[0], extent_transformed[2], extent_transformed[1], extent_transformed[3])
     else:
         return extent_transformed
+
+class DatasetWrapper(object):    
+    dataset_desc: gdal.Dataset
+    dataset_open_options: dict[str, str]
+    dataset_type = Enum("DatasetType", "VECTOR RASTER")
+    _flags = gdal.OF_VERBOSE_ERROR | gdal.OF_SHARED | gdal.OF_READONLY
+    
+    def __init__(self, dataset_desc: str, dataset_open_options: dict[str, str], dataset_type: dataset_type = dataset_type.VECTOR):
+        self.dataset_desc = dataset_desc
+        self.dataset_open_options = dataset_open_options
+        self.dataset_type = dataset_type
+        
+    def __enter__(self):
+        self._flags |= gdal.OF_VECTOR if self.dataset_type == self.dataset_type.VECTOR else gdal.OF_RASTER
+        self.ds: gdal.Dataset = gdal.OpenEx(self.dataset_desc, self._flags, open_options=self.dataset_open_options)
+        return self.ds
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Close dataset with garbage collection, by removing reference
+        self.ds = None
+        return False
+
+def get_dataset_from_collection_table(collection: CollectionTable, session: sqlmodel.Session) -> DatasetWrapper:
+    # Currently only supports postgis
+    dataset = collection.dataset
+    dataset_path = dataset.path
+    # Check what type of dataset it is
+    # Since it's currently only postgis, we can assume it's a connection string
+    if True:
+        open_options = {}
+        type = DatasetWrapper.dataset_type.VECTOR
+    else:
+        pass
+    
+    return DatasetWrapper(dataset_path, open_options, type)
