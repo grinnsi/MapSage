@@ -1,12 +1,14 @@
+import enum
 from typing import Any, Optional, Self
 import uuid as unique_id
 
 import orjson
 from pydantic import field_validator
 from sqlalchemy import Column, ForeignKey, String
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, Enum
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID as pg_uuid
+from sqlalchemy import engine
 
 from server.ogc_apis.features.models import collection as features_api_collection
 from server.ogc_apis.features.implementation import pre_render_helper
@@ -76,16 +78,80 @@ class CoreModel(SQLModel):
 class TableBase(CoreModel):
     uuid: unique_id.UUID = Field(default_factory=unique_id.uuid4, primary_key=True)
 
-class Connection(TableBase, table=True):
-    name: str
-    host: str
-    port: int
-    role: str
-    password: str
-    database_name: str
-    
-    collections: list["CollectionTable"] = Relationship(back_populates="connection")
+class Dataset(TableBase, table=True):
+    class Type(str, enum.Enum):
+        DB = "db"
+        SHAPE = "shape"
+        GPKG = "gpkg"
+        GEOJSON = "geojson"
+        CSV = "csv"
 
+    name: str
+    type: Type = Field(sa_column=Column(Enum(Type)))
+    # Path or connection string to the dataset
+    path: str
+    
+    collections: list["CollectionTable"] = Relationship(back_populates="dataset")
+    
+    @classmethod
+    def from_dict(cls, obj: dict) -> Self:
+        name = obj.get("name", None)
+        if name is None:
+            raise ValueError("Name is required")
+        
+        type_value = obj.get("type", None)
+        if type_value is None:
+            raise ValueError("Type is required")
+        if type_value not in cls.Type:
+            raise ValueError(f"Type must be one of {cls.Type.__members__.keys()}")
+        
+        if type_value == cls.Type.DB:
+            path = engine.URL.create(
+                "postgresql",
+                username=obj["role"],
+                password=obj["password"],
+                host=obj["host"],
+                port=obj["port"],
+                database=obj["database_name"]
+            ).__to_string__(hide_password=False)
+        else:
+            path = obj.get("path", None)
+            if path is None:
+                raise ValueError("Path is required")
+        
+        return cls(
+            name=name,
+            type=cls.Type(type_value),
+            path=path
+        )
+    
+    def to_dict(self, short: bool = False, show_password: bool = False) -> dict:
+        if short:
+            return {
+                "uuid": self.uuid,
+                "name": self.name,
+                "type": self.type,
+                "path": self.path
+            }
+            
+        obj = {
+            "uuid": self.uuid,
+            "name": self.name,
+            "type": self.type,
+        }
+
+        if self.type == self.Type.DB:
+            connection_string = engine.make_url(self.path)
+            obj["host"] = connection_string.host
+            obj["port"] = connection_string.port
+            obj["role"] = connection_string.username
+            obj["password"] = connection_string.password if show_password else "********"
+            obj["database_name"] = connection_string.database
+        else:
+            obj["path"] = self.path
+            
+        return obj
+            
 class License(TableBase, table=True):
     title: str = Field(unique=True)
     url: str
@@ -102,7 +168,7 @@ class License(TableBase, table=True):
     def get_default_licenses(cls) -> list[Self]:
         default_licenses = [
             {
-            "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "url": "https://creativecommons.org/publicdomain/zero/1.0/",
                 "type": "text/html",
                 "alternative_url": "https://creativecommons.org/publicdomain/zero/1.0/rdf",
                 "alternative_type": "application/rdf+xml",
@@ -185,18 +251,19 @@ class CollectionTable(TableBase, table=True):
     
     extent_json: Optional[str] = Field(default=None)                                                        # JSON
     spatial_extent_crs: Optional[str] = Field(default=None)
-    temporal_extent_trs: Optional[str] = Field(default=None)                                                       
+    temporal_extent_trs: Optional[str] = Field(default=None)
+    is_3D: bool = Field(default=False)
 
     crs_json: str = Field(default="""["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]""")                   # JSON
     storage_crs: str = Field(default="http://www.opengis.net/def/crs/OGC/1.3/CRS84")
     storage_crs_coordinate_epoch: Optional[float] = Field(default=None)
     
-    connection_uuid: unique_id.UUID = Field(sa_column=Column(pg_uuid(as_uuid=True), ForeignKey(f"{Connection.__tablename__}.uuid", ondelete="CASCADE", onupdate="CASCADE"), nullable=False))
+    dataset_uuid: unique_id.UUID = Field(sa_column=Column(pg_uuid(as_uuid=True), ForeignKey(f"{Dataset.__tablename__}.uuid", ondelete="CASCADE", onupdate="CASCADE"), nullable=False))
     
     pre_rendered_json: Optional[str] = Field(default=None)                                                  # JSON
     
     license: Optional[License] = Relationship(back_populates="collections")
-    connection: Connection = Relationship(back_populates="collections")
+    dataset: Dataset = Relationship(back_populates="collections")
     
     def to_collection(self) -> features_api_collection.Collection:
         collection = features_api_collection.Collection(

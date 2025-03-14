@@ -12,7 +12,7 @@ from osgeo import gdal, ogr, osr
 
 from server.utils.string_utils import string_to_kebab
 
-def generate_collection_table_object(layer_name: str, connection_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
+def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
     gdal.UseExceptions()
     
     new_collection = CollectionTable()
@@ -36,6 +36,7 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     else:
         default_uri_of_crs = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
         extent_coordinate_count = 6
+        new_collection.is_3D = True
         
     # Reorder the extent to be in the order of OGC API Features
     # FIXME: Order of axis are east, north; might need to be changed if the layer is in a different order
@@ -85,7 +86,7 @@ def generate_collection_table_object(layer_name: str, connection_uuid: str, data
     collection_title = base_id.replace("-", " ")
     collection_title = " ".join(word.capitalize() for word in collection_title.split(" "))
     new_collection.title = collection_title
-    new_collection.connection_uuid = UUID(connection_uuid)
+    new_collection.dataset_uuid = UUID(dataset_uuid)
     
     new_collection.pre_render(app_base_url=app_base_url)
 
