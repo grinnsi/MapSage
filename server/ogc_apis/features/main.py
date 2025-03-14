@@ -13,6 +13,7 @@
 """  # noqa: E501
 
 
+import os
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -38,6 +39,13 @@ def init_api_server() -> FastAPI:
     def _custom_openapi():
         if not app.openapi_schema:
             app.openapi_schema = FastAPI.openapi(app)
+            
+            # Manually set the server URL
+            app.openapi_schema["servers"] = [
+                {
+                    "url": os.getenv("API_SERVER_ROOT_PATH", "/").rstrip("/") + ogc_api_config.routes.FEATURES
+                }
+            ]
             
             for _, method_item in app.openapi_schema.get("paths").items():
                 for _, param in method_item.items():
