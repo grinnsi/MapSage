@@ -13,6 +13,7 @@ from sqlalchemy import engine
 from server.ogc_apis.features.models import collection as features_api_collection
 from server.ogc_apis.features.implementation import pre_render_helper
 from server.utils.string_utils import camel_to_snake
+from server.ogc_apis import ogc_api_config
 
 # All custom models should inherit from CoreModel, so they have snake_case tablenames in the sqlite db
 class CoreModel(SQLModel):
@@ -281,21 +282,23 @@ class CollectionTable(TableBase, table=True):
         return collection
     
     # FIXME: Delete column on restart
-    def pre_render(self, app_base_url: str = "") -> None:       
+    def pre_render(self, app_base_url: str = "") -> None:
+        app_base_url = app_base_url.rstrip("/")
+
         link_root = {
-            "url": f"{app_base_url}/features/",
+            "url": f"{app_base_url}{ogc_api_config.routes.FEATURES}",
             "rel": "root",
             "title": "Landing page of the server as {format_name}"
         }
         
         link_self = {
-            "url": f"{app_base_url}/features/collections/{self.id}",
+            "url": f"{app_base_url}{ogc_api_config.routes.FEATURES}/collections/{self.id}",
             "rel": "self",
             "title": "This document as {format_name}"
         }
         
         link_items = {
-            "url": f"{app_base_url}/features/collections/{self.id}/items",
+            "url": f"{app_base_url}{ogc_api_config.routes.FEATURES}/collections/{self.id}/items",
             "rel": "items",
             "title": f"Items of '{self.title}' as {{format_name}}"
         }
