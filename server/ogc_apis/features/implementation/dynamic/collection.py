@@ -1,7 +1,7 @@
 from uuid import UUID
 from sqlmodel import text
 from server.database.db import Database
-from server.database.models import CollectionTable
+from server.database import models
 from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
@@ -12,10 +12,10 @@ from osgeo import gdal, ogr, osr
 
 from server.utils.string_utils import string_to_kebab
 
-def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
+def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> models.CollectionTable:
     gdal.UseExceptions()
     
-    new_collection = CollectionTable()
+    new_collection = models.CollectionTable()
     
     layer: ogr.Layer = dataset.GetLayerByName(layer_name)
     if layer is None:
@@ -65,13 +65,13 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     
     base_id = string_to_kebab(layer_name.split(".", 1)[-1])
     
-    result = Database.select_sqlite_db(statement=text(f"SELECT id FROM {CollectionTable.__tablename__} WHERE \"id\" = '{base_id}'"))
+    result = Database.select_sqlite_db(statement=text(f"SELECT id FROM {models.CollectionTable.__tablename__} WHERE \"id\" = '{base_id}'"))
     if result is None or len(result) == 0:
         new_collection.id = base_id
     else:
         query = f"""
             SELECT MAX(CAST(SUBSTR(id, LENGTH('{base_id}') + 2) AS INTEGER)) 
-            FROM {CollectionTable.__tablename__}
+            FROM {models.CollectionTable.__tablename__}
             WHERE id LIKE '{base_id}' || '-%' AND SUBSTR(id, LENGTH('{base_id}') + 2) GLOB '[0-9]*'
         """
         result = Database.select_sqlite_db(statement=text(query))[0][0]
@@ -92,9 +92,9 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
 
     return new_collection
 
-def get_collection_by_id(id: str, session: sqlmodel.Session = None) -> list[CollectionTable]:
-    statement = sqlmodel.select(CollectionTable).where(CollectionTable.id == id)
-    found_collections: list[CollectionTable]
+def get_collection_by_id(id: str, session: sqlmodel.Session = None) -> list[models.CollectionTable]:
+    statement = sqlmodel.select(models.CollectionTable).where(models.CollectionTable.id == id)
+    found_collections: list[models.CollectionTable]
     
     if session is None:
         found_collections = Database.select_sqlite_db(statement=statement)
