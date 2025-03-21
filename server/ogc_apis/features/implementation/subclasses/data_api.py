@@ -32,20 +32,20 @@ class DataApi(BaseDataApi):
         collections: list[models.CollectionTable] = dynamic.collection_impl.get_collection_by_id(id=collectionId, session=session)
         if len(collections) == 0:
             raise HTTPException(status_code=404, detail="The requested resource does not exist on the server. For example, a path parameter had an incorrect value.")
-        
         collection = collections[0]
-        dataset_wrapper = gdal_utils.get_dataset_from_collection_table(collection, session)
-        try:
-            featureId = int(featureId)
-            feature = dynamic.feature_impl.get_feature_by_id(dataset_wrapper, collection.layer_name, featureId)
-        except ValueError:
-            raise HTTPException(status_code=404, detail="The requested resource does not exist on the server. For example, a path parameter had an incorrect value.")
         
         if crs is None:
             crs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84" if not collection.is_3D else "http://www.opengis.net/def/crs/OGC/0/CRS84h"
         
         if crs not in collection.crs_json:
             raise HTTPException(status_code=400, detail="The requested CRS is not applicable to this collection. List of supported CRSs: " + ", ".join(collection.crs_json))
+        
+        dataset_wrapper = gdal_utils.get_dataset_from_collection_table(collection, session)
+        try:
+            featureId = int(featureId)
+            feature = dynamic.feature_impl.get_feature_by_id(dataset_wrapper, collection.layer_name, featureId)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="The requested resource does not exist on the server. For example, a path parameter had an incorrect value.")
         
         if crs != collection.storage_crs:
             dynamic.feature_impl.transform_feature(feature, crs)
