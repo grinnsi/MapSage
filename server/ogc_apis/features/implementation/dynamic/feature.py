@@ -48,10 +48,7 @@ def transform_feature(feature: ogr.Feature, t_srs_resource: str) -> None:
     if geom is None:        
         return
     
-    if t_srs_resource.startswith("urn"):
-        t_srs = gdal_utils.get_spatial_ref_from_urn(t_srs_resource)
-    else:
-        t_srs = gdal_utils.get_spatial_ref_from_uri(t_srs_resource)
+    t_srs = gdal_utils.get_spatial_ref_from_ressource(t_srs_resource)
         
     geom.TransformTo(t_srs)
 
