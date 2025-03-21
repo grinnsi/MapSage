@@ -33,3 +33,36 @@ def validate_limit(limit: Any) -> int:
         return 1
     return limit
 
+def validate_bbox(bbox_param: Any) -> list[float]:
+    """Validate the bbox parameter format and values."""
+    
+    try:
+        if type(bbox_param) == str:
+            if bbox_param.startswith("[") and bbox_param.endswith("]"):
+                # Convert JSON array string to list
+                bbox_param = orjson.loads(bbox_param)
+            else:
+                # If string input (like "160,10,10,10"), convert to list of floats
+                bbox_param = [float(x) for x in bbox_param.split(",")]
+        elif type(bbox_param) == list:
+            # If input is an actual list, convert to list of floats
+            bbox_param = [float(x) for x in bbox_param]
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Bounding box should be specified as comma-separated numbers"
+            )
+        
+        # Check correct number of coordinates
+        if len(bbox_param) != 4 and len(bbox_param) != 6:
+            raise HTTPException(
+                status_code=400,
+                detail="Bounding box should contain 4 or 6 values"
+            )
+        
+        return bbox_param
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Bounding box should be specified as comma-separated numbers"
+        )
