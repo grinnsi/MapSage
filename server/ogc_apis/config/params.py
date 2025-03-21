@@ -1,8 +1,11 @@
-from fastapi import Query
+from typing import Any, Optional
+import orjson
+from fastapi import HTTPException, Query
 from pydantic import Field
 from typing_extensions import Annotated
 from . import formats
 
+LIMIT_MAXIMUM = 100000
 
 def get_format_query(f: Annotated[formats.ReturnFormat, Field(
         default=formats.ReturnFormat.get_default(), 
@@ -10,5 +13,23 @@ def get_format_query(f: Annotated[formats.ReturnFormat, Field(
     )] = Query(
         default=formats.ReturnFormat.get_default(), 
         description="Optional parameter which indicates the output format of the response"
-    )) -> None:
+    )) -> formats.ReturnFormat:
     return f
+
+def validate_limit(limit: Any) -> int:
+    """Validate and cap limit parameter to the maximum allowed value."""
+    
+    if type(limit) == str and limit.isdigit():
+        limit = int(limit)
+    elif type(limit) != int:
+        raise HTTPException(
+            status_code=400,
+            detail="Input for parameter 'limit' of type 'query' is invalid. Input should be a valid integer, unable to parse string as an integer"
+        )
+    
+    if limit > LIMIT_MAXIMUM:
+        return LIMIT_MAXIMUM
+    if limit < 1:
+        return 1
+    return limit
+
