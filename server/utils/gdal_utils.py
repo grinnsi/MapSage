@@ -77,10 +77,11 @@ def get_wkt_from_uri(uri: str) -> str:
     
     return spatial_ref.ExportToWkt()
     
-def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spatial_ref: osr.SpatialReference | str, extent: list[float], return_gdal_format: bool = True) -> list[float]:
+def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spatial_ref: osr.SpatialReference | str, extent: list[float], input_gdal_format: bool = True, return_gdal_format: bool = True) -> list[float]:
     """
     Transforms the extent from the source spatial reference to the target spatial reference \n
     Extent is in order of [xmin, xmax, ymin, ymax, zmin, zmax] if 3D, else [xmin, xmax, ymin, ymax] \n
+    If input_gdal_format is False, the extent is expected in the order of [xmin, xmax, ymin, ymax, zmin, zmax] if 3D, else [xmin, xmax, ymin, ymax] \n
     If return_gdal_format is False, the extent is returned in the order of [xmin, ymin, zmin, xmax, ymax, zmax] if 3D, else [xmin, ymin, xmax, ymax]
     """
     
