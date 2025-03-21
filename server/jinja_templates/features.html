@@ -1,0 +1,209 @@
+{% extends "basic.html" %}
+{% block head %}
+  {{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.0/proj4.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ol-proj4@4.0.1/dist/ol-proj4.min.js"></script>
+{% endblock %}
+{% block title %}{{ collection.title }}: Features{% endblock %}
+{% block heading %}{{ collection.title }}: Features{% endblock %}
+{% set links = features.links %}
+
+{% block content %}
+<div class="feature-details">
+  <div class="main-feature-information">
+    <div class="map-container">
+      <h3>Map View</h3>
+      <div id="map"></div>
+    </div>
+
+    <div class="feature-properties">
+      <div style="display: flex; justify-content: space-between;">
+        <h3>Properties</h3>
+        <div>
+          <button id="prev-feature">&lt;</button>
+          <button id="next-feature">&gt;</button>
+        </div>
+      </div>
+      <dl id="properties">
+        
+      </dl>
+    </div>
+  </div>
+
+  {% if features %}
+  <div class="features-metadata">
+    <h3>Metadata</h3>
+    <div><strong>Response created at: </strong>{{ features.timeStamp }}</div>
+    <div><strong>Matched feature count: </strong> {{ features.numberMatched }}</div>
+    <div><strong>Returned feature count: </strong> {{ features.numberReturned }}</div>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let projWkt = '{{ crs_wkt | safe}}';
+  proj4.defs('CustomProj', projWkt);
+  ol.proj.proj4.register(proj4);
+  
+  console.debug({{ features | to_json | safe }});
+  let offset = Number({{ offset | safe }});
+
+  let tileLayer = new ol.layer.Tile({
+    source: new ol.source.OSM(),
+    wrapX: false
+  });
+
+  let featureData = new ol.format.GeoJSON().readFeatures({{ features | to_json | safe }}, {
+    dataProjection: 'CustomProj',
+    featureProjection: 'CustomProj'
+  });
+
+  let source = new ol.source.Vector({
+    features: featureData
+  });
+
+  let vectorLayer = new ol.layer.Vector({
+      source: source
+  });
+
+  let currentFeatureIndex = 0;
+  let currentFeature = source.getFeatureById(featureData[currentFeatureIndex].id_);
+
+  let highlightStroke = new ol.style.Stroke({
+    color: 'rgba(0, 0, 255, 1.0)',
+    width: 2
+  });
+  let highlightFill = new ol.style.Fill({ 
+    color: 'rgba(0, 0, 255, 0.3)' 
+  });
+  let highlightStyle = new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 5,
+      stroke: highlightStroke,
+      fill: highlightFill
+    }),
+    stroke: highlightStroke,
+    fill: highlightFill
+  });
+
+  function updateProperties() {
+    if (currentFeature) {
+      currentFeature.setStyle(null);
+    }
+    currentFeature = source.getFeatureById(featureData[currentFeatureIndex].id_);
+    if (!currentFeature) return;
+
+    let properties = currentFeature.getProperties();
+    let propertiesList = document.getElementById("properties");
+    propertiesList.innerHTML = "";
+    for (let key in properties) {
+      if (key == "geometry") continue;
+
+      let value = properties[key];
+      let dt = document.createElement("dt");
+      dt.textContent = key;
+      let dd = document.createElement("dd");
+      dd.textContent = value;
+      propertiesList.appendChild(dt);
+      propertiesList.appendChild(dd);
+    }
+
+    currentFeature.setStyle(highlightStyle);
+  }
+
+  updateProperties();
+  
+  document.getElementById("prev-feature").addEventListener("click", async function() {
+    currentFeatureIndex--;
+    if (currentFeatureIndex < 0) currentFeatureIndex = 0; // Update to prevent negative index
+    updateProperties(); // Update properties after changing feature
+  });
+
+  document.getElementById("next-feature").addEventListener("click", async function() {
+    currentFeatureIndex++;
+    if (currentFeatureIndex > featureData.length - 1) currentFeatureIndex = featureData.length - 1; // Update to prevent exceeding feature count
+    updateProperties(); // Update properties after changing feature
+  });
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    let view = new ol.View({
+      center: ol.proj.fromLonLat([0, 0]),
+      zoom: 2,
+      projection: "CustomProj",
+      maxZoom: 20,
+      minZoom: 2
+    });
+
+    const map = new ol.Map({
+      target: 'map',
+      layers: [
+        tileLayer,
+        vectorLayer, 
+      ],
+      view,
+    });
+
+    await new Promise(r => setTimeout(r, 500));
+
+    let extent = vectorLayer.getSource().getExtent();
+    let resolution = view.getResolutionForExtent(extent);
+    let zoom = view.getZoomForResolution(resolution);
+    let center = ol.extent.getCenter(extent);
+
+    view.animate({center: center});
+    view.animate({zoom: zoom});
+  });
+</script>
+
+<style>
+dl {
+  display: grid;
+  grid-template-columns: max-content auto;
+}
+
+dt {
+  grid-column-start: 1;
+}
+
+dd {
+  grid-column-start: 2;
+}
+
+.main-feature-information {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.main-feature-information > div {
+  /* flex: 1; */
+  min-width: 0;
+}
+
+.feature-properties {
+  flex: 0.3;
+}
+
+.map-container {
+  flex: 0.7;
+}
+
+.map-container {
+  width: 100%;
+}
+
+/* .map-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+
+#map {
+  height: 600px;
+  width: 100%;
+}
+</style>
+{% endblock %}

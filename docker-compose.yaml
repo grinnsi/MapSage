@@ -79,7 +79,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: ${DOCKER_CONTAINER_BASE_NAME}-nginx
-    image: ${APPLICATION_NAME}.nginx
+    image: ${APPLICATION_NAME}.nginx.${APP_ENV}
     environment:
       APP_ENV: ${APP_ENV}
       API_SERVER_ROOT_PATH: ${API_SERVER_ROOT_PATH}

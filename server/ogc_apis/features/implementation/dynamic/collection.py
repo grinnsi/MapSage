@@ -1,7 +1,7 @@
 from uuid import UUID
 from sqlmodel import text
 from server.database.db import Database
-from server.database.models import CollectionTable
+from server.database import models
 from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
@@ -12,10 +12,10 @@ from osgeo import gdal, ogr, osr
 
 from server.utils.string_utils import string_to_kebab
 
-def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> CollectionTable:
+def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> models.CollectionTable:
     gdal.UseExceptions()
     
-    new_collection = CollectionTable()
+    new_collection = models.CollectionTable()
     
     layer: ogr.Layer = dataset.GetLayerByName(layer_name)
     if layer is None:
@@ -29,8 +29,41 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     default_crs_uri = ""
     extent_coordinate_count = 4
     
-    # Always calculate the bbx as 3D, just in case it is a 3D layer
-    extent_calc: tuple[float] = layer.GetExtent3D()
+    # Try to calculate bbox as 3D, just in case it is a 3D layer
+    try:
+        # This doesnt work 3D postgresql layer, 2D but not 3D for whatever reason
+        # It seems like GDAL doesnt call the ST_3DExtent function, but the ST_Extent function, since the error mentions "BOX(..,..,..,..) is not valid 3D" ort something
+        extent_calc: tuple[float] = layer.GetExtent3D(True)
+    except RuntimeError as error:
+        # If that fails, the extent can't be calculated like that and a driver specific method is needed
+        driver: gdal.Driver = dataset.GetDriver()
+        if driver is None:
+            raise ValueError(f"Driver for dataset {dataset.GetDescription()} not found") from error
+        
+        geom_col: str = layer.GetGeometryColumn()
+        test_feature: ogr.Feature = layer.GetNextFeature()
+        test_geom: ogr.Geometry = test_feature.GetGeometryRef()
+        is3D = bool(test_geom.Is3D())
+        
+        if driver.GetName() == "PostgreSQL":
+            schema, table = layer_name.split(".", 1)
+            if not is3D:
+                sql_query = f'SELECT ST_Extent({geom_col}) as extent FROM {schema}."{table}"'
+            else:
+                sql_query = f'SELECT ST_3DExtent({geom_col}) as extent FROM {schema}."{table}"'
+            with dataset.ExecuteSQL(sql_query) as result:
+                bbox_string: str = result.GetNextFeature()["extent"]
+                bbox_string = bbox_string.split("(", 1)[1].replace(")", "").split(",")
+                min_point = [float(coord) for coord in bbox_string[0].split(" ")]
+                max_point = [float(coord) for coord in bbox_string[1].split(" ")]
+                if len(min_point) == 2:
+                    min_point.append(math.inf)
+                    max_point.append(-math.inf)
+                    
+                extent_calc = tuple([min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2]])
+        else:
+            raise ValueError(f"Driver {driver.GetName()} not supported for calculating extent") from error
+                
     if extent_calc[4] == math.inf and extent_calc[5] == -math.inf:
         default_crs_uri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
     else:
@@ -65,13 +98,13 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     
     base_id = string_to_kebab(layer_name.split(".", 1)[-1])
     
-    result = Database.select_sqlite_db(statement=text(f"SELECT id FROM {CollectionTable.__tablename__} WHERE \"id\" = '{base_id}'"))
+    result = Database.select_sqlite_db(statement=text(f"SELECT id FROM {models.CollectionTable.__tablename__} WHERE \"id\" = '{base_id}'"))
     if result is None or len(result) == 0:
         new_collection.id = base_id
     else:
         query = f"""
             SELECT MAX(CAST(SUBSTR(id, LENGTH('{base_id}') + 2) AS INTEGER)) 
-            FROM {CollectionTable.__tablename__}
+            FROM {models.CollectionTable.__tablename__}
             WHERE id LIKE '{base_id}' || '-%' AND SUBSTR(id, LENGTH('{base_id}') + 2) GLOB '[0-9]*'
         """
         result = Database.select_sqlite_db(statement=text(query))[0][0]
@@ -92,9 +125,9 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
 
     return new_collection
 
-def get_collection_by_id(id: str, session: sqlmodel.Session = None) -> list[CollectionTable]:
-    statement = sqlmodel.select(CollectionTable).where(CollectionTable.id == id)
-    found_collections: list[CollectionTable]
+def get_collection_by_id(id: str, session: sqlmodel.Session = None) -> list[models.CollectionTable]:
+    statement = sqlmodel.select(models.CollectionTable).where(models.CollectionTable.id == id)
+    found_collections: list[models.CollectionTable]
     
     if session is None:
         found_collections = Database.select_sqlite_db(statement=statement)

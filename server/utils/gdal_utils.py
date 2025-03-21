@@ -45,6 +45,17 @@ def get_spatial_ref_from_uri(uri: str) -> osr.SpatialReference:
     except Exception:
         raise ValueError("URI format is invalid or does not contain authority and code")
 
+def get_spatial_ref_from_ressource(ressource: str) -> osr.SpatialReference:
+    if ressource is None:
+        raise ValueError("Resource is None")
+
+    if ressource.startswith("http"):
+        return get_spatial_ref_from_uri(ressource)
+    elif ressource.startswith("urn"):
+        return get_spatial_ref_from_urn(ressource)
+    else:
+        raise ValueError("Resource must be a valid URI or URN")
+
 def get_spatial_ref_from_urn(urn: str) -> osr.SpatialReference:
     if urn is None:
         raise TypeError("URN is None")
@@ -57,11 +68,20 @@ def get_spatial_ref_from_urn(urn: str) -> osr.SpatialReference:
         return spatial_ref
     except Exception:
         raise ValueError("URN format is invalid or does not contain authority and code")
+
+def get_wkt_from_uri(uri: str) -> str:
+    if uri is None:
+        raise TypeError("URI is None")
     
-def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spatial_ref: osr.SpatialReference | str, extent: list[float], return_gdal_format: bool = True) -> list[float]:
+    spatial_ref = get_spatial_ref_from_uri(uri)
+    
+    return spatial_ref.ExportToWkt()
+    
+def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spatial_ref: osr.SpatialReference | str, extent: list[float], input_gdal_format: bool = True, return_gdal_format: bool = True) -> list[float]:
     """
     Transforms the extent from the source spatial reference to the target spatial reference \n
     Extent is in order of [xmin, xmax, ymin, ymax, zmin, zmax] if 3D, else [xmin, xmax, ymin, ymax] \n
+    If input_gdal_format is False, the extent is expected in the order of [xmin, xmax, ymin, ymax, zmin, zmax] if 3D, else [xmin, xmax, ymin, ymax] \n
     If return_gdal_format is False, the extent is returned in the order of [xmin, ymin, zmin, xmax, ymax, zmax] if 3D, else [xmin, ymin, xmax, ymax]
     """
     
@@ -83,9 +103,13 @@ def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spat
         raise TypeError("Extent is None")
     
     if len(extent) == 4:
-        extent = (extent[0], extent[2], extent[1], extent[3])
+        if input_gdal_format:
+            extent = (extent[0], extent[2], extent[1], extent[3])
     elif len(extent) == 6:
-        extent = (extent[0], extent[2], extent[1], extent[3], extent[4], extent[5])
+        if input_gdal_format:
+            extent = (extent[0], extent[2], extent[1], extent[3], extent[4], extent[5])
+        else:
+            extent = (extent[0], extent[1], extent[3], extent[4], extent[2], extent[5])
     else:
         raise ValueError("Extent must be [xmin, xmax, ymin, ymax] or [xmin, xmax, ymin, ymax, zmin, zmax]")
     
