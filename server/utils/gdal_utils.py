@@ -45,6 +45,17 @@ def get_spatial_ref_from_uri(uri: str) -> osr.SpatialReference:
     except Exception:
         raise ValueError("URI format is invalid or does not contain authority and code")
 
+def get_spatial_ref_from_ressource(ressource: str) -> osr.SpatialReference:
+    if ressource is None:
+        raise ValueError("Resource is None")
+
+    if ressource.startswith("http"):
+        return get_spatial_ref_from_uri(ressource)
+    elif ressource.startswith("urn"):
+        return get_spatial_ref_from_urn(ressource)
+    else:
+        raise ValueError("Resource must be a valid URI or URN")
+
 def get_spatial_ref_from_urn(urn: str) -> osr.SpatialReference:
     if urn is None:
         raise TypeError("URN is None")
