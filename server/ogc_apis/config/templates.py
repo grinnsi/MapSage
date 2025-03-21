@@ -1,11 +1,13 @@
 from fastapi.templating import Jinja2Templates
 import jinja2
+import orjson
 
 ENVIRONMENT = jinja2.Environment(
     loader=jinja2.PackageLoader("server", "jinja_templates"),
     autoescape=jinja2.select_autoescape(),
 )
 RESPONSE = Jinja2Templates(env=ENVIRONMENT)
+RESPONSE.env.filters["to_json"] = lambda value: orjson.dumps(value).decode("utf-8")
 
 def get(template_name: str) -> jinja2.Template:
     try:
