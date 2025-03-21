@@ -43,10 +43,8 @@
   let projWkt = '{{ crs_wkt | safe}}';
   proj4.defs('CustomProj', projWkt);
   ol.proj.proj4.register(proj4);
-  
-  console.debug({{ feature | safe }});
 
-  let featureData = new ol.format.GeoJSON().readFeatures({{ feature | safe }}, {
+  let featureData = new ol.format.GeoJSON().readFeatures({{ feature | to_json | safe }}, {
     dataProjection: 'CustomProj',
     featureProjection: 'CustomProj'
   });
