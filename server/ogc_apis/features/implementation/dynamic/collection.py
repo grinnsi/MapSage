@@ -29,8 +29,41 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     default_crs_uri = ""
     extent_coordinate_count = 4
     
-    # Always calculate the bbx as 3D, just in case it is a 3D layer
-    extent_calc: tuple[float] = layer.GetExtent3D()
+    # Try to calculate bbox as 3D, just in case it is a 3D layer
+    try:
+        # This doesnt work 3D postgresql layer, 2D but not 3D for whatever reason
+        # It seems like GDAL doesnt call the ST_3DExtent function, but the ST_Extent function, since the error mentions "BOX(..,..,..,..) is not valid 3D" ort something
+        extent_calc: tuple[float] = layer.GetExtent3D(True)
+    except RuntimeError as error:
+        # If that fails, the extent can't be calculated like that and a driver specific method is needed
+        driver: gdal.Driver = dataset.GetDriver()
+        if driver is None:
+            raise ValueError(f"Driver for dataset {dataset.GetDescription()} not found") from error
+        
+        geom_col: str = layer.GetGeometryColumn()
+        test_feature: ogr.Feature = layer.GetNextFeature()
+        test_geom: ogr.Geometry = test_feature.GetGeometryRef()
+        is3D = bool(test_geom.Is3D())
+        
+        if driver.GetName() == "PostgreSQL":
+            schema, table = layer_name.split(".", 1)
+            if not is3D:
+                sql_query = f'SELECT ST_Extent({geom_col}) as extent FROM {schema}."{table}"'
+            else:
+                sql_query = f'SELECT ST_3DExtent({geom_col}) as extent FROM {schema}."{table}"'
+            with dataset.ExecuteSQL(sql_query) as result:
+                bbox_string: str = result.GetNextFeature()["extent"]
+                bbox_string = bbox_string.split("(", 1)[1].replace(")", "").split(",")
+                min_point = [float(coord) for coord in bbox_string[0].split(" ")]
+                max_point = [float(coord) for coord in bbox_string[1].split(" ")]
+                if len(min_point) == 2:
+                    min_point.append(math.inf)
+                    max_point.append(-math.inf)
+                    
+                extent_calc = tuple([min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2]])
+        else:
+            raise ValueError(f"Driver {driver.GetName()} not supported for calculating extent") from error
+                
     if extent_calc[4] == math.inf and extent_calc[5] == -math.inf:
         default_crs_uri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
     else:
