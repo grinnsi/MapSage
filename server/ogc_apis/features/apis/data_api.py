@@ -248,4 +248,4 @@ async def get_features(
     """Fetch features of the feature collection with id `collectionId`.  Every feature in a dataset belongs to a collection. A dataset may consist of multiple feature collections. A feature collection is often a collection of features of a similar type, based on a common schema.  Use content negotiation to request HTML or GeoJSON."""
     if not BaseDataApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseDataApi.subclasses[0]().get_features(collectionId, limit, bbox, datetime, bbox_crs, crs)
+    return await BaseDataApi.subclasses[0]().get_features(collectionId, limit, offset, bbox, datetime, bbox_crs, crs, format, request, session)
