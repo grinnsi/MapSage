@@ -139,7 +139,77 @@ async def get_feature(
 @router.get(
     "/collections/{collectionId}/items",
     responses={
-        200: {"model": FeatureCollectionGeoJSON, "description": "The response is a document consisting of features in the collection. The features included in the response are determined by the server based on the query parameters of the request. To support access to larger collections without overloading the client, the API supports paged access with links to the next page, if more features are selected that the page size.  The `bbox` and `datetime` parameter can be used to select only a subset of the features in the collection (the features that are in the bounding box or time interval). The `bbox` parameter matches all features in the collection that are not associated with a location, too. The `datetime` parameter matches all features in the collection that are not associated with a time stamp or interval, too.  The `limit` parameter may be used to control the subset of the selected features that should be returned in the response, the page size. Each page may include information about the number of selected and returned features (`numberMatched` and `numberReturned`) as well as links to support paging (link relation `next`)."},
+        200: {
+            "model": FeatureCollectionGeoJSON,
+            "content": {
+                "application/geo+json": {
+                    "description": "GeoJSON representation of the features in the feature collection with id `collectionId`.",
+                    "example": {
+                        "type": "FeatureCollection",
+                        "links": [
+                            {
+                                "href": "http://data.example.com/collections/buildings/items.json",
+                                "rel": "self",
+                                "type": "application/geo+json",
+                                "title": "this document"
+                            },
+                            {
+                                "href": "http://data.example.com/collections/buildings/items.html",
+                                "rel": "alternate",
+                                "type": "text/html",
+                                "title": "this document as HTML"
+                            },
+                            {
+                                "href": "http://data.example.com/collections/buildings/items.json&offset=10&limit=2",
+                                "rel": "next",
+                                "type": "application/geo+json",
+                                "title": "next page"
+                            }
+                        ],
+                        "timeStamp": "2018-04-03T14:52:23Z",
+                        "numberMatched": 123,
+                        "numberReturned": 2,
+                        "features": [
+                            {
+                                "type": "Feature",
+                                "id": "123",
+                                "geometry": {
+                                    "type": "Polygon",
+                                    "coordinates": [
+                                    "..."
+                                    ]
+                            },
+                                "properties": {
+                                    "function": "residential",
+                                    "floors": "2",
+                                    "lastUpdate": "2015-08-01T12:34:56Z"
+                                }
+                            },
+                            {
+                                "type": "Feature",
+                                "id": "132",
+                                "geometry": {
+                                    "type": "Polygon",
+                                    "coordinates": [
+                                    "..."
+                                    ]
+                                },
+                                "properties": {
+                                    "function": "public use",
+                                    "floors": "10",
+                                    "lastUpdate": "2013-12-03T10:15:37Z"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "text/html": {
+                    "description": "HTML representation of the features in the feature collection with id `collectionId`.",
+                    "example": "string",
+                },
+            },
+            "description": "The response is a document consisting of features in the collection. The features included in the response are determined by the server based on the query parameters of the request. To support access to larger collections without overloading the client, the API supports paged access with links to the next page if more features are selected that the page size.\n\n  The `bbox` and `datetime` parameter can be used to select only a subset of the features in the collection (the features that are in the bounding box or time interval). The `bbox` parameter matches all features in the collection that are not associated with a location, too. The `datetime` parameter matches all features in the collection that are not associated with a time stamp or interval, too.\n\n  The `limit` parameter may be used to control the subset of the selected features that should be returned in the response, the page size. Each page may include information about the number of selected and returned features (`numberMatched` and `numberReturned`) as well as links to support paging (link relation `next`)."
+        },
         404: {
             "model": OGCException,
             "content": {
@@ -160,6 +230,7 @@ async def get_feature(
     summary="fetch features",
     response_model_by_alias=True,
     response_model_exclude_none=True,
+    response_class=ogc_api_config.formats.GeoJSONResponse,
 )
 async def get_features(
     collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")] = Path(..., description=markdown.markdown("local identifier of a collection")),
