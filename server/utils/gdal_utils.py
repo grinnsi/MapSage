@@ -103,9 +103,13 @@ def transform_extent(source_spatial_ref: osr.SpatialReference | str, target_spat
         raise TypeError("Extent is None")
     
     if len(extent) == 4:
-        extent = (extent[0], extent[2], extent[1], extent[3])
+        if input_gdal_format:
+            extent = (extent[0], extent[2], extent[1], extent[3])
     elif len(extent) == 6:
-        extent = (extent[0], extent[2], extent[1], extent[3], extent[4], extent[5])
+        if input_gdal_format:
+            extent = (extent[0], extent[2], extent[1], extent[3], extent[4], extent[5])
+        else:
+            extent = (extent[0], extent[1], extent[3], extent[4], extent[2], extent[5])
     else:
         raise ValueError("Extent must be [xmin, xmax, ymin, ymax] or [xmin, xmax, ymin, ymax, zmin, zmax]")
     
