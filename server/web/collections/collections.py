@@ -48,7 +48,7 @@ def create_collection(form: dict, connection_string: str = None, gdal_dataset: g
     
     count_existing_collection = Database.select_sqlite_db(text(f" Count(*) FROM {models.CollectionTable.__tablename__} WHERE \"layer_name\" = '{form['layer_name']}' AND \"dataset_uuid\" = '{UUID(form['uuid']).hex}'"))
     if count_existing_collection is not None and count_existing_collection[0] > 0:
-        raise ValueError(f"Collection with layer name {form['layer_name']} already exists for this connection.")
+        return Response(status=409, response="Collection already exists")
     
     app_url_root = get_app_url_root()
     
