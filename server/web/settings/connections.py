@@ -39,7 +39,7 @@ def create_new_connection(form: dict) -> Response:
 def delete_connection(form: dict) -> Response:
     """Deletes a connection from the internal database"""
     
-    connection: Union[None, Dataset] = Database.delete_sqlite_db(table_model=Dataset, uuid=form["uuid"])
+    connection: Union[None, Dataset] = Database.delete_sqlite_db(table_model=Dataset, primary_key_value=form["uuid"])
     if not connection:
         return Response(status=404, response="Connection not found")
     
