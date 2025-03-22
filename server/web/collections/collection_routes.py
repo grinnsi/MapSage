@@ -25,7 +25,10 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
                 if request_data is None:
                     return Response(status=400, response="Bad request")
                 
-                response = create_collections(request_data)
+                if "layer_name" in request_data:
+                    response = create_collection(request_data, return_object=False)
+                else:
+                    response = create_collections(request_data)
                 static.collections.update_database_object(app_base_url=get_app_url_root())
                 return response
             
