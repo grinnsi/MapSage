@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, request, Response, current_app
 
 from server.ogc_apis.features.implementation import static
-from server.web.collections.collections import create_collections, delete_collections, get_all_collections
+from server.web.collections.collections import create_collection, create_collections, delete_collections, get_all_collections, get_dataset_layers_information
 from server.web.flask_utils import get_app_url_root
 
 def create_collections_endpoints(main_endpoint: str) -> Blueprint:
