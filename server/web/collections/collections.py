@@ -41,7 +41,7 @@ def get_all_collections():
         
         return json_data
 
-def create_collection(form: dict, connection_string: str = None, gdal_dataset: gdal.Dataset = None):
+def create_collection(form: dict, connection_string: str = None, gdal_dataset: gdal.Dataset = None, return_object: bool = True):
     if connection_string is None:    
         table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
         connection_string = table_dataset.path
@@ -60,10 +60,10 @@ def create_collection(form: dict, connection_string: str = None, gdal_dataset: g
     
     new_collection = Database.insert_sqlite_db(new_collection)
     
-    if connection_string is None and gdal_dataset is None:
-        return Response(status=201, response="Collection created")
-    else:
+    if return_object:
         return new_collection
+    else:
+        return Response(status=201, response="Collection created")
 
 def create_collections(form: dict):
     table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
