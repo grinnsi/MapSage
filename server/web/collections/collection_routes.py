@@ -47,4 +47,19 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
         # Send HTTP Error 501 (Not implemented), when method is not GET, POST or DELETE
         return Response(status=501, response="Method not implemented")
     
+    @bp.route('/dataset-information/<dataset_uuid>', methods=["GET"])
+    def dataset_information(dataset_uuid: str) -> Response:
+        request_data = request.get_json() if request.data else None
+
+        try:
+            if request.method == "GET":
+                return get_dataset_layers_information(dataset_uuid)
+            
+        except Exception as e:
+            current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
+            return Response(status=500, response="Internal server error")
+
+        # Send HTTP Error 501 (Not implemented), when method is not GET, POST or DELETE
+        return Response(status=501, response="Method not implemented")
+    
     return bp
