@@ -4,15 +4,31 @@
     fill-space
   >
     <template #header-right>
+      <TemplateButton 
+        tooltip="Kollektionen löschen" 
+        iconName="flowbite:trash-bin-outline"
+        :button-type="StyleType.Danger"
+        @click="() =>{
+        if (collectionTable.getSelectionRows().length > 0) {
+          confirmationDialogRef.toggleVisibility();
+        } else {
+          ElMessage({
+            type: 'info',
+            message: 'Bitte wählen Sie mindestens eine Kollektion aus'
+          });
+        }
+      }" />
       <TemplateButton tooltip="Neue Kollektion" iconName="flowbite:plus-outline" @click="showConnectionsDialog" />
     </template>
     <div class="table-container">
       <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
         <!-- TODO: Use expanding rows or all informations and an edit button -->
         <ElTable
+          ref="collectionTable"
           :data="collectionsTableData"
           stripe
         >
+          <ElTableColumn type="selection" />
           <ElTableColumn prop="title" label="Titel" />
           <ElTableColumn prop="id" label="ID" />
           <ElTableColumn prop="description" label="Beschreibung" />
@@ -69,6 +85,18 @@
         </ElTableColumn>
       </ElTable>
     </TemplateDialog>
+    <TemplateDialog
+      ref="confirmationDialogRef"
+      :dialogStyle="StyleType.Danger"
+      :dialogTitle="'Ausgewählte Kollektionen löschen ?'"
+      :close-on-click-modal="true"
+      :dialog-type="DialogType.Confirmation"
+      @confirm="deleteCollections"  
+    >
+      <span>Sind Sie sicher, dass Sie die Kollektionen löschen möchten ?
+      <br>Diese Aktion kann nicht rückgängig gemacht werden.
+      </span>
+    </TemplateDialog>
   </ClientOnly>
 </template>
 
@@ -79,13 +107,17 @@ definePageMeta({
 // FIXME: The client (Nuxt) fetches data from the server with an offset, so the client isnt overloaded (Server handles pagination)
 const { status, data, refresh } = useBaseUrlFetch<Collection[]>('/data/collections');
 
+const collectionTable = ref<any>(null);
 const collectionsTableData = ref<Collection[] | undefined>([]);
 const connectionsTableData = ref<Connection[]>([]);
 const pageSize = ref(10);
+
 const dialogRef = ref<any>(null);
+const confirmationDialogRef = ref<any>(null);
 
 watchEffect(() => {
   if (status.value === 'success' && data.value) {
+    data.value.sort((a, b) => a.title.localeCompare(b.title));
     handlePageChange(1);
   }
 });
@@ -107,6 +139,7 @@ async function showConnectionsDialog() {
       }
     });
     connectionsTableData.value = response;
+    connectionsTableData.value.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error(error);
     useServerErrorNotification();
@@ -127,13 +160,36 @@ async function addCollections(uuid: string) {
     // if (!response.ok) throw new Error('Failed to add collections');
     ElMessage({
       type: 'success',
-      message: 'Collections added successfully'
+      message: 'Kollektionen erfolgreich hinzugefügt'
     });
   } catch (error) {
     console.error(error);
     useServerErrorNotification();
   } finally {
     dialogRef.value.toggleVisibility();
+    refresh();
+  }
+}
+
+async function deleteCollections() {
+  const collections: Collection[] = collectionTable.value.getSelectionRows();
+
+  try {
+    const response = await useBaseUrlFetchRaw('/data/collections', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ uuids: collections.map(collection => collection.uuid) })
+    });
+    ElMessage({
+      type: 'success',
+      message: 'Kollektionen erfolgreich gelöscht'
+    });
+  } catch (error) {
+    console.error(error);
+    useServerErrorNotification();
+  } finally {
     refresh();
   }
 }

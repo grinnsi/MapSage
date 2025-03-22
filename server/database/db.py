@@ -232,21 +232,29 @@ class Database():
             return data_object
         
     @classmethod
-    def delete_sqlite_db(cls, table_model: CoreModel, uuid: str) -> Union[None, CoreModel]:
-        uuid = UUID(uuid)
-
+    def delete_sqlite_db(cls, table_model: CoreModel, primary_key_value: str | list) -> Union[None, CoreModel]:
+        if type(primary_key_value) is str:
+            primary_key_value = [primary_key_value]
+        
+        objs = []
+        
         with DatabaseSession() as session:
-            object_to_delete = session.get(table_model, uuid)
-            if not object_to_delete:
-                _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with uuid: {uuid}")
-                return None
+            for value in primary_key_value:
+                value = UUID(value)
+
+                object_to_delete = session.get(table_model, value)
+                if not object_to_delete:
+                    _LOGGER.warning(msg=f"No [{table_model.__class__.__name__}] found with primary key: {value}")
+                    return None
+                
+                session.delete(object_to_delete)
+                session.commit()
+                objs.append(object_to_delete)
+
+            for obj in objs:
+                _LOGGER.debug(msg=f"Successfully deleted [{table_model.__class__.__name__}] with primary key [{obj.uuid}]: {obj}")
             
-            session.delete(object_to_delete)
-            session.commit()
-            
-            _LOGGER.debug(msg=f"Successfully deleted [{table_model.__class__.__name__}] with uuid [{uuid}]: {object_to_delete}")
-            
-            return object_to_delete
+            return objs if len(objs) != 1 else objs[0]
     
     @classmethod
     def update_sqlite_db(cls, update: Union[CoreModel, list[CoreModel]], primary_key_value: str = None, primary_key_name = "uuid") -> Union[None, CoreModel, list[CoreModel]]:                
