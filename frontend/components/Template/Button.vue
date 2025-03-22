@@ -1,5 +1,5 @@
 <template>
-  <ElButton size="default" class="icon-button" type="primary">
+  <ElButton size="default" class="icon-button" :type="buttonType">
     <ElTooltip :content="tooltip" :placement="tooltipPlacement" :hide-after="80" :show-after="300">
       <iconify-icon :icon="iconName" :width="iconSize" :height="iconSize" />
     </ElTooltip>
@@ -27,6 +27,10 @@ defineProps({
   tooltipPlacement: {
     type: String,
     default: 'top',
+  },
+  buttonType: {
+    type: String as () => StyleType,
+    default: StyleType.Normal,
   }
 });
 </script>
