@@ -64,26 +64,46 @@
     <!-- FIXME: Testdialog, will be removed, once adding of collections properly implemented -->
     <TemplateDialog
       ref="dialogRef"
-      dialog-title="Neue Kollektionen hinzufügen"
+      dialog-title="Neue Kollektion hinzufügen"
       :close-on-click-modal="false"
       :dialog-type="DialogType.Blank"
       :dialog-style="StyleType.Normal"
+      @closed="layerTableData = null"
     >
-      <h3 style="color: black;">Wählen Sie die gewünschte Datenquelle aus:</h3>
-      <ElTable
-        :data="connectionsTableData"
-        stripe
-        style="width: 100%"
-      >
-        <ElTableColumn prop="name" label="Name" />
-        <ElTableColumn>
-          <template #default="scope" >
-            <div style="display: flex; justify-content: end;">
-              <ElButton type="primary" @click="addCollections(scope.row.uuid)">Hinzufügen</ElButton>
-            </div>
-          </template>
-        </ElTableColumn>
-      </ElTable>
+      <div v-if="!layerTableData">
+        <h3 style="color: black;">Wählen Sie die gewünschte Datenquelle aus:</h3>
+        <ElTable
+          :data="conectionsTableData"
+          stripe
+          style="width: 100%"
+        >
+          <ElTableColumn prop="name" label="Name" />
+          <ElTableColumn>
+            <template #default="scope" >
+              <div style="display: flex; justify-content: end;">
+                <ElButton type="primary" @click="getDatasetInformation(scope.row.uuid)">Auswählen</ElButton>
+              </div>
+            </template>
+          </ElTableColumn>
+        </ElTable>
+      </div>
+      <div v-else>
+        <h3 style="color: black;">Wählen Sie die Ebene aus:</h3>
+        <ElTable
+          :data="layerTableData"
+          stripe
+          style="width: 100%"
+        >
+          <ElTableColumn prop="name" label="Name" />
+          <ElTableColumn>
+            <template #default="scope" >
+              <div style="display: flex; justify-content: end;">
+                <ElButton type="primary" @click="addCollection(datasetUuid, scope.row.name)">Auswählen</ElButton>
+              </div>
+            </template>
+          </ElTableColumn>
+        </ElTable>
+      </div>
     </TemplateDialog>
     <TemplateDialog
       ref="confirmationDialogRef"
@@ -109,10 +129,13 @@ const { status, data, refresh } = useBaseUrlFetch<Collection[]>('/data/collectio
 
 const collectionTable = ref<any>(null);
 const collectionsTableData = ref<Collection[] | undefined>([]);
-const connectionsTableData = ref<Connection[]>([]);
+const conectionsTableData = ref<Connection[]>([]);
+const layerTableData = ref<any>(null);
 const pageSize = ref(10);
 
 const dialogRef = ref<any>(null);
+const datasetUuid = ref<string>('');
+const timeField = ref<string>('');
 const confirmationDialogRef = ref<any>(null);
 
 watchEffect(() => {
@@ -138,8 +161,8 @@ async function showConnectionsDialog() {
         'Content-Type': 'application/json'
       }
     });
-    connectionsTableData.value = response;
-    connectionsTableData.value.sort((a, b) => a.name.localeCompare(b.name));
+    conectionsTableData.value = response;
+    conectionsTableData.value.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error(error);
     useServerErrorNotification();
@@ -148,23 +171,46 @@ async function showConnectionsDialog() {
   }
 }
 
-async function addCollections(uuid: string) {
+async function getDatasetInformation(uuid: string) {
+  try {
+    const response = await useBaseUrlFetchRaw(`/data/collections/dataset-information/${uuid}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    datasetUuid.value = uuid;
+    layerTableData.value = JSON.parse(response as any)["layers"];
+  } catch (error) {
+    console.error(error);
+    useServerErrorNotification();
+  }
+}
+
+async function addCollection(datasetUuid: string, layerName: string) {
   try {
     const response = await useBaseUrlFetchRaw('/data/collections', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ uuid })
+      body: JSON.stringify({ uuid: datasetUuid, layer_name: layerName })
     });
     // if (!response.ok) throw new Error('Failed to add collections');
     ElMessage({
       type: 'success',
       message: 'Kollektionen erfolgreich hinzugefügt'
     });
-  } catch (error) {
-    console.error(error);
-    useServerErrorNotification();
+  } catch (error: any) {
+    if (error.status === 409) {
+      ElMessage({
+        type: 'error',
+        message: 'Kollektion existiert bereits'
+      });
+    } else {
+      console.error(error);
+      useServerErrorNotification();
+    }
   } finally {
     dialogRef.value.toggleVisibility();
     refresh();

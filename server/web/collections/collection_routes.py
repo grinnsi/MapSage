@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, request, Response, current_app
 
 from server.ogc_apis.features.implementation import static
-from server.web.collections.collections import create_collections, delete_collections, get_all_collections
+from server.web.collections.collections import create_collection, create_collections, delete_collections, get_all_collections, get_dataset_layers_information
 from server.web.flask_utils import get_app_url_root
 
 def create_collections_endpoints(main_endpoint: str) -> Blueprint:
@@ -25,7 +25,10 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
                 if request_data is None:
                     return Response(status=400, response="Bad request")
                 
-                response = create_collections(request_data)
+                if "layer_name" in request_data:
+                    response = create_collection(request_data, return_object=False)
+                else:
+                    response = create_collections(request_data)
                 static.collections.update_database_object(app_base_url=get_app_url_root())
                 return response
             
@@ -36,6 +39,21 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
                 response = delete_collections(request_data)
                 static.collections.update_database_object(app_base_url=get_app_url_root())
                 return response
+            
+        except Exception as e:
+            current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
+            return Response(status=500, response="Internal server error")
+
+        # Send HTTP Error 501 (Not implemented), when method is not GET, POST or DELETE
+        return Response(status=501, response="Method not implemented")
+    
+    @bp.route('/dataset-information/<dataset_uuid>', methods=["GET"])
+    def dataset_information(dataset_uuid: str) -> Response:
+        request_data = request.get_json() if request.data else None
+
+        try:
+            if request.method == "GET":
+                return get_dataset_layers_information(dataset_uuid)
             
         except Exception as e:
             current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)

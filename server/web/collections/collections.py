@@ -41,14 +41,14 @@ def get_all_collections():
         
         return json_data
 
-def create_collection(form: dict, connection_string: str = None, gdal_dataset: gdal.Dataset = None):
+def create_collection(form: dict, connection_string: str = None, gdal_dataset: gdal.Dataset = None, return_object: bool = True):
     if connection_string is None:    
         table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
         connection_string = table_dataset.path
     
     count_existing_collection = Database.select_sqlite_db(text(f" Count(*) FROM {models.CollectionTable.__tablename__} WHERE \"layer_name\" = '{form['layer_name']}' AND \"dataset_uuid\" = '{UUID(form['uuid']).hex}'"))
     if count_existing_collection is not None and count_existing_collection[0] > 0:
-        raise ValueError(f"Collection with layer name {form['layer_name']} already exists for this connection.")
+        return Response(status=409, response="Collection already exists")
     
     app_url_root = get_app_url_root()
     
@@ -60,10 +60,10 @@ def create_collection(form: dict, connection_string: str = None, gdal_dataset: g
     
     new_collection = Database.insert_sqlite_db(new_collection)
     
-    if connection_string is None and gdal_dataset is None:
-        return Response(status=201, response="Collection created")
-    else:
+    if return_object:
         return new_collection
+    else:
+        return Response(status=201, response="Collection created")
 
 def create_collections(form: dict):
     table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
@@ -110,3 +110,23 @@ def delete_collections(form: dict):
         return Response(status=404, response="Collections not found")
     
     return Response(status=204, response="Collections successfully deleted")
+
+def get_dataset_layers_information(dataset_uuid: str) -> Response:
+    table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=dataset_uuid)
+    if not table_dataset:
+        return Response(status=404, response="Dataset not found")
+    connection_string = table_dataset.path
+    
+    gdal.UseExceptions()
+    layers = []
+    
+    gdal_dataset: gdal.Dataset
+    with gdal.OpenEx(connection_string) as gdal_dataset:
+        for i in range(gdal_dataset.GetLayerCount()):
+            layer: ogr.Layer = gdal_dataset.GetLayerByIndex(i)
+            layers.append({
+                "name": layer.GetName(),
+            })
+    
+    layers.sort(key=lambda x: x["name"])
+    return Response(status=200, response=orjson.dumps({"layers": layers}))

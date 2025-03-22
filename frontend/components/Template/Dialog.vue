@@ -1,5 +1,5 @@
 <template>
-  <ElDialog v-model="dialogVisible" :show-close="false" destroy-on-close modal-class="dialog-background" width="500" :close-on-click-modal="true" @close="resetFields(formRef)">
+  <ElDialog v-model="dialogVisible" :show-close="false" destroy-on-close modal-class="dialog-background" width="700" :close-on-click-modal="true" @close="resetFields(formRef)">
     <template #header="{ close, titleId, titleClass }">
       <div class="dialog-header">
         <h3 :class="titleClass" :id="titleId" :style="{ color: 'var(--el-color-' + dialogStyle + ')' }">{{ dialogTitle }}
