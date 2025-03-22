@@ -110,3 +110,23 @@ def delete_collections(form: dict):
         return Response(status=404, response="Collections not found")
     
     return Response(status=204, response="Collections successfully deleted")
+
+def get_dataset_layers_information(dataset_uuid: str) -> Response:
+    table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=dataset_uuid)
+    if not table_dataset:
+        return Response(status=404, response="Dataset not found")
+    connection_string = table_dataset.path
+    
+    gdal.UseExceptions()
+    layers = []
+    
+    gdal_dataset: gdal.Dataset
+    with gdal.OpenEx(connection_string) as gdal_dataset:
+        for i in range(gdal_dataset.GetLayerCount()):
+            layer: ogr.Layer = gdal_dataset.GetLayerByIndex(i)
+            layers.append({
+                "name": layer.GetName(),
+            })
+    
+    layers.sort(key=lambda x: x["name"])
+    return Response(status=200, response=orjson.dumps({"layers": layers}))
