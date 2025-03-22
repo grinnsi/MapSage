@@ -99,3 +99,14 @@ def create_collections(form: dict):
         return Response(status=500, response=orjson.dumps({"message": "All collections failed", "failed_layers": failed_layers}))
     else:
         return Response(status=207, response=orjson.dumps({"message": "Some collections created", "successful_layers": successful_layers, "failed_layers": failed_layers}))
+
+def delete_collections(form: dict):
+    collection_ids = form.get("uuids", None)
+    if not collection_ids:
+        return Response(status=400, response="Bad request")
+    
+    collections = Database.delete_sqlite_db(models.CollectionTable, collection_ids)
+    if not collections:
+        return Response(status=404, response="Collections not found")
+    
+    return Response(status=204, response="Collections successfully deleted")

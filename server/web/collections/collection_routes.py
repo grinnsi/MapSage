@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, request, Response, current_app
 
 from server.ogc_apis.features.implementation import static
-from server.web.collections.collections import create_collections, get_all_collections
+from server.web.collections.collections import create_collections, delete_collections, get_all_collections
 from server.web.flask_utils import get_app_url_root
 
 def create_collections_endpoints(main_endpoint: str) -> Blueprint:
@@ -13,7 +13,7 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
 
     bp = Blueprint("collections_endpoints", __name__, url_prefix=bp_url_prefix)
     
-    @bp.route('/', methods=["GET", "POST"])
+    @bp.route('/', methods=["GET", "POST", "DELETE"])
     def collections() -> Response:
         request_data = request.get_json() if request.data else None
 
@@ -26,6 +26,14 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
                     return Response(status=400, response="Bad request")
                 
                 response = create_collections(request_data)
+                static.collections.update_database_object(app_base_url=get_app_url_root())
+                return response
+            
+            if request.method == "DELETE":
+                if request_data is None:
+                    return Response(status=400, response="Bad request")
+                
+                response = delete_collections(request_data)
                 static.collections.update_database_object(app_base_url=get_app_url_root())
                 return response
             
