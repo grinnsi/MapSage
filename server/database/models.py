@@ -92,7 +92,7 @@ class Dataset(TableBase, table=True):
     # Path or connection string to the dataset
     path: str
     
-    collections: list["CollectionTable"] = Relationship(back_populates="dataset")
+    collections: list["CollectionTable"] = Relationship(back_populates="dataset", cascade_delete=True)
     
     @classmethod
     def from_dict(cls, obj: dict) -> Self:
