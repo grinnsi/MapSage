@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, request, Response, current_app
 
 from server.ogc_apis.features.implementation import static
-from server.web.collections.collections import create_collection, create_collections, delete_collections, get_all_collections, get_dataset_layers_information
+from server.web.collections.licenses import get_licenses
 from server.web.flask_utils import get_app_url_root
 
 def create_collections_endpoints(main_endpoint: str) -> Blueprint:
@@ -58,8 +58,13 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
         except Exception as e:
             current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
             return Response(status=500, response="Internal server error")
-
-        # Send HTTP Error 501 (Not implemented), when method is not GET, POST or DELETE
-        return Response(status=501, response="Method not implemented")
+    
+    @bp.route('/licenses', methods=["GET"])
+    def licenses() -> Response:
+        try:
+            return get_licenses()
+        except Exception as e:
+            current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
+            return Response(status=500, response="Internal server error")
     
     return bp
