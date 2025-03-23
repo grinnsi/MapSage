@@ -145,22 +145,31 @@ def delete_collections(form: dict):
     
     return Response(status=204, response="Collections successfully deleted")
 
-def get_dataset_layers_information(dataset_uuid: str) -> Response:
-    table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=dataset_uuid)
-    if not table_dataset:
-        return Response(status=404, response="Dataset not found")
-    connection_string = table_dataset.path
+def update_collection(form: dict):
+    with DatabaseSession() as session:
+        collection: models.CollectionTable = session.get(models.CollectionTable, UUID(form["uuid"]))
+        if not collection:
+            return Response(status=404, response="Collection not found")
+        
+        app_url_root = get_app_url_root()
+        if "selected_date_time_field" in form:
+            form.setdefault("id", collection.id)
+            form.setdefault("title", collection.title)
+            form.setdefault("description", collection.description)
+            form.setdefault("license_title", collection.license_title)
+            with gdal.OpenEx(collection.dataset.path) as gdal_dataset:
+                collection = collection_impl.generate_collection_table_object(collection.layer_name, collection.dataset.uuid, gdal_dataset, app_url_root, form)
+        else:
+            for key, value in form.items():
+                if key in ["uuid", "id"]:
+                    continue
+                
+                if hasattr(collection, key):
+                    setattr(collection, key, value)
+            
+            collection.pre_render(app_base_url=app_url_root)
+        
+    Database.update_sqlite_db(collection, collection.uuid)
     
-    gdal.UseExceptions()
-    layers = []
-    
-    gdal_dataset: gdal.Dataset
-    with gdal.OpenEx(connection_string) as gdal_dataset:
-        for i in range(gdal_dataset.GetLayerCount()):
-            layer: ogr.Layer = gdal_dataset.GetLayerByIndex(i)
-            layers.append({
-                "name": layer.GetName(),
-            })
-    
-    layers.sort(key=lambda x: x["name"])
-    return Response(status=200, response=orjson.dumps({"layers": layers}))
+    collection_information = get_collection_details(collection.uuid.__str__())
+    return Response(status=200, response=orjson.dumps(collection_information))
