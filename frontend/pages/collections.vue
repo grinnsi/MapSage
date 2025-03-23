@@ -35,7 +35,7 @@
           <ElTableColumn prop="url" label="URL" >
             <template #default="scope">
               <ElLink 
-                :href="scope.row.url" 
+                :href="scope.row.url + '?f=html'" 
                 target="_blank" 
                 :underline="false"
                 class="collection-link"
