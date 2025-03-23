@@ -22,7 +22,6 @@
     </template>
     <div class="table-container">
       <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
-        <!-- TODO: Use expanding rows or all informations and an edit button -->
         <ElTable
           ref="collectionTable"
           :data="collectionsTableData"
@@ -173,7 +172,7 @@ async function showConnectionsDialog() {
 
 async function getDatasetInformation(uuid: string) {
   try {
-    const response = await useBaseUrlFetchRaw(`/data/collections/dataset-information/${uuid}`, {
+    const response = await useBaseUrlFetchRaw(`/data/settings/datasets/${uuid}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
