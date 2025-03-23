@@ -265,13 +265,22 @@ def prepare_features_postgresql(
             
             z_min = filter_geom.GetGeometryRef(0).GetZ(0)
             z_max = filter_geom.GetGeometryRef(0).GetZ(2)
-            where_clauses.append(f'(ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) AND ST_ZMin({geom_col}) <= {z_max} AND ST_ZMax({geom_col}) >= {z_min})')
+            where_clauses.append(f'(ST_Intersects("{geom_col}", ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) AND ST_ZMin("{geom_col}") <= {z_max} AND ST_ZMax("{geom_col}") >= {z_min}) OR "{geom_col}" IS NULL')
         else:
             filter_geom.FlattenTo2D()
-            where_clauses.append(f'(ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})))')
-        where_clauses.append(f'({geom_col} IS NULL)')
+            where_clauses.append(f'ST_Intersects("{geom_col}", ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) OR "{geom_col}" IS NULL')
+            
+    if datetime_interval and datetime_field:
+        start, end = datetime_interval
+        if start and end:
+            where_clauses.append(f'("{datetime_field}" >= \'{start.isoformat()}\' AND "{datetime_field}" <= \'{end.isoformat()}\') OR {datetime_field} IS NULL')
+        elif start:
+            where_clauses.append(f'"{datetime_field}" >= \'{start.isoformat()}\' OR {datetime_field} IS NULL')
+        elif end:
+            where_clauses.append(f'"{datetime_field}" <= \'{end.isoformat()}\' OR {datetime_field} IS NULL')
 
-    where_clauses = (" WHERE " + " OR ".join(where_clauses)) if len(where_clauses) > 0 else ""
+    where_clauses = [f'({clause})' for clause in where_clauses]
+    where_clauses = (" WHERE " + " AND ".join(where_clauses)) if len(where_clauses) > 0 else ""
     
     matched_feature_count = get_feature_count(layer, filter_geom, datetime_interval, datetime_field, sql_where_query=where_clauses)
     if offset >= matched_feature_count and matched_feature_count > 0:
