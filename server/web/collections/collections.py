@@ -11,6 +11,8 @@ from osgeo import gdal, ogr
 
 from server.ogc_apis.features.implementation.dynamic import collection_impl
 from server.web.flask_utils import get_app_url_root
+    
+gdal.UseExceptions()
 
 # FIXME: Only return a page worth of collections at a time (handle pagination)
 def get_all_collections():
@@ -29,15 +31,9 @@ def get_all_collections():
             "title": collection.title,
             "description": collection.description,
             "license_title": collection.license_title,
-            "extent": collection.extent_json,
-            # "spatial_extent_crs": collection.spatial_extent_crs,
-            # "temporal_extent_trs": collection.temporal_extent_trs,
-            "crs": collection.crs_json,
-            "storage_crs": collection.storage_crs,
-            "storage_crs_coordinate_epoch": collection.storage_crs_coordinate_epoch,
             "connection_name": collection.dataset.name,
             "url": f"{app_url_root}/features/collections/{collection.id}",
-        } for collection in collections]      
+        } for collection in collections]
         
         return json_data
 
@@ -71,8 +67,6 @@ def create_collections(form: dict):
     
     successful_layers = []
     failed_layers = []
-    
-    gdal.UseExceptions()
     
     gdal_dataset: gdal.Dataset
     with gdal.OpenEx(connection_string) as gdal_dataset:
