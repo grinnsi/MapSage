@@ -141,6 +141,7 @@ function saveCollection() {
       type: 'info',
       message: 'Keine Änderungen zum Speichern gefunden',
     });
+    dialogRef.value.toggleLoadingState(false);
     return;
   }
 
