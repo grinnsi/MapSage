@@ -90,7 +90,10 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
             raise ValueError(f"Field {optional_data['selected_date_time_field']} not found in layer {layer_name}")
         
         if field_defn.GetType() == ogr.OFTTime:
-            sql_query = f"""SELECT (DATE '1970-01-01' + MIN("{optional_data["selected_date_time_field"]}"))::timestamp as min_datetime, (DATE '1970-01-01' + MAX("{optional_data["selected_date_time_field"]}"))::timestamp as max_datetime FROM """
+            if driver.GetName() == "PostgreSQL":
+                sql_query = f"""SELECT (DATE '1970-01-01' + MIN("{optional_data["selected_date_time_field"]}"))::timestamp as min_datetime, (DATE '1970-01-01' + MAX("{optional_data["selected_date_time_field"]}"))::timestamp as max_datetime FROM """
+            else:
+                sql_query = f"""SELECT datetime('1970-01-01' || 'T' || (MIN("{optional_data["selected_date_time_field"]}"))) as min_datetime, datetime('1970-01-01' || 'T' || (MAX("{optional_data["selected_date_time_field"]}"))) as max_datetime FROM """
         else:
             # Not tested since no other driver than PostgreSQL is allowed at the moment
             sql_query = f'SELECT MIN("{optional_data["selected_date_time_field"]}")::timestamp as min_datetime, MAX("{optional_data["selected_date_time_field"]}")::timestamp as max_datetime FROM '
