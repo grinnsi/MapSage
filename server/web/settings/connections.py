@@ -1,8 +1,13 @@
 from typing import Union
 from flask import Response
+import orjson
 
 from server.database import models
 from server.database.db import Database
+
+from osgeo import gdal, ogr
+
+gdal.UseExceptions()
 
 def get_connections() -> Response:
     """Gets all connections to a (PostgreSQL) database from the internal database and returns a Response with the data and status"""
@@ -45,3 +50,22 @@ def delete_connection(form: dict) -> Response:
         return Response(status=404, response="Connection not found")
     
     return Response(status=204, response="Connection successfully deleted")
+
+def get_dataset_layers_information(dataset_uuid: str) -> Response:
+    table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=dataset_uuid)
+    if not table_dataset:
+        return Response(status=404, response="Dataset not found")
+    connection_string = table_dataset.path
+
+    layers = []
+    
+    gdal_dataset: gdal.Dataset
+    with gdal.OpenEx(connection_string) as gdal_dataset:
+        for i in range(gdal_dataset.GetLayerCount()):
+            layer: ogr.Layer = gdal_dataset.GetLayerByIndex(i)
+            layers.append({
+                "name": layer.GetName(),
+            })
+    
+    layers.sort(key=lambda x: x["name"])
+    return Response(status=200, response=orjson.dumps({"layers": layers}))
