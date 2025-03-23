@@ -168,22 +168,22 @@ def get_feature_count(
                 total_feature_count = result.GetNextFeature().GetField("count")
     else:
         # File based drivers (at least GeoPackage)
+        # Needs to be redone if file based drivers become available
         null_geom_count = 0
-        if count_null_geom:
-            # Get geometry column name
-            geom_col = layer.GetGeometryColumn()
-            if geom_col == "":
-                geom_col = "_ogr_geometry_"
-                
-            # Count only NULL geometry features
-            layer.SetAttributeFilter(f"{geom_col} IS NULL")
-            null_geom_count = layer.GetFeatureCount()
-            # Manually count NULL geometry features
-            # for feature in layer:
-            #     null_geom_count += 1
+        # Get geometry column name
+        geom_col = layer.GetGeometryColumn()
+        if geom_col == "":
+            geom_col = "_ogr_geometry_"
             
-            layer.SetAttributeFilter(None)
-            layer.ResetReading()
+        # Count only NULL geometry features
+        layer.SetAttributeFilter(f"{geom_col} IS NULL")
+        null_geom_count = layer.GetFeatureCount()
+        # Manually count NULL geometry features
+        # for feature in layer:
+        #     null_geom_count += 1
+        
+        layer.SetAttributeFilter(None)
+        layer.ResetReading()
         
         feature_count = 0
         if filter_geom:
