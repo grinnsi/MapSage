@@ -6,7 +6,7 @@ from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
 from server.utils import gdal_utils
-import math, sqlmodel
+import math, datetime, sqlmodel
 
 from osgeo import gdal, ogr, osr
 
@@ -81,13 +81,45 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     else:
         spatial_extent = None
     
-    # Here we assume that the layer is NEVER temporal, and we will need to change this in the future
-    if True:
+    # Setting the temporal extent, if an attribute field is provided in the optional data
+    if "selected_date_time_field" in optional_data and optional_data["selected_date_time_field"]:
+        default_trs_uri = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+        feature_defn: ogr.FeatureDefn = layer.GetLayerDefn()
+        field_defn: ogr.FieldDefn = feature_defn.GetFieldDefn(optional_data["selected_date_time_field"])
+        if not field_defn:
+            raise ValueError(f"Field {optional_data['selected_date_time_field']} not found in layer {layer_name}")
+        
+        if field_defn.GetType() == ogr.OFTTime:
+            sql_query = f"""SELECT (DATE '1970-01-01' + MIN("{optional_data["selected_date_time_field"]}"))::timestamp as min_datetime, (DATE '1970-01-01' + MAX("{optional_data["selected_date_time_field"]}"))::timestamp as max_datetime FROM """
+        else:
+            # Not tested since no other driver than PostgreSQL is allowed at the moment
+            sql_query = f'SELECT MIN("{optional_data["selected_date_time_field"]}")::timestamp as min_datetime, MAX("{optional_data["selected_date_time_field"]}")::timestamp as max_datetime FROM '
+            
+        if driver.GetName() == "PostgreSQL":
+            schema, table = layer_name.split(".", 1)
+            sql_query += f'"{schema}"."{table}"'
+        else:
+            sql_query += f'"{layer_name}"'
+        
+        with dataset.ExecuteSQL(sql_query) as result_layer:
+            result: ogr.Feature = result_layer.GetNextFeature()
+            min_datetime = result.GetFieldAsDateTime("min_datetime")
+            max_datetime = result.GetFieldAsDateTime("max_datetime")
+            
+            # Currently ignores potential timezones
+            min_datetime = datetime.datetime(*min_datetime[:5], second=round(min_datetime[5]))
+            max_datetime = datetime.datetime(*max_datetime[:5], second=round(max_datetime[5]))
+
+            temporal_extent = ExtentTemporal(trs=default_trs_uri, interval=[[min_datetime.isoformat(), max_datetime.isoformat()]])
+        new_collection.date_time_field = optional_data["selected_date_time_field"]
+    else:
         temporal_extent = None
+        new_collection.date_time_field = None
+        
     extent = Extent(spatial=spatial_extent, temporal=temporal_extent)
     new_collection.extent_json = extent.to_json()
     # new_collection.spatial_extent_crs = default_crs_uri
-    # new_collection.temporal_extent_trs = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+    # new_collection.temporal_extent_trs = default_trs_uri
     
     crs_list = list(set([default_crs_uri, spatial_ref_uri]))
     new_collection.crs_json = crs_list
