@@ -37,6 +37,46 @@ def get_all_collections():
         
         return json_data
 
+def get_collection_details(collection_uuid: str):
+    with DatabaseSession() as session:
+        collection_uuid = UUID(collection_uuid)
+        collection: Optional[models.CollectionTable] = session.get(models.CollectionTable, collection_uuid)
+        if not collection:
+            return Response(status=404, response="Collection not found")
+        
+        date_time_fields = []
+        with gdal.OpenEx(collection.dataset.path) as gdal_dataset:
+            layer: ogr.Layer = gdal_dataset.GetLayerByName(collection.layer_name)
+            if layer is not None:
+                layer_defn: ogr.FeatureDefn = layer.GetLayerDefn()
+                for i in range(layer_defn.GetFieldCount()):
+                    field_defn: ogr.FieldDefn = layer_defn.GetFieldDefn(i)
+                    if field_defn.GetType() in [ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime]:
+                        date_time_fields.append(field_defn.GetName())
+    
+    app_url_root = get_app_url_root()
+    
+    json_data = {
+        "uuid": collection.uuid,
+        "id": collection.id,
+        "title": collection.title,
+        "description": collection.description,
+        "license_title": collection.license_title,
+        "connection_name": collection.dataset.name,
+        "url": f"{app_url_root}/features/collections/{collection.id}",
+        
+        "extent": collection.extent_json,
+        # "spatial_extent_crs": collection.spatial_extent_crs,
+        # "temporal_extent_trs": collection.temporal_extent_trs,
+        "date_time_fields": date_time_fields,
+        "selected_date_time_field": collection.date_time_field,
+        "crs": collection.crs_json,
+        "storage_crs": collection.storage_crs,
+        "storage_crs_coordinate_epoch": collection.storage_crs_coordinate_epoch,
+    }
+    
+    return json_data
+
 def create_collection(form: dict, connection_string: str = None, gdal_dataset: gdal.Dataset = None, return_object: bool = True):
     if connection_string is None:    
         table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
