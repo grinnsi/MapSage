@@ -100,13 +100,21 @@ def generate_feature_links(base_url: str, collection_id: str, feature_id: str | 
     
     return links
 
-def get_feature_count(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], sql_where_query = Optional[str], count_null_geom: bool = True) -> int:
+def get_feature_count(
+    layer: ogr.Layer, 
+    filter_geom: Optional[ogr.Geometry], 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]],
+    datetime_field: Optional[str] = None,
+    sql_where_query: Optional[str] = None,
+) -> int:
     """Get the number of features in a layer within a bounding box. \n
-    Features without geometry are also counted due to the OGC Specification
+    Features without geometry (and datetime if provided) are also counted due to the OGC Specification
 
     Args:
         layer (ogr.Layer): The layer from which to get the number of features.
         filter_geom (Optional[ogr.Geometry]): The geometry to spatialy filter the features.
+        datetime_interval (tuple[Optional[datetime.datetime], Optional[datetime.datetime]]): The datetime interval to filter features.
+        datetime_field (Optional[str]): The name of the datetime field to filter features.
         sql_where_query (Optional[str]): A SQL WHERE query to filter the features. Only used for database drivers.
         count_null_geom (bool): Whether to count features with NULL geometry.
 
@@ -255,7 +263,7 @@ def prepare_features_postgresql(
 
     where_clauses = (" WHERE " + " OR ".join(where_clauses)) if len(where_clauses) > 0 else ""
     
-    matched_feature_count = get_feature_count(layer, filter_geom, sql_where_query=where_clauses)
+    matched_feature_count = get_feature_count(layer, filter_geom, datetime_interval, datetime_field, sql_where_query=where_clauses)
     if offset >= matched_feature_count and matched_feature_count > 0:
         raise ValueError(f"Offset is greater than or equal to the number of features in the layer/extent")
     
@@ -284,7 +292,7 @@ def prepare_features_file(
     geom_col = layer.GetGeometryColumn()
     fid_col = layer.GetFIDColumn()
     
-    matched_feature_count = get_feature_count(layer, filter_geom)
+    matched_feature_count = get_feature_count(layer, filter_geom, datetime_interval)
     if offset >= matched_feature_count and matched_feature_count > 0:
         raise ValueError(f"Offset is greater than or equal to the number of features in the layer/extent")
     

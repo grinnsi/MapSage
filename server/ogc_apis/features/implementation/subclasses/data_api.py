@@ -129,7 +129,7 @@ class DataApi(BaseDataApi):
         dataset_wrapper = gdal_utils.get_dataset_from_collection_table(collection, session)
         
         try:
-            features, total_feature_count, returned_feature_count = dynamic.feature_impl.get_features(dataset_wrapper, collection.layer_name, limit, offset, bbox, bbox_crs, crs)
+            features, total_feature_count, returned_feature_count = dynamic.feature_impl.get_features(dataset_wrapper, collection.layer_name, bbox, bbox_crs, datetime_interval, collection.date_time_field, crs, limit, offset)
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         
