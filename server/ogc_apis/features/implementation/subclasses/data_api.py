@@ -107,20 +107,20 @@ class DataApi(BaseDataApi):
         if bbox_crs is None and bbox is not None:
             bbox_crs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84" if not collection.is_3D else "http://www.opengis.net/def/crs/OGC/0/CRS84h"
         
-        time_interval = None
+        datetime_interval = None
         if datetime is not None:
             parts = datetime.split("/")
             try:
                 if len(parts) == 1:
                     datetime = dt.datetime.fromisoformat(datetime)
-                    time_interval = (datetime, datetime)
+                    datetime_interval = (datetime, datetime)
                 elif len(parts) == 2:
                     if parts[0] == "" or parts[0] == "..":
-                        time_interval = (None, dt.datetime.fromisoformat(parts[1]))
+                        datetime_interval = (None, dt.datetime.fromisoformat(parts[1]))
                     elif parts[1] == "" or parts[1] == "..":
-                        time_interval = (dt.datetime.fromisoformat(parts[0]), None)
+                        datetime_interval = (dt.datetime.fromisoformat(parts[0]), None)
                     else:
-                        time_interval = (dt.datetime.fromisoformat(parts[0]), dt.datetime.fromisoformat(parts[1]))
+                        datetime_interval = (dt.datetime.fromisoformat(parts[0]), dt.datetime.fromisoformat(parts[1]))
                 else:
                     raise ValueError("Too many datetime parts")
             except ValueError as error:
@@ -129,7 +129,7 @@ class DataApi(BaseDataApi):
         dataset_wrapper = gdal_utils.get_dataset_from_collection_table(collection, session)
         
         try:
-            features, total_feature_count, returned_feature_count = dynamic.feature_impl.get_features(dataset_wrapper, collection.layer_name, limit, offset, bbox, bbox_crs, crs)
+            features, total_feature_count, returned_feature_count = dynamic.feature_impl.get_features(dataset_wrapper, collection.layer_name, bbox, bbox_crs, datetime_interval, collection.date_time_field, crs, limit, offset)
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         

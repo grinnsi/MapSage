@@ -22,11 +22,11 @@
     </template>
     <div class="table-container">
       <TemplateFetchStatus :status="status" error-title="Fehler beim laden der gespeicherten Kollektionen">
-        <!-- TODO: Use expanding rows or all informations and an edit button -->
         <ElTable
           ref="collectionTable"
-          :data="collectionsTableData"
           stripe
+          :data="collectionsTableData"
+          @row-dblclick="showCollectionInformationDialog"
         >
           <ElTableColumn type="selection" />
           <ElTableColumn prop="title" label="Titel" />
@@ -36,7 +36,7 @@
           <ElTableColumn prop="url" label="URL" >
             <template #default="scope">
               <ElLink 
-                :href="scope.row.url" 
+                :href="scope.row.url + '?f=html'" 
                 target="_blank" 
                 :underline="false"
                 class="collection-link"
@@ -61,7 +61,6 @@
     </template>
   </TemplateSection>
   <ClientOnly>
-    <!-- FIXME: Testdialog, will be removed, once adding of collections properly implemented -->
     <TemplateDialog
       ref="dialogRef"
       dialog-title="Neue Kollektion hinzufügen"
@@ -105,13 +104,19 @@
         </ElTable>
       </div>
     </TemplateDialog>
+    <DialogsCollectionInformation
+      ref="collectionInformationDialogRef"
+      :collection="editCollection as CollectionDetail" 
+      @submitInformation="updateCollection"
+    />
     <TemplateDialog
       ref="confirmationDialogRef"
       :dialogStyle="StyleType.Danger"
       :dialogTitle="'Ausgewählte Kollektionen löschen ?'"
       :close-on-click-modal="true"
       :dialog-type="DialogType.Confirmation"
-      @confirm="deleteCollections"  
+      @confirm="deleteCollections"
+      @close="editCollection = {}"
     >
       <span>Sind Sie sicher, dass Sie die Kollektionen löschen möchten ?
       <br>Diese Aktion kann nicht rückgängig gemacht werden.
@@ -121,6 +126,8 @@
 </template>
 
 <script setup lang="ts">
+import type { CollectionDetail } from '~/utils/types';
+
 definePageMeta({
   name: "Kollektionen"
 });
@@ -135,8 +142,10 @@ const pageSize = ref(10);
 
 const dialogRef = ref<any>(null);
 const datasetUuid = ref<string>('');
-const timeField = ref<string>('');
 const confirmationDialogRef = ref<any>(null);
+
+const collectionInformationDialogRef = ref<any>(null);
+const editCollection = ref<Collection | {}>(data.value ? data.value[0] : {});
 
 watchEffect(() => {
   if (status.value === 'success' && data.value) {
@@ -151,6 +160,22 @@ function handlePageChange(newPage: number) {
   } else {
     throw new Error('Collection data is not available');
   }
+}
+
+async function showCollectionInformationDialog(collection: Collection) {
+  try {
+    const response: any = await useBaseUrlFetchRaw(`/data/collections/${collection.uuid}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    editCollection.value = response as CollectionDetail;
+    collectionInformationDialogRef.value.toggleVisibility();
+  } catch (error) {
+    console.error(error);
+    useServerErrorNotification();
+  } 
 }
 
 async function showConnectionsDialog() {
@@ -173,7 +198,7 @@ async function showConnectionsDialog() {
 
 async function getDatasetInformation(uuid: string) {
   try {
-    const response = await useBaseUrlFetchRaw(`/data/collections/dataset-information/${uuid}`, {
+    const response = await useBaseUrlFetchRaw(`/data/settings/datasets/${uuid}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -236,6 +261,32 @@ async function deleteCollections() {
     console.error(error);
     useServerErrorNotification();
   } finally {
+    refresh();
+  }
+}
+
+async function updateCollection(data: Partial<CollectionDetail>, toggleButtonState: () => void) {
+  try {
+    data['uuid'] = (editCollection.value! as any).uuid;
+    const response = await useBaseUrlFetchRaw('/data/collections/', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    editCollection.value = JSON.parse(response as unknown as string) as CollectionDetail;
+
+    ElMessage({
+      type: 'success',
+      message: 'Kollektion erfolgreich aktualisiert'
+    });
+  } catch (error) {
+    console.error(error);
+    useServerErrorNotification();
+  } finally {
+    toggleButtonState();
     refresh();
   }
 }

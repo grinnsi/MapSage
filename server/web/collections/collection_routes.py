@@ -2,7 +2,8 @@ import os
 from flask import Blueprint, request, Response, current_app
 
 from server.ogc_apis.features.implementation import static
-from server.web.collections.collections import create_collection, create_collections, delete_collections, get_all_collections, get_dataset_layers_information
+from server.web.collections.collections import create_collection, create_collections, delete_collections, get_all_collections, get_collection_details, update_collection
+from server.web.collections.licenses import get_licenses
 from server.web.flask_utils import get_app_url_root
 
 def create_collections_endpoints(main_endpoint: str) -> Blueprint:
@@ -13,7 +14,7 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
 
     bp = Blueprint("collections_endpoints", __name__, url_prefix=bp_url_prefix)
     
-    @bp.route('/', methods=["GET", "POST", "DELETE"])
+    @bp.route('/', methods=["GET", "POST", "PATCH", "DELETE"])
     def collections() -> Response:
         request_data = request.get_json() if request.data else None
 
@@ -32,6 +33,14 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
                 static.collections.update_database_object(app_base_url=get_app_url_root())
                 return response
             
+            if request.method == "PATCH":
+                if request_data is None:
+                    return Response(status=400, response="Bad request")
+                
+                response = update_collection(request_data)
+                static.collections.update_database_object(app_base_url=get_app_url_root())
+                return response
+            
             if request.method == "DELETE":
                 if request_data is None:
                     return Response(status=400, response="Bad request")
@@ -47,19 +56,20 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
         # Send HTTP Error 501 (Not implemented), when method is not GET, POST or DELETE
         return Response(status=501, response="Method not implemented")
     
-    @bp.route('/dataset-information/<dataset_uuid>', methods=["GET"])
-    def dataset_information(dataset_uuid: str) -> Response:
-        request_data = request.get_json() if request.data else None
-
+    @bp.route('/<collection_uuid>', methods=["GET"])
+    def get_collection(collection_uuid: str) -> Response:
         try:
-            if request.method == "GET":
-                return get_dataset_layers_information(dataset_uuid)
-            
+            return get_collection_details(collection_uuid)
         except Exception as e:
             current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
             return Response(status=500, response="Internal server error")
-
-        # Send HTTP Error 501 (Not implemented), when method is not GET, POST or DELETE
-        return Response(status=501, response="Method not implemented")
+    
+    @bp.route('/licenses', methods=["GET"])
+    def licenses() -> Response:
+        try:
+            return get_licenses()
+        except Exception as e:
+            current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
+            return Response(status=500, response="Internal server error")
     
     return bp

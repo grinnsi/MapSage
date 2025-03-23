@@ -11,6 +11,8 @@ from osgeo import gdal, ogr
 
 from server.ogc_apis.features.implementation.dynamic import collection_impl
 from server.web.flask_utils import get_app_url_root
+    
+gdal.UseExceptions()
 
 # FIXME: Only return a page worth of collections at a time (handle pagination)
 def get_all_collections():
@@ -29,17 +31,51 @@ def get_all_collections():
             "title": collection.title,
             "description": collection.description,
             "license_title": collection.license_title,
-            "extent": collection.extent_json,
-            # "spatial_extent_crs": collection.spatial_extent_crs,
-            # "temporal_extent_trs": collection.temporal_extent_trs,
-            "crs": collection.crs_json,
-            "storage_crs": collection.storage_crs,
-            "storage_crs_coordinate_epoch": collection.storage_crs_coordinate_epoch,
             "connection_name": collection.dataset.name,
             "url": f"{app_url_root}/features/collections/{collection.id}",
-        } for collection in collections]      
+        } for collection in collections]
         
         return json_data
+
+def get_collection_details(collection_uuid: str):
+    with DatabaseSession() as session:
+        collection_uuid = UUID(collection_uuid)
+        collection: Optional[models.CollectionTable] = session.get(models.CollectionTable, collection_uuid)
+        if not collection:
+            return Response(status=404, response="Collection not found")
+        
+        date_time_fields = []
+        with gdal.OpenEx(collection.dataset.path) as gdal_dataset:
+            layer: ogr.Layer = gdal_dataset.GetLayerByName(collection.layer_name)
+            if layer is not None:
+                layer_defn: ogr.FeatureDefn = layer.GetLayerDefn()
+                for i in range(layer_defn.GetFieldCount()):
+                    field_defn: ogr.FieldDefn = layer_defn.GetFieldDefn(i)
+                    if field_defn.GetType() in [ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime]:
+                        date_time_fields.append(field_defn.GetName())
+    
+    app_url_root = get_app_url_root()
+    
+    json_data = {
+        "uuid": collection.uuid,
+        "id": collection.id,
+        "title": collection.title,
+        "description": collection.description,
+        "license_title": collection.license_title,
+        "connection_name": collection.dataset.name,
+        "url": f"{app_url_root}/features/collections/{collection.id}",
+        
+        "extent": collection.extent_json,
+        # "spatial_extent_crs": collection.spatial_extent_crs,
+        # "temporal_extent_trs": collection.temporal_extent_trs,
+        "date_time_fields": date_time_fields,
+        "selected_date_time_field": collection.date_time_field,
+        "crs": collection.crs_json,
+        "storage_crs": collection.storage_crs,
+        "storage_crs_coordinate_epoch": collection.storage_crs_coordinate_epoch,
+    }
+    
+    return json_data
 
 def create_collection(form: dict, connection_string: str = None, gdal_dataset: gdal.Dataset = None, return_object: bool = True):
     if connection_string is None:    
@@ -71,8 +107,6 @@ def create_collections(form: dict):
     
     successful_layers = []
     failed_layers = []
-    
-    gdal.UseExceptions()
     
     gdal_dataset: gdal.Dataset
     with gdal.OpenEx(connection_string) as gdal_dataset:
@@ -111,22 +145,31 @@ def delete_collections(form: dict):
     
     return Response(status=204, response="Collections successfully deleted")
 
-def get_dataset_layers_information(dataset_uuid: str) -> Response:
-    table_dataset: models.Dataset = Database.select_sqlite_db(table_model=models.Dataset, primary_key_value=dataset_uuid)
-    if not table_dataset:
-        return Response(status=404, response="Dataset not found")
-    connection_string = table_dataset.path
+def update_collection(form: dict):
+    with DatabaseSession() as session:
+        collection: models.CollectionTable = session.get(models.CollectionTable, UUID(form["uuid"]))
+        if not collection:
+            return Response(status=404, response="Collection not found")
+        
+        app_url_root = get_app_url_root()
+        if "selected_date_time_field" in form:
+            form.setdefault("id", collection.id)
+            form.setdefault("title", collection.title)
+            form.setdefault("description", collection.description)
+            form.setdefault("license_title", collection.license_title)
+            with gdal.OpenEx(collection.dataset.path) as gdal_dataset:
+                collection = collection_impl.generate_collection_table_object(collection.layer_name, collection.dataset.uuid, gdal_dataset, app_url_root, form)
+        else:
+            for key, value in form.items():
+                if key in ["uuid", "id"]:
+                    continue
+                
+                if hasattr(collection, key):
+                    setattr(collection, key, value)
+            
+            collection.pre_render(app_base_url=app_url_root)
+        
+    Database.update_sqlite_db(collection, collection.uuid)
     
-    gdal.UseExceptions()
-    layers = []
-    
-    gdal_dataset: gdal.Dataset
-    with gdal.OpenEx(connection_string) as gdal_dataset:
-        for i in range(gdal_dataset.GetLayerCount()):
-            layer: ogr.Layer = gdal_dataset.GetLayerByIndex(i)
-            layers.append({
-                "name": layer.GetName(),
-            })
-    
-    layers.sort(key=lambda x: x["name"])
-    return Response(status=200, response=orjson.dumps({"layers": layers}))
+    collection_information = get_collection_details(collection.uuid.__str__())
+    return Response(status=200, response=orjson.dumps(collection_information))

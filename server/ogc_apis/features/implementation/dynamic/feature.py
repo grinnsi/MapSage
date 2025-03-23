@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 from typing import Any, Optional
@@ -99,13 +100,21 @@ def generate_feature_links(base_url: str, collection_id: str, feature_id: str | 
     
     return links
 
-def get_feature_count(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], sql_where_query = Optional[str], count_null_geom: bool = True) -> int:
+def get_feature_count(
+    layer: ogr.Layer, 
+    filter_geom: Optional[ogr.Geometry], 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]],
+    datetime_field: Optional[str] = None,
+    sql_where_query: Optional[str] = None,
+) -> int:
     """Get the number of features in a layer within a bounding box. \n
-    Features without geometry are also counted due to the OGC Specification
+    Features without geometry (and datetime if provided) are also counted due to the OGC Specification
 
     Args:
         layer (ogr.Layer): The layer from which to get the number of features.
         filter_geom (Optional[ogr.Geometry]): The geometry to spatialy filter the features.
+        datetime_interval (tuple[Optional[datetime.datetime], Optional[datetime.datetime]]): The datetime interval to filter features.
+        datetime_field (Optional[str]): The name of the datetime field to filter features.
         sql_where_query (Optional[str]): A SQL WHERE query to filter the features. Only used for database drivers.
         count_null_geom (bool): Whether to count features with NULL geometry.
 
@@ -136,35 +145,45 @@ def get_feature_count(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], sql
                     srid = result.GetNextFeature().GetField("srid")
                 
                 if filter_geom.Is3D():
-                    where_clauses.append(f'ST_3DIntersects({geom_col}, Box3D(ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})))')
+                    z_min = filter_geom.GetGeometryRef(0).GetZ(0)
+                    z_max = filter_geom.GetGeometryRef(0).GetZ(2)
+                    where_clauses.append(f'(ST_Intersects("{geom_col}", ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) AND ST_ZMin("{geom_col}") <= {z_max} AND ST_ZMax("{geom_col}") >= {z_min}) OR "{geom_col}" IS NULL')
                 else:
-                    where_clauses.append(f'ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid}))')
-            if count_null_geom and len(where_clauses) > 0:
-                where_clauses.append(f'{geom_col} IS NULL')
+                    filter_geom.FlattenTo2D()
+                    where_clauses.append(f'ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) OR {geom_col} IS NULL')
             
-            if len(where_clauses) > 0:
-                sql += (" WHERE " + " OR ".join(where_clauses)) if len(where_clauses) > 0 else ""
+            if datetime_interval and datetime_field:
+                start, end = datetime_interval
+                if start and end:
+                    where_clauses.append(f'("{datetime_field}" >= \'{start.isoformat()}\' AND "{datetime_field}" <= \'{end.isoformat()}\') OR {datetime_field} IS NULL')
+                elif start:
+                    where_clauses.append(f'"{datetime_field}" >= \'{start.isoformat()}\' OR {datetime_field} IS NULL')
+                elif end:
+                    where_clauses.append(f'"{datetime_field}" <= \'{end.isoformat()}\' OR {datetime_field} IS NULL')
+            
+            where_clauses = [f'({clause})' for clause in where_clauses]
+            sql += (" WHERE " + " AND ".join(where_clauses)) if len(where_clauses) > 0 else ""
             
             with ds.ExecuteSQL(sql) as result:
                 total_feature_count = result.GetNextFeature().GetField("count")
     else:
         # File based drivers (at least GeoPackage)
+        # Needs to be redone if file based drivers become available
         null_geom_count = 0
-        if count_null_geom:
-            # Get geometry column name
-            geom_col = layer.GetGeometryColumn()
-            if geom_col == "":
-                geom_col = "_ogr_geometry_"
-                
-            # Count only NULL geometry features
-            layer.SetAttributeFilter(f"{geom_col} IS NULL")
-            null_geom_count = layer.GetFeatureCount()
-            # Manually count NULL geometry features
-            # for feature in layer:
-            #     null_geom_count += 1
+        # Get geometry column name
+        geom_col = layer.GetGeometryColumn()
+        if geom_col == "":
+            geom_col = "_ogr_geometry_"
             
-            layer.SetAttributeFilter(None)
-            layer.ResetReading()
+        # Count only NULL geometry features
+        layer.SetAttributeFilter(f"{geom_col} IS NULL")
+        null_geom_count = layer.GetFeatureCount()
+        # Manually count NULL geometry features
+        # for feature in layer:
+        #     null_geom_count += 1
+        
+        layer.SetAttributeFilter(None)
+        layer.ResetReading()
         
         feature_count = 0
         if filter_geom:
@@ -212,7 +231,16 @@ def get_feature_count(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], sql
 
     return total_feature_count
 
-def prepare_features_postgresql(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], limit: int, offset: int, gdal_vector_translate_options: dict = None) -> tuple[Any, int, int]:
+def prepare_features_postgresql(
+    layer: ogr.Layer, 
+    filter_geom: Optional[ogr.Geometry], 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]], 
+    datetime_field: Optional[str], 
+    limit: int, 
+    offset: int, 
+    gdal_vector_translate_options: dict = None
+) -> tuple[Any, int, int]:
+    
     if filter_geom:
         filter_geom_srs = filter_geom.GetSpatialReference()
         layer_srs = layer.GetSpatialRef()
@@ -237,15 +265,24 @@ def prepare_features_postgresql(layer: ogr.Layer, filter_geom: Optional[ogr.Geom
             
             z_min = filter_geom.GetGeometryRef(0).GetZ(0)
             z_max = filter_geom.GetGeometryRef(0).GetZ(2)
-            where_clauses.append(f'(ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) AND ST_ZMin({geom_col}) <= {z_max} AND ST_ZMax({geom_col}) >= {z_min})')
+            where_clauses.append(f'(ST_Intersects("{geom_col}", ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) AND ST_ZMin("{geom_col}") <= {z_max} AND ST_ZMax("{geom_col}") >= {z_min}) OR "{geom_col}" IS NULL')
         else:
             filter_geom.FlattenTo2D()
-            where_clauses.append(f'(ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})))')
-        where_clauses.append(f'({geom_col} IS NULL)')
+            where_clauses.append(f'ST_Intersects("{geom_col}", ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) OR "{geom_col}" IS NULL')
+            
+    if datetime_interval and datetime_field:
+        start, end = datetime_interval
+        if start and end:
+            where_clauses.append(f'("{datetime_field}" >= \'{start.isoformat()}\' AND "{datetime_field}" <= \'{end.isoformat()}\') OR {datetime_field} IS NULL')
+        elif start:
+            where_clauses.append(f'"{datetime_field}" >= \'{start.isoformat()}\' OR {datetime_field} IS NULL')
+        elif end:
+            where_clauses.append(f'"{datetime_field}" <= \'{end.isoformat()}\' OR {datetime_field} IS NULL')
 
-    where_clauses = (" WHERE " + " OR ".join(where_clauses)) if len(where_clauses) > 0 else ""
+    where_clauses = [f'({clause})' for clause in where_clauses]
+    where_clauses = (" WHERE " + " AND ".join(where_clauses)) if len(where_clauses) > 0 else ""
     
-    matched_feature_count = get_feature_count(layer, filter_geom, sql_where_query=where_clauses)
+    matched_feature_count = get_feature_count(layer, filter_geom, datetime_interval, datetime_field, sql_where_query=where_clauses)
     if offset >= matched_feature_count and matched_feature_count > 0:
         raise ValueError(f"Offset is greater than or equal to the number of features in the layer/extent")
     
@@ -259,12 +296,22 @@ def prepare_features_postgresql(layer: ogr.Layer, filter_geom: Optional[ogr.Geom
 
     return options, matched_feature_count
 
-def prepare_features_file(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], limit: int, offset: int, gdal_vector_translate_options: dict = None) -> tuple[Any, int, int]:
+def prepare_features_file(
+    layer: ogr.Layer, 
+    filter_geom: Optional[ogr.Geometry], 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]], 
+    datetime_field: Optional[str], 
+    limit: int, 
+    offset: int, 
+    gdal_vector_translate_options: dict = None
+) -> tuple[Any, int, int]:
+    # Needs to be redone if file based drivers become available
+    
     where_clauses = []
     geom_col = layer.GetGeometryColumn()
     fid_col = layer.GetFIDColumn()
     
-    matched_feature_count = get_feature_count(layer, filter_geom)
+    matched_feature_count = get_feature_count(layer, filter_geom, datetime_interval)
     if offset >= matched_feature_count and matched_feature_count > 0:
         raise ValueError(f"Offset is greater than or equal to the number of features in the layer/extent")
     
@@ -369,19 +416,28 @@ def prepare_features_file(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry],
     
     # return features, matched_feature_count, returned_feature_count
 
-def get_features(dataset_wrapper: gdal_utils.DatasetWrapper, layer_name: str, limit: int, offset: int, bbox: list[float], bbox_srs_res: str, t_srs_res: str):
+def get_features(
+    dataset_wrapper: gdal_utils.DatasetWrapper, 
+    layer_name: str, bbox: list[float], 
+    bbox_srs_res: str, 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]], 
+    datetime_field: Optional[str], 
+    t_srs_res: str, 
+    limit: int, 
+    offset: int
+):
     """Get features from a dataset within a bounding box.
 
     Args:
         dataset_wrapper (gdal_utils.DatasetWrapper): The dataset wrapper containing the dataset.
         layer_name (str): The name of the layer from which to get the features.
-        is3D (bool): Whether to return 3D geometries.
-        s_srs_res (str): The source spatial reference system as URI or URN.
         bbox (list[float]): The bounding box to filter the features in format xmin, ymin, zmin, xmax, ymax, zmax.
+        bbox_srs_res (str): The coordinate reference system of the bounding box as URI or URN.
+        datetime_interval (tuple[Optional[datetime.datetime], Optional[datetime.datetime]]): The temporal interval to filter the features.
+        datetime_field (Optional[str]): The optional field for filtering by datetime.
+        t_srs_res (str): The target spatial reference system as URI or URN.
         limit (int): The maximum number of features to return.
         offset (int): The number of features to skip.
-        bbox_crs (str): The coordinate reference system of the bounding box.
-        t_srs_res (str): The target spatial reference system as URI or URN.
 
     Raises:
         ValueError: Provided parameters are invalid
@@ -452,9 +508,9 @@ def get_features(dataset_wrapper: gdal_utils.DatasetWrapper, layer_name: str, li
     driver_name = ds.GetDriver().GetName()
     with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
         if driver_name == "PostgreSQL":
-            options, matched_feature_count = prepare_features_postgresql(layer, filter_geom, limit, offset, translate_options)
+            options, matched_feature_count = prepare_features_postgresql(layer, filter_geom, datetime_interval, datetime_field, limit, offset, translate_options)
         else:
-            options, matched_feature_count = prepare_features_file(layer, filter_geom, limit, offset, translate_options)
+            options, matched_feature_count = prepare_features_file(layer, filter_geom, datetime_interval, datetime_field, limit, offset, translate_options)
                 
         file_id = uuid.uuid4()
         gdal.VectorTranslate(f"/vsimem/{file_id}.geojson", dataset_wrapper.dataset_desc, options=options)
