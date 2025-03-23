@@ -145,14 +145,24 @@ def get_feature_count(
                     srid = result.GetNextFeature().GetField("srid")
                 
                 if filter_geom.Is3D():
-                    where_clauses.append(f'ST_3DIntersects({geom_col}, Box3D(ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})))')
+                    z_min = filter_geom.GetGeometryRef(0).GetZ(0)
+                    z_max = filter_geom.GetGeometryRef(0).GetZ(2)
+                    where_clauses.append(f'(ST_Intersects("{geom_col}", ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) AND ST_ZMin("{geom_col}") <= {z_max} AND ST_ZMax("{geom_col}") >= {z_min}) OR "{geom_col}" IS NULL')
                 else:
-                    where_clauses.append(f'ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid}))')
-            if count_null_geom and len(where_clauses) > 0:
-                where_clauses.append(f'{geom_col} IS NULL')
+                    filter_geom.FlattenTo2D()
+                    where_clauses.append(f'ST_Intersects({geom_col}, ST_GeomFromText(\'{filter_geom.ExportToWkt()}\', {srid})) OR {geom_col} IS NULL')
             
-            if len(where_clauses) > 0:
-                sql += (" WHERE " + " OR ".join(where_clauses)) if len(where_clauses) > 0 else ""
+            if datetime_interval and datetime_field:
+                start, end = datetime_interval
+                if start and end:
+                    where_clauses.append(f'("{datetime_field}" >= \'{start.isoformat()}\' AND "{datetime_field}" <= \'{end.isoformat()}\') OR {datetime_field} IS NULL')
+                elif start:
+                    where_clauses.append(f'"{datetime_field}" >= \'{start.isoformat()}\' OR {datetime_field} IS NULL')
+                elif end:
+                    where_clauses.append(f'"{datetime_field}" <= \'{end.isoformat()}\' OR {datetime_field} IS NULL')
+            
+            where_clauses = [f'({clause})' for clause in where_clauses]
+            sql += (" WHERE " + " AND ".join(where_clauses)) if len(where_clauses) > 0 else ""
             
             with ds.ExecuteSQL(sql) as result:
                 total_feature_count = result.GetNextFeature().GetField("count")
