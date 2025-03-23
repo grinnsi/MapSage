@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 from typing import Any, Optional
@@ -212,7 +213,16 @@ def get_feature_count(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], sql
 
     return total_feature_count
 
-def prepare_features_postgresql(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], limit: int, offset: int, gdal_vector_translate_options: dict = None) -> tuple[Any, int, int]:
+def prepare_features_postgresql(
+    layer: ogr.Layer, 
+    filter_geom: Optional[ogr.Geometry], 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]], 
+    datetime_field: Optional[str], 
+    limit: int, 
+    offset: int, 
+    gdal_vector_translate_options: dict = None
+) -> tuple[Any, int, int]:
+    
     if filter_geom:
         filter_geom_srs = filter_geom.GetSpatialReference()
         layer_srs = layer.GetSpatialRef()
@@ -259,7 +269,17 @@ def prepare_features_postgresql(layer: ogr.Layer, filter_geom: Optional[ogr.Geom
 
     return options, matched_feature_count
 
-def prepare_features_file(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry], limit: int, offset: int, gdal_vector_translate_options: dict = None) -> tuple[Any, int, int]:
+def prepare_features_file(
+    layer: ogr.Layer, 
+    filter_geom: Optional[ogr.Geometry], 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]], 
+    datetime_field: Optional[str], 
+    limit: int, 
+    offset: int, 
+    gdal_vector_translate_options: dict = None
+) -> tuple[Any, int, int]:
+    # Needs to be redone if file based drivers become available
+    
     where_clauses = []
     geom_col = layer.GetGeometryColumn()
     fid_col = layer.GetFIDColumn()
@@ -369,19 +389,28 @@ def prepare_features_file(layer: ogr.Layer, filter_geom: Optional[ogr.Geometry],
     
     # return features, matched_feature_count, returned_feature_count
 
-def get_features(dataset_wrapper: gdal_utils.DatasetWrapper, layer_name: str, limit: int, offset: int, bbox: list[float], bbox_srs_res: str, t_srs_res: str):
+def get_features(
+    dataset_wrapper: gdal_utils.DatasetWrapper, 
+    layer_name: str, bbox: list[float], 
+    bbox_srs_res: str, 
+    datetime_interval: tuple[Optional[datetime.datetime], Optional[datetime.datetime]], 
+    datetime_field: Optional[str], 
+    t_srs_res: str, 
+    limit: int, 
+    offset: int
+):
     """Get features from a dataset within a bounding box.
 
     Args:
         dataset_wrapper (gdal_utils.DatasetWrapper): The dataset wrapper containing the dataset.
         layer_name (str): The name of the layer from which to get the features.
-        is3D (bool): Whether to return 3D geometries.
-        s_srs_res (str): The source spatial reference system as URI or URN.
         bbox (list[float]): The bounding box to filter the features in format xmin, ymin, zmin, xmax, ymax, zmax.
+        bbox_srs_res (str): The coordinate reference system of the bounding box as URI or URN.
+        datetime_interval (tuple[Optional[datetime.datetime], Optional[datetime.datetime]]): The temporal interval to filter the features.
+        datetime_field (Optional[str]): The optional field for filtering by datetime.
+        t_srs_res (str): The target spatial reference system as URI or URN.
         limit (int): The maximum number of features to return.
         offset (int): The number of features to skip.
-        bbox_crs (str): The coordinate reference system of the bounding box.
-        t_srs_res (str): The target spatial reference system as URI or URN.
 
     Raises:
         ValueError: Provided parameters are invalid
@@ -452,9 +481,9 @@ def get_features(dataset_wrapper: gdal_utils.DatasetWrapper, layer_name: str, li
     driver_name = ds.GetDriver().GetName()
     with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
         if driver_name == "PostgreSQL":
-            options, matched_feature_count = prepare_features_postgresql(layer, filter_geom, limit, offset, translate_options)
+            options, matched_feature_count = prepare_features_postgresql(layer, filter_geom, datetime_interval, datetime_field, limit, offset, translate_options)
         else:
-            options, matched_feature_count = prepare_features_file(layer, filter_geom, limit, offset, translate_options)
+            options, matched_feature_count = prepare_features_file(layer, filter_geom, datetime_interval, datetime_field, limit, offset, translate_options)
                 
         file_id = uuid.uuid4()
         gdal.VectorTranslate(f"/vsimem/{file_id}.geojson", dataset_wrapper.dataset_desc, options=options)
