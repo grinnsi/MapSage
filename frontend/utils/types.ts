@@ -27,6 +27,11 @@ export interface Collection {
   id: string,
   title: string,
   description: string,
+  connection_name: string,
+  url: string,
+}
+
+export interface CollectionDetail extends Collection {
   license_title: string,
   extent: {
     spatial: {
@@ -38,14 +43,11 @@ export interface Collection {
       trs: string
     }
   },
-  spatial_extent_crs: string,
-  temporal_extent_trs: string,
+  date_time_fields: Array<string>;
+  selected_date_time_field: string;
   crs: Array<string>,
   storage_crs: string,
   storage_crs_coordinate_epoch: number,
-
-  connection_name: string,
-  url: string,
 }
 
 export interface Namespace {
