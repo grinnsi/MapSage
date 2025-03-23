@@ -172,7 +172,7 @@ class Database():
             result = None
             
             if table_model is not None and primary_key_value is not None:
-                if issubclass(table_model, TableBase):
+                if issubclass(table_model, TableBase) and type(primary_key_value) is str:
                     primary_key_value = UUID(primary_key_value)
                     
                 result = session.get(table_model, primary_key_value)
@@ -240,7 +240,8 @@ class Database():
         
         with DatabaseSession() as session:
             for value in primary_key_value:
-                value = UUID(value)
+                if type(value) is str:
+                    value = UUID(value)
 
                 object_to_delete = session.get(table_model, value)
                 if not object_to_delete:
@@ -292,7 +293,7 @@ class Database():
                 if issubclass(table_model, KeyValueBase):
                     primary_key_name = "key"
                     
-                if primary_key_name == "uuid":
+                if primary_key_name == "uuid" and type(primary_key_value) is str:
                     primary_key_value = UUID(primary_key_value)
                 
                 db_model: CoreModel = session.get(table_model, primary_key_value)

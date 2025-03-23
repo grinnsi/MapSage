@@ -251,6 +251,7 @@ class CollectionTable(TableBase, table=True):
     license_title: Optional[str] = Field(default=None, sa_column=Column(String, ForeignKey(f"{License.__tablename__}.title", ondelete="SET NULL", onupdate="CASCADE"), nullable=True))
     
     extent_json: Optional[str] = Field(default=None)                                                        # JSON
+    date_time_field: Optional[str] = Field(default=None)
     # spatial_extent_crs: Optional[str] = Field(default=None)
     # temporal_extent_trs: Optional[str] = Field(default=None)
     is_3D: bool = Field(default=False)
