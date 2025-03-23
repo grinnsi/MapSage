@@ -12,11 +12,12 @@ from osgeo import gdal, ogr, osr
 
 from server.utils.string_utils import string_to_kebab
 
-def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str) -> models.CollectionTable:
+def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset: gdal.Dataset, app_base_url: str, optional_data: dict = {}) -> models.CollectionTable:
     gdal.UseExceptions()
     
     new_collection = models.CollectionTable()
     
+    driver: gdal.Driver = dataset.GetDriver()
     layer: ogr.Layer = dataset.GetLayerByName(layer_name)
     if layer is None:
         raise ValueError(f"Layer {layer_name} not found in dataset {dataset.GetDescription()}")
@@ -36,7 +37,6 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
         extent_calc: tuple[float] = layer.GetExtent3D(True)
     except RuntimeError as error:
         # If that fails, the extent can't be calculated like that and a driver specific method is needed
-        driver: gdal.Driver = dataset.GetDriver()
         if driver is None:
             raise ValueError(f"Driver for dataset {dataset.GetDescription()} not found") from error
         
@@ -119,7 +119,16 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     collection_title = base_id.replace("-", " ")
     collection_title = " ".join(word.capitalize() for word in collection_title.split(" "))
     new_collection.title = collection_title
-    new_collection.dataset_uuid = UUID(dataset_uuid)
+
+    if type(dataset_uuid) is str:
+        dataset_uuid = UUID(dataset_uuid)
+    new_collection.dataset_uuid = dataset_uuid
+    
+    for key, value in optional_data.items():
+        if hasattr(new_collection, key):
+            if key == "uuid":
+                value = UUID(value)
+            setattr(new_collection, key, value)
     
     new_collection.pre_render(app_base_url=app_base_url)
 
