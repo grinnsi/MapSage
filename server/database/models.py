@@ -282,7 +282,7 @@ class CollectionTable(TableBase, table=True):
         
         return collection
     
-    # FIXME: Delete column on restart
+    # TODO: Delete column on restart / Better solution to access endpoints from different user url (e.g. localhost:8000 and localhost)
     def pre_render(self, app_base_url: str = "") -> None:
         app_base_url = app_base_url.rstrip("/")
 
