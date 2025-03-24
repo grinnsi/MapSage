@@ -14,7 +14,7 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
 
     bp = Blueprint("collections_endpoints", __name__, url_prefix=bp_url_prefix)
     
-    @bp.route('/', methods=["GET", "POST", "PATCH", "DELETE"])
+    @bp.route('/', methods=["GET", "POST", "DELETE"])
     def collections() -> Response:
         request_data = request.get_json() if request.data else None
 
@@ -33,14 +33,6 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
                 static.collections.update_database_object(app_base_url=get_app_url_root())
                 return response
             
-            if request.method == "PATCH":
-                if request_data is None:
-                    return Response(status=400, response="Bad request")
-                
-                response = update_collection(request_data)
-                static.collections.update_database_object(app_base_url=get_app_url_root())
-                return response
-            
             if request.method == "DELETE":
                 if request_data is None:
                     return Response(status=400, response="Bad request")
@@ -56,13 +48,27 @@ def create_collections_endpoints(main_endpoint: str) -> Blueprint:
         # Send HTTP Error 501 (Not implemented), when method is not GET, POST or DELETE
         return Response(status=501, response="Method not implemented")
     
-    @bp.route('/<collection_uuid>', methods=["GET"])
+    @bp.route('/<collection_uuid>', methods=["GET", "PATCH"])
     def get_collection(collection_uuid: str) -> Response:
+        request_data = request.get_json() if request.data else None
+        
         try:
-            return get_collection_details(collection_uuid)
+            if request.method == "GET":
+                return get_collection_details(collection_uuid)
+            
+            if request.method == "PATCH":
+                if request_data is None:
+                    return Response(status=400, response="Bad request")
+                
+                response = update_collection(collection_uuid, request_data)
+                static.collections.update_database_object(app_base_url=get_app_url_root())
+                return response
         except Exception as e:
             current_app.logger.error(msg=f"Error while processing request: {e}", exc_info=True)
             return Response(status=500, response="Internal server error")
+
+        # Send HTTP Error 501 (Not implemented), when method is not GET or PATCH
+        return Response(status=501, response="Method not implemented")
     
     @bp.route('/licenses', methods=["GET"])
     def licenses() -> Response:

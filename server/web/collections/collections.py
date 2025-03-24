@@ -145,14 +145,15 @@ def delete_collections(form: dict):
     
     return Response(status=204, response="Collections successfully deleted")
 
-def update_collection(form: dict):
+def update_collection(uuid: str, form: dict):
     with DatabaseSession() as session:
-        collection: models.CollectionTable = session.get(models.CollectionTable, UUID(form["uuid"]))
+        collection: models.CollectionTable = session.get(models.CollectionTable, UUID(uuid))
         if not collection:
             return Response(status=404, response="Collection not found")
         
         app_url_root = get_app_url_root()
         if "selected_date_time_field" in form:
+            form.setdefault("uuid", collection.uuid)
             form.setdefault("id", collection.id)
             form.setdefault("title", collection.title)
             form.setdefault("description", collection.description)

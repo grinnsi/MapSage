@@ -267,8 +267,7 @@ async function deleteCollections() {
 
 async function updateCollection(data: Partial<CollectionDetail>, toggleButtonState: () => void) {
   try {
-    data['uuid'] = (editCollection.value! as any).uuid;
-    const response = await useBaseUrlFetchRaw('/data/collections/', {
+    const response = await useBaseUrlFetchRaw(`/data/collections/${(editCollection.value! as any).uuid}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
