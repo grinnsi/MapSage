@@ -385,8 +385,9 @@ async def get_landing_page(
         200: {
             "model": None,
             "content": {
-                "application/json": {
+                "application/vnd.oai.openapi+json;version=3.0": {
                     "description": "The OpenAPI schema as JSON.",
+                    "example": "string",
                 },
                 "text/html": {
                     "description": "The OpenAPI schema as HTML.",
@@ -398,13 +399,14 @@ async def get_landing_page(
     },
     tags=["Capabilities"],
     summary="API definition",
+    response_class=Response
 )
 async def get_openapi_schema(
     request: Request,
 ):
     """Get the OpenAPI schema in JSON or HTML format."""
     
-    accept_header = request.headers.get("accept", "application/json")
+    accept_header = request.headers.get("accept", "application/vnd.oai.openapi+json;version=3.0")
     format = request.query_params.get("f")
     app = request.app
     
@@ -424,4 +426,4 @@ async def get_openapi_schema(
         return html
     else:
         # Serve OpenAPI schema as JSON
-        return ORJSONResponse(content=openapi_schema)
+        return ORJSONResponse(content=openapi_schema, media_type="application/vnd.oai.openapi+json;version=3.0")
