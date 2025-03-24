@@ -180,7 +180,7 @@ async function showCollectionInformationDialog(collection: Collection) {
 
 async function showConnectionsDialog() {
   try {
-    const response: any = await useBaseUrlFetchRaw('/data/settings/connections', {
+    const response: any = await useBaseUrlFetchRaw('/data/datasets', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -198,7 +198,7 @@ async function showConnectionsDialog() {
 
 async function getDatasetInformation(uuid: string) {
   try {
-    const response = await useBaseUrlFetchRaw(`/data/settings/datasets/${uuid}`, {
+    const response = await useBaseUrlFetchRaw(`/data/datasets/${uuid}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -267,8 +267,7 @@ async function deleteCollections() {
 
 async function updateCollection(data: Partial<CollectionDetail>, toggleButtonState: () => void) {
   try {
-    data['uuid'] = (editCollection.value! as any).uuid;
-    const response = await useBaseUrlFetchRaw('/data/collections/', {
+    const response = await useBaseUrlFetchRaw(`/data/collections/${(editCollection.value! as any).uuid}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
