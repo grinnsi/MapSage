@@ -42,10 +42,10 @@ def create_new_connection(form: dict) -> Response:
     
     return Response(status=400, response="Connection parameters incorrect")
 
-def delete_connection(form: dict) -> Response:
+def delete_connection(uuid: str) -> Response:
     """Deletes a connection from the internal database"""
     
-    connection: Union[None, models.Dataset] = Database.delete_sqlite_db(table_model=models.Dataset, primary_key_value=form["uuid"])
+    connection: Union[None, models.Dataset] = Database.delete_sqlite_db(table_model=models.Dataset, primary_key_value=uuid)
     if not connection:
         return Response(status=404, response="Connection not found")
     

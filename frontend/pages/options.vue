@@ -94,12 +94,11 @@ async function deleteConnection(uuid: string) {
   confirmationDialogRef.value!.toggleVisibility();
 
   try {
-    const response = await useBaseUrlFetchRaw('/data/settings/connections', {
+    const response = await useBaseUrlFetchRaw(`/data/settings/datasets/${uuid}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ uuid }),
     });
     // if (!response.ok) throw new Error('Antwort des Löschens nicht verständlich');
     ElMessage({
