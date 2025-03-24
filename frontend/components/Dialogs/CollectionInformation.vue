@@ -110,7 +110,6 @@ const { data: licenseData } = await useBaseUrlFetch<{title: string}[]>("/data/co
 
 function resetDialog() {
   dialogRef.value.toggleLoadingState(false);
-  // TODO: Check whether the form gets updated, when updating is successful
   resetFields();
 }
 

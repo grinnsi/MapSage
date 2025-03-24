@@ -1,6 +1,6 @@
 <template>
   <TemplateSection 
-    section-title="Gespeicherte Kollektionen" 
+    section-title="Gespeicherte Kollektionen:" 
     fill-space
   >
     <template #header-right>
