@@ -1,20 +1,41 @@
 from typing import Any, Optional
 import orjson
-from fastapi import HTTPException, Query
+from fastapi import HTTPException, Header, Query
 from pydantic import Field
 from typing_extensions import Annotated
 from . import formats
 
 LIMIT_MAXIMUM = 100000
 
-def get_format_query(f: Annotated[formats.ReturnFormat, Field(
+def get_format_query(
+    _f_docs: Annotated[formats.ReturnFormat, Field(
         default=formats.ReturnFormat.get_default(), 
-        description="Optional parameter which indicates the output format of the response"
+        description="Optional parameter which indicates the output format of the response",
     )] = Query(
         default=formats.ReturnFormat.get_default(), 
-        description="Optional parameter which indicates the output format of the response"
-    )) -> formats.ReturnFormat:
-    return f
+        description="Optional parameter which indicates the output format of the response",
+        alias="f"
+    ),    
+    f: Annotated[formats.ReturnFormat, Field(
+        default=formats.ReturnFormat.get_default(), 
+    )] = Query(
+        default=None, 
+        include_in_schema=False
+    ),
+    content_type: Optional[str] = Header(None, alias="accept", include_in_schema=False)
+) -> formats.ReturnFormat:
+    """Get the format query parameter from the request and validate it."""
+    
+    if f is not None:
+        return f
+    
+    if content_type and content_type != "*/*":
+        if "text/html" in content_type:
+            return formats.ReturnFormat.html
+        elif "application/json" in content_type or "application/geo+json" in content_type:
+            return formats.ReturnFormat.json
+        
+    return formats.ReturnFormat.get_default()
 
 def validate_limit(limit: Any) -> int:
     """Validate and cap limit parameter to the maximum allowed value."""

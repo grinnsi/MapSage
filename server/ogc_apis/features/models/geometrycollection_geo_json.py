@@ -104,6 +104,5 @@ class GeometrycollectionGeoJSON(BaseModel):
         return _obj
 
 from server.ogc_apis.features.models.geometry_geo_json import GeometryGeoJSON
-# TODO: Rewrite to not use raise_errors
 GeometrycollectionGeoJSON.model_rebuild(raise_errors=False)
 

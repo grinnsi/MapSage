@@ -53,6 +53,66 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
             "content": {
                 "application/json": {
                     "description": "JSON representation of the feature collection with id `collectionId`.",
+                    "example": {
+                        "id": "buildings",
+                        "title": "Buildings",
+                        "description": "Buildings in the city of Bonn.",
+                        "extent": {
+                            "spatial": {
+                                "bbox": [
+                                    [
+                                    7.01,
+                                    50.63,
+                                    7.22,
+                                    50.78
+                                    ]
+                                ],
+                                "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                            },
+                            "temporal": {
+                                "interval": [
+                                    [
+                                    "2010-02-15T12:34:56Z",
+                                    "null"
+                                    ]
+                                ],
+                                "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
+                            }
+                        },
+                        "itemType": "feature",
+                        "crs": [
+                            "http://www.opengis.net/def/crs/EPSG/0/25832",
+                            "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                        ],
+                        "storageCrs": "http://www.opengis.net/def/crs/EPSG/0/25832",
+                        "storageCrsCoordinateEpoch": 0,
+                        "links": [
+                            {
+                                "href": "http://data.example.org/collections/buildings/items",
+                                "rel": "items",
+                                "type": "application/geo+json",
+                                "title": "Buildings"
+                            },
+                            {
+                                "href": "http://data.example.org/collections/buildings/items.html",
+                                "rel": "items",
+                                "type": "text/html",
+                                "title": "Buildings"
+                            },
+                            {
+                                "href": "https://creativecommons.org/publicdomain/zero/1.0/",
+                                "rel": "license",
+                                "type": "text/html",
+                                "title": "CC0-1.0"
+                            },
+                            {
+                                "href": "https://creativecommons.org/publicdomain/zero/1.0/rdf",
+                                "rel": "license",
+                                "type": "application/rdf+xml",
+                                "title": "CC0-1.0"
+                            }
+                        ]
+                    }
                 },
                 "text/html": {
                     "description": "HTML representation of the feature collection with id `collectionId`.",
@@ -95,7 +155,113 @@ async def describe_collection(
 @router.get(
     "/collections",
     responses={
-        200: {"model": Collections, "description": "The feature collections shared by this API.\n\nThe dataset is organized as one or more feature collections. This resource provides information about and access to the collections.\n\nThe response contains the list of collections. For each collection, a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is 'feature')."},
+        200: {
+            "model": Collections,
+            "content": {
+                "application/json": {
+                    "description": "JSON representation of the feature collections.",
+                    "example": {
+                        "links": [
+                            {
+                                "href": "http://data.example.org/collections.json",
+                                "rel": "self",
+                                "type": "application/json",
+                                "title": "this document"
+                            },
+                            {
+                                "href": "http://data.example.org/collections.html",
+                                "rel": "alternate",
+                                "type": "text/html",
+                                "title": "this document as HTML"
+                            },
+                            {
+                                "href": "http://schemas.example.org/1.0/buildings.xsd",
+                                "rel": "describedby",
+                                "type": "application/xml",
+                                "title": "GML application schema for Acme Corporation building data"
+                            },
+                            {
+                                "href": "http://download.example.org/buildings.gpkg",
+                                "rel": "enclosure",
+                                "type": "application/geopackage+sqlite3",
+                                "title": "Bulk download (GeoPackage)",
+                                "length": 472546
+                            }
+                        ],
+                        "collections": [
+                            {
+                                "id": "buildings",
+                                "title": "Buildings",
+                                "description": "Buildings in the city of Bonn.",
+                                "extent": {
+                                    "spatial": {
+                                        "bbox": [
+                                            [
+                                            7.01,
+                                            50.63,
+                                            7.22,
+                                            50.78
+                                            ]
+                                        ],
+                                        "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                                    },
+                                    "temporal": {
+                                        "interval": [
+                                            [
+                                            "2010-02-15T12:34:56Z",
+                                            "null"
+                                            ]
+                                        ],
+                                        "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+                                    },   
+                                },
+                                "itemType": "feature",
+                                "crs": [
+                                    "#/crs",
+                                ],
+                                "storageCrs": "http://www.opengis.net/def/crs/EPSG/0/25832",
+                                "storageCrsCoordinateEpoch": 0,
+                                "links": [
+                                    {
+                                        "href": "http://data.example.org/collections/buildings/items",
+                                        "rel": "items",
+                                        "type": "application/geo+json",
+                                        "title": "Buildings"
+                                    },
+                                    {
+                                        "href": "http://data.example.org/collections/buildings/items.html",
+                                        "rel": "items",
+                                        "type": "text/html",
+                                        "title": "Buildings"
+                                    },
+                                    {
+                                        "href": "https://creativecommons.org/publicdomain/zero/1.0/",
+                                        "rel": "license",
+                                        "type": "text/html",
+                                        "title": "CC0-1.0"
+                                    },
+                                    {
+                                        "href": "https://creativecommons.org/publicdomain/zero/1.0/rdf",
+                                        "rel": "license",
+                                        "type": "application/rdf+xml",
+                                        "title": "CC0-1.0"
+                                    }
+                                ]
+                            }
+                        ],
+                        "crs": [
+                            "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                            "http://www.opengis.net/def/crs/EPSG/0/25832"  
+                        ],
+                    }
+                },
+                "text/html": {
+                    "description": "HTML representation of the feature collections.",
+                    "example": "string",
+                },
+            },
+            "description": "The feature collections shared by this API.\n\nThe dataset is organized as one or more feature collections. This resource provides information about and access to the collections.\n\nThe response contains the list of collections. For each collection, a link to the items in the collection (path `/collections/{collectionId}/items`, link relation `items`) as well as key information about the collection. This information includes:\n\n* A local identifier for the collection that is unique for the dataset;\n\n* A list of coordinate reference systems (CRS) in which geometries may be returned by the server. The first CRS is the default coordinate reference system (the default is always WGS 84 with axis order longitude/latitude);\n\n* An optional title and description for the collection;\n\n* An optional extent that can be used to provide an indication of the spatial and temporal extent of the collection - typically derived from the data;\n\n* An optional indicator about the type of the items in the collection (the default value, if the indicator is not provided, is 'feature').",
+        },
     },
     tags=["Capabilities"],
     summary="the feature collections in the dataset",
@@ -109,11 +275,30 @@ async def get_collections(
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BaseCapabilitiesApi.subclasses[0]().get_collections(request, format)
 
-# FIXME: Fix the response model for the conformance declaration and landing page for HTML and so on
 @router.get(
     "/conformance",
     responses={
-        200: {"model": ConfClasses, "description": "The URIs of all conformance classes supported by the server.\n\nTo support 'generic' clients that want to access multiple OGC API Features implementations - and not 'just' a specific API / server, the server declares the conformance classes it implements and conforms to."},
+        200: {
+            "model": ConfClasses,
+            "content": {
+                "application/json": {
+                    "description": "JSON representation of the conformance declaration.",
+                    "example": {
+                        "conformsTo": [
+                            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+                            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+                            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
+                            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
+                        ]
+                    },
+                },
+                "text/html": {
+                    "description": "HTML representation of the conformance declaration.",
+                    "example": "string",
+                }
+            },
+            "description": "The URIs of all conformance classes supported by the server.\n\nTo support 'generic' clients that want to access multiple OGC API Features implementations - and not 'just' a specific API / server, the server declares the conformance classes it implements and conforms to."
+        },
     },
     tags=["Capabilities"],
     summary="information about specifications that this API conforms to",
@@ -136,6 +321,42 @@ async def get_conformance_declaration(
             "content": {
                 "application/json": {
                     "description": "JSON representation of the landing page.",
+                    "example": {
+                        "title": "Buildings in Bonn",
+                        "description": "Access to data about buildings in the city of Bonn via a Web API that conforms to the OGC API Features specification.",
+                        "links": [
+                            {
+                                "href": "http://data.example.org/",
+                                "rel": "self",
+                                "type": "application/json",
+                                "title": "this document"
+                            },
+                            {
+                                "href": "http://data.example.org/api",
+                                "rel": "service-desc",
+                                "type": "application/vnd.oai.openapi+json;version=3.0",
+                                "title": "the API definition"
+                            },
+                            {
+                                "href": "http://data.example.org/api.html",
+                                "rel": "service-doc",
+                                "type": "text/html",
+                                "title": "the API documentation"
+                            },
+                            {
+                                "href": "http://data.example.org/conformance",
+                                "rel": "conformance",
+                                "type": "application/json",
+                                "title": "OGC API conformance classes implemented by this server"
+                            },
+                            {
+                                "href": "http://data.example.org/collections",
+                                "rel": "data",
+                                "type": "application/json",
+                                "title": "Information about the feature collections"
+                            }
+                        ]
+                    }
                 },
                 "text/html": {
                     "description": "HTML representation of the landing page.",
@@ -164,11 +385,13 @@ async def get_landing_page(
         200: {
             "model": None,
             "content": {
-                "application/json": {
+                "application/vnd.oai.openapi+json;version=3.0": {
                     "description": "The OpenAPI schema as JSON.",
+                    "example": "string",
                 },
                 "text/html": {
                     "description": "The OpenAPI schema as HTML.",
+                    "example": "string",
                 },
             },
             "description": "Get the OpenAPI schema",
@@ -176,13 +399,14 @@ async def get_landing_page(
     },
     tags=["Capabilities"],
     summary="API definition",
+    response_class=Response
 )
 async def get_openapi_schema(
     request: Request,
 ):
     """Get the OpenAPI schema in JSON or HTML format."""
     
-    accept_header = request.headers.get("accept", "application/json")
+    accept_header = request.headers.get("accept", "application/vnd.oai.openapi+json;version=3.0")
     format = request.query_params.get("f")
     app = request.app
     
@@ -202,4 +426,4 @@ async def get_openapi_schema(
         return html
     else:
         # Serve OpenAPI schema as JSON
-        return ORJSONResponse(content=openapi_schema)
+        return ORJSONResponse(content=openapi_schema, media_type="application/vnd.oai.openapi+json;version=3.0")

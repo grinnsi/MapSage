@@ -20,7 +20,8 @@ def generate_object(collections_url: str) -> Collections:
     shared_crs = list(set.intersection(*map(set, [collection.crs_json for collection in all_collections])))
     for collection in all_collections:
         specific_crs = [crs for crs in collection.crs_json if crs not in shared_crs]
-        specific_crs.insert(0, "#/crs")
+        if len(shared_crs) > 0:
+            specific_crs.insert(0, "#/crs")
         collection.crs_json = specific_crs
     
     all_collections_model = [collection.to_collection() for collection in all_collections]

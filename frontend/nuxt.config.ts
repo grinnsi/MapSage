@@ -15,8 +15,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       charset: 'utf-8',
-      // TODO Set name of application everywhere (here, in other pages, in nginx, ...; noted as [name])
-      title: '[name] Dashboard',
+      title: 'MapSage Dashboard',
     },
     // If env-variable DASHBOARD_URL is set, the dashboard will be available under /DASHBOARD_URL/ else under /dashboard/
     // Prefix that with the API_SERVER_ROOT_PATH if set

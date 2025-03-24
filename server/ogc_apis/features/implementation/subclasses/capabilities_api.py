@@ -13,10 +13,7 @@ from server.ogc_apis.features.implementation import static
 from server.ogc_apis.features.models.collections import Collections
 from server.ogc_apis.features.models.conf_classes import ConfClasses
 
-# TODO: Using Depends for SQLite session, so its cleanup is handled after sending of response, not during it
-
 class CapabilitiesApi(BaseCapabilitiesApi):
-    # FIXME: Use Exception from ogc for error 404
     async def describe_collection(
         self,
         collectionId: Annotated[StrictStr, Field(description="local identifier of a collection")],

@@ -216,6 +216,5 @@ class GeometryGeoJSON(BaseModel):
         return pprint.pformat(self.model_dump())
 
 from server.ogc_apis.features.models.geometrycollection_geo_json import GeometrycollectionGeoJSON
-# TODO: Rewrite to not use raise_errors
 GeometryGeoJSON.model_rebuild(raise_errors=False)
 

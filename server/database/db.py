@@ -111,7 +111,6 @@ class SetupSqliteDatabase():
             data = function()
             Database.insert_sqlite_db(data, do_nothing_on_conflict=True)
 
-# TODO How to include second db ?
 class Database():
     debug_mode = os.getenv("APP_DEBUG_MODE", "False") == "True"
     sqlite_file_name = "data.db"

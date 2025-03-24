@@ -42,7 +42,6 @@ ns_pkg = implementation
 for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     importlib.import_module(name)
 
-# FIXME: Use ogc Exception model for error 404
 @router.get(
     "/collections/{collectionId}/items/{featureId}",
     responses={
