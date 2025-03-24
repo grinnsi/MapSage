@@ -75,7 +75,7 @@ definePageMeta({
   name: "Datenquellen"
 });
 
-const { status, data, refresh } = await useBaseUrlFetch<Connection[]>('/data/settings/connections', {
+const { status, data, refresh } = await useBaseUrlFetch<Connection[]>('/data/datasets', {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json'
@@ -91,7 +91,7 @@ async function deleteConnection(uuid: string) {
   confirmationDialogRef.value!.toggleVisibility();
 
   try {
-    const response = await useBaseUrlFetchRaw(`/data/settings/datasets/${uuid}`, {
+    const response = await useBaseUrlFetchRaw(`/data/datasets/${uuid}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'

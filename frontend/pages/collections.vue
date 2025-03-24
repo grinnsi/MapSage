@@ -180,7 +180,7 @@ async function showCollectionInformationDialog(collection: Collection) {
 
 async function showConnectionsDialog() {
   try {
-    const response: any = await useBaseUrlFetchRaw('/data/settings/connections', {
+    const response: any = await useBaseUrlFetchRaw('/data/datasets', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -198,7 +198,7 @@ async function showConnectionsDialog() {
 
 async function getDatasetInformation(uuid: string) {
   try {
-    const response = await useBaseUrlFetchRaw(`/data/settings/datasets/${uuid}`, {
+    const response = await useBaseUrlFetchRaw(`/data/datasets/${uuid}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
