@@ -30,7 +30,7 @@
 <script setup lang="ts">
 const nav = [
   {path: '/', name: 'Startseite'},
-  // {path: '/namespaces', name: 'Namespaces'},
+  {path: '/datasets', name: 'Datenquellen'},
   {path: '/collections', name: 'Kollektionen'},
   {path: '/options', name: 'Einstellungen'},
 ];
