@@ -1,6 +1,8 @@
 # coding: utf-8
 
+import mimetypes
 from fastapi.testclient import TestClient
+from sqlmodel import select
 from server.ogc_apis.features.tests import conftest
 import httpx
 
@@ -14,6 +16,8 @@ from server.ogc_apis.features.models.conf_classes import ConfClasses  # noqa: F4
 from server.ogc_apis.features.models.exception import Exception  # noqa: F401
 from server.ogc_apis.features.models.landing_page import LandingPage  # noqa: F401
 from server.ogc_apis import ogc_api_config
+from server.database.db import Database, DatabaseSession
+from server.database import models
 
 
 def test_describe_collection(client: TestClient, headers: httpx.Headers):
@@ -91,8 +95,29 @@ def test_get_collections(client: TestClient, headers: httpx.Headers):
     # check items
     assert json["collections"] is not None
     collections = json["collections"]
-    assert all()
-
+    with DatabaseSession() as session:
+        assert len(collections) == len(session.exec(select(models.CollectionTable)).all())
+        for collection in collections:
+            assert "id" in collection
+            
+            links = collection["links"]
+            # Verify that each Collection item in the Collections Metadata document includes a link property for each supported encoding.?????
+            assert len(links) % len(ogc_api_config.ReturnFormat.get_all()) == 0
+            items_links = [link for link in links if link["rel"] == "items"]
+            types = [mimetypes.types_map["." + _format] for _format in ogc_api_config.formats.ReturnFormat.get_all()]
+            assert all([link["type"] in types or link["type"] == "application/geo+json" for link in items_links])
+            
+            assert "extent" in collection
+            extent = collection["extent"]
+            assert "spatial" in extent and "bbox" in extent["spatial"] and len(extent["spatial"]["bbox"][0]) >= 4
+            db_collection: models.CollectionTable = session.exec(select(models.CollectionTable).where(models.CollectionTable.id == collection["id"])).first()
+            if db_collection.date_time_field is not None:
+                assert "temporal" in extent
+    
+    assert Collections.model_validate(json)
+    # Test different formats
+    conftest.formats("GET", "/collections", headers, client)
+            
 def test_get_conformance_declaration(client: TestClient, headers: httpx.Headers):
     """Test case for get_conformance_declaration
 
