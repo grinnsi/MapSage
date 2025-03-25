@@ -38,7 +38,7 @@ def formats(operation: str, rel_url: str, headers: httpx.Headers, test_client: T
         })
         
         response: httpx.Response = test_client.request(
-            operation=operation,
+            method=operation,
             url=url,
             headers=headers,
             data=data
