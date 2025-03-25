@@ -161,7 +161,7 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     
     for key, value in optional_data.items():
         if hasattr(new_collection, key):
-            if key == "uuid":
+            if key == "uuid" and type(value) is str:
                 value = UUID(value)
             setattr(new_collection, key, value)
     

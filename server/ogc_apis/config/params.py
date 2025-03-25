@@ -1,6 +1,6 @@
 from typing import Any, Optional
 import orjson
-from fastapi import HTTPException, Header, Query
+from fastapi import HTTPException, Header, Query, Request
 from pydantic import Field
 from typing_extensions import Annotated
 from . import formats
@@ -86,4 +86,15 @@ def validate_bbox(bbox_param: Any) -> list[float]:
         raise HTTPException(
             status_code=400,
             detail="Bounding box should be specified as comma-separated numbers"
+        )
+        
+def validate_items_parameters(request: Request):
+    allowed_params = {"limit", "offset", "bbox", "bbox-crs", "datetime", "crs", "f"}
+    query_params = request.query_params
+    unrecognized_params = set(query_params.keys()) - allowed_params
+    
+    if unrecognized_params:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unrecognized query parameter(s): {', '.join(unrecognized_params)}"
         )
