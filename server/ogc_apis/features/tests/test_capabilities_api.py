@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from fastapi.testclient import TestClient
-from . import conftest
+from server.ogc_apis.features.tests import conftest
 import httpx
 
 
@@ -54,14 +54,14 @@ def test_get_collections(client: TestClient, headers: httpx.Headers):
 
     assert response.status_code == 200
     json = response.json()
-    assert "http://www.opengis.net/def/crs/OGC/1.3/CRS84" in json["crs"][0]
+    assert "http://www.opengis.net/def/crs/OGC/1.3/CRS84" in json["crs"]
     
     # check links
     links = json["links"]
     assert all("rel" in link and "type" in link for link in links)
     rels = [link["rel"] for link in links]
     assert any(rel == "self" for rel in rels)
-    assert len(filter(lambda rel: rel == "alternate", rels)) == len(ogc_api_config.formats.ReturnFormat.get_all() - 1)
+    assert len(list(filter(lambda rel: rel == "alternate", rels))) == len(ogc_api_config.formats.ReturnFormat.get_all()) - 1
     
     # check items
     assert json["collections"] is not None
@@ -86,8 +86,8 @@ def test_get_conformance_declaration(client: TestClient, headers: httpx.Headers)
 
     assert response.status_code == 200
     json = response.json()
-    assert ConfClasses.model_validate_json(json)
-    assert "http://www.opengis.net/spec/ogcapi-features-1/1.1/conf/core" in json["conformsTo"]
+    assert ConfClasses.model_validate(json)
+    assert "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core" in json["conformsTo"]
 
 
 def test_get_landing_page(client: TestClient, headers: httpx.Headers):
@@ -109,7 +109,7 @@ def test_get_landing_page(client: TestClient, headers: httpx.Headers):
     assert response.status_code == 200
     json = response.json()
     assert json is not None
-    assert LandingPage.model_validate_json(json)
+    assert LandingPage.model_validate(json)
     links = json.get('links')
     
     rels = [link.get('rel') for link in links]
@@ -120,7 +120,7 @@ def test_get_landing_page(client: TestClient, headers: httpx.Headers):
     assert 'self' in rels
     
     # Test different formats
-    conftest.formats("GET", "/", headers)
+    conftest.formats("GET", "/", headers, client)
 
 def test_get_api(client: TestClient, headers: httpx.Headers):
     """Test case for get_api in both formats
