@@ -6,16 +6,18 @@ import mimetypes
 
 from server.ogc_apis.features.main import init_api_server
 from server.ogc_apis import ogc_api_config
+from server.database.db import Database
 
-@pytest.fixture(scope="module")
+Database.init_sqlite_db(False)
+
+@pytest.fixture(scope="session")
 def app() -> FastAPI:
     application = init_api_server()
     application.dependency_overrides = {}
 
     return application
 
-
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def client(app) -> TestClient:
     return TestClient(app)
 
@@ -24,7 +26,7 @@ def headers() -> httpx.Headers:
     return {
     }
 
-def formats(operation: str, rel_url: str, headers: httpx.Headers, data: str = None, test_client: TestClient = app()) -> None:
+def formats(operation: str, rel_url: str, headers: httpx.Headers, test_client: TestClient = None, data: str = None) -> None:
     for _format in ogc_api_config.formats.ReturnFormat.get_all():
         url = f"{rel_url}{"&" if "?" in rel_url else "?"}f={_format}"
         
