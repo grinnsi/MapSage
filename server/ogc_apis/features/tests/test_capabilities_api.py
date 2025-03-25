@@ -25,16 +25,41 @@ def test_describe_collection(client: TestClient, headers: httpx.Headers):
     headers.update({
         
     })
-    # uncomment below to make a request
+    
     response = client.request(
        "GET",
-       "/collections/{collectionId}".format(collectionId='collection_id_example'),
+       "/collections",
        headers=headers,
     )
 
-    # uncomment below to assert the status code of the HTTP response
-    #assert response.status_code == 200
-
+    collections_json = response.json()
+    collections = collections_json["collections"]
+    # Not an official ogc test
+    assert collections is not None and len(collections) > 0
+    
+    for index, collection in enumerate(collections):
+        collection_id = collection["id"]
+        response = client.request(
+            "GET",
+            f"/collections/{collection_id}",
+            headers=headers,
+        )
+        
+        assert response.status_code == 200
+        json = response.json()
+        assert json["id"] == collections[index]["id"]
+        assert json["title"] == collections[index]["title"]
+        assert json["description"] == collections[index]["description"]
+        assert json["extent"] == collections[index]["extent"]
+        assert json["itemType"] == collections[index]["itemType"]
+        assert json["storageCrs"] == collections[index]["storageCrs"]
+        assert json["storageCrsCoordinateEpoch"] == collections[index]["storageCrsCoordinateEpoch"]
+        assert all(crs in collections[index]["crs"] or crs in collections_json["crs"] for crs in json["crs"])
+        
+        assert Collection.model_validate(json)
+        
+        # Test different formats
+        conftest.formats("GET", f"/collections/{collection_id}", headers, client)
 
 def test_get_collections(client: TestClient, headers: httpx.Headers):
     """Test case for get_collections
