@@ -182,4 +182,34 @@ def test_get_api(client: TestClient, headers: httpx.Headers):
         
     })
     
-    conftest.formats("GET", ogc_api_config.routes.API, headers)    
+    response = client.request(
+       "GET",
+       "/",
+       headers=headers,
+    )
+    
+    assert response.status_code == 200
+    json = response.json()
+    links = json.get('links')
+    service_doc = next(link for link in links if link.get('rel') == 'service-doc')
+    service_desc = next(link for link in links if link.get('rel') == 'service-desc')
+
+    from urllib.parse import urlparse
+    
+    service_doc_path = str(urlparse(service_doc.get('href')).path).removeprefix(ogc_api_config.routes.FEATURES)
+    service_desc_path = str(urlparse(service_desc.get('href')).path).removeprefix(ogc_api_config.routes.FEATURES)
+
+    response_doc = client.request(
+       "GET",
+       service_doc_path,
+       headers=headers,
+    )
+    
+    response_desc = client.request(
+       "GET",
+       service_desc_path,
+       headers=headers,
+    )
+    
+    assert response_desc.status_code == 200
+    assert response_doc.status_code == 200
