@@ -36,7 +36,7 @@ class FeatureGeoJSON(BaseModel):
     FeatureGeoJSON
     """ # noqa: E501
     type: StrictStr
-    geometry: GeometryGeoJSON
+    geometry: Optional[GeometryGeoJSON]
     properties: Optional[Dict[str, Any]]
     id: Optional[FeatureGeoJSONId] = None
     links: Optional[List[Link]] = None
