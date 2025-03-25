@@ -33,14 +33,15 @@ def formats(operation: str, rel_url: str, headers: httpx.Headers, test_client: T
         if _format == "json":
             _format = "geojson"
         
-        headers.update({
+        request_headers = headers.copy()
+        request_headers.update({
             "Accept": mimetypes.types_map["." + _format]
         })
         
         response: httpx.Response = test_client.request(
             method=operation,
             url=url,
-            headers=headers,
+            headers=request_headers,
             data=data
         )
         
