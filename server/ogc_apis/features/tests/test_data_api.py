@@ -61,7 +61,7 @@ def test_get_feature(client: TestClient, headers: httpx.Headers):
         assert alternates == len(ogc_api_config.formats.ReturnFormat.get_all()) - 1
         # Link 4: rel and type
         assert all("rel" in link and "type" in link for link in links)
-        
+        assert FeatureGeoJSON.from_dict(item_json)
         conftest.formats("GET", f"/collections/{collectionId}/items/{item['id']}", headers, client)
 
 
