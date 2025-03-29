@@ -151,7 +151,7 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
         new_collection.id = f"{base_id}-{next_suffix:02d}"
     
     new_collection.layer_name = layer_name
-    collection_title = base_id.replace("-", " ")
+    collection_title = string_to_kebab(layer_name.split(".", 1)[-1]).replace("-", " ")
     collection_title = " ".join(word.capitalize() for word in collection_title.split(" "))
     new_collection.title = collection_title
 
