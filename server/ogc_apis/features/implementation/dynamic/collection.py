@@ -6,7 +6,7 @@ from server.ogc_apis.features.models.extent import Extent
 from server.ogc_apis.features.models.extent_spatial import ExtentSpatial
 from server.ogc_apis.features.models.extent_temporal import ExtentTemporal
 from server.utils import gdal_utils
-import math, datetime, sqlmodel
+import re, math, datetime, sqlmodel
 
 from osgeo import gdal, ogr, osr
 
@@ -132,6 +132,11 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
         new_collection.storage_crs_coordinate_epoch = spatial_ref.GetCoordinateEpoch()
     
     base_id = string_to_kebab(layer_name.split(".", 1)[-1])
+    base_id = ''.join(e for e in base_id if e.isalnum() or e == "-")
+    base_id = base_id.lstrip("-").rstrip("-")
+    base_id = re.sub(r"[-]{2,}", "-", base_id)
+    if len(base_id) == 0:
+        base_id = str(unique_id.uuid4())[:8]
     
     result = Database.select_sqlite_db(statement=text(f"SELECT id FROM {models.CollectionTable.__tablename__} WHERE \"id\" = '{base_id}'"))
     if result is None or len(result) == 0:
