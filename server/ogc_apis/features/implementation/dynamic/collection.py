@@ -1,4 +1,4 @@
-from uuid import UUID
+import uuid as unique_id
 from sqlmodel import text
 from server.database.db import Database
 from server.database import models
@@ -156,13 +156,13 @@ def generate_collection_table_object(layer_name: str, dataset_uuid: str, dataset
     new_collection.title = collection_title
 
     if type(dataset_uuid) is str:
-        dataset_uuid = UUID(dataset_uuid)
+        dataset_uuid = unique_id.UUID(dataset_uuid)
     new_collection.dataset_uuid = dataset_uuid
     
     for key, value in optional_data.items():
         if hasattr(new_collection, key):
             if key == "uuid" and type(value) is str:
-                value = UUID(value)
+                value = unique_id.UUID(value)
             setattr(new_collection, key, value)
     
     new_collection.pre_render(app_base_url=app_base_url)
