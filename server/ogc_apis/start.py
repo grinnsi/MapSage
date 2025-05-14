@@ -33,7 +33,7 @@ def init_main_api_server() -> FastAPI:
         description="This server implements the new OGC APIs. Currently, it implements the OGC API - Features - Part 1 and Part 2: Core and CRS standard. Others will be added in the future.",
         version="1.0.0",
         lifespan=lifespan,
-        root_path=os.getenv("API_SERVER_ROOT_PATH", "/"),
+        root_path=os.getenv("API_SERVER_ROOT_PATH", ""),
         openapi_url=f"{ogc_api_config.routes.API}.json",
         docs_url=f"{ogc_api_config.routes.API}.html",
         redoc_url=None,
@@ -117,6 +117,8 @@ def start_prod_api_server() -> uvicorn.Server:
         proxy_headers=True,
         log_config=get_logger_config(False),
         log_level="info",
-        loop="uvloop"
+        loop="uvloop",
+        workers=10,
+        backlog=4000,
     )
     return uvicorn.Server(config)

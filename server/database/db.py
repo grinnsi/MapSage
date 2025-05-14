@@ -34,7 +34,7 @@ def init_sqlite_engine(sqlite_file_name: str, debug_mode: bool) -> Engine:
 
     sqlite_url = f"sqlite:///{database_path}{os.path.sep}{sqlite_file_name}"
     connection_args = {"check_same_thread": False}
-    return create_engine(sqlite_url, echo=debug_mode, connect_args=connection_args)
+    return create_engine(sqlite_url, echo=debug_mode, connect_args=connection_args, pool_size=80, max_overflow=120)
 
 class SetupSqliteDatabase():
     def __init__(self):

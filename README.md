@@ -15,11 +15,12 @@ To run the server, please execute the following from the root directory:
 
 ```bash
 pip3 install -r ./server/requirements.txt
-PYTHONPATH=server python -u -m server
+PYTHONPATH=server 
+python -u -m server
 ```
 After startup the server runs on port 8000.
 
-Open your browser at `http://localhost:8080/features/` to see the landing page of the features server.
+Open your browser at `http://localhost:8000/features/` to see the landing page of the features server.
 
 ## Running with Docker
 
